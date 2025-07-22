@@ -16,6 +16,13 @@
   networking.hostName = "nixos-dev"; # Define your hostname
   networking.networkmanager.enable = true;
 
+  # Filesystem mounts
+  fileSystems."/mnt/debian" = {
+    device = "/dev/nvme0n1p2";
+    fsType = "ext4";
+    options = [ "defaults" "nofail" ];
+  };
+
   # Set your time zone
   time.timeZone = "America/Vancouver"; # Adjust for your location
 
@@ -62,6 +69,58 @@
   
   # Enable D-Bus for inter-process communication
   services.dbus.enable = true;
+  
+  # Enable nix-ld for running dynamically linked executables
+  programs.nix-ld.enable = true;
+  programs.nix-ld.libraries = with pkgs; [
+    stdenv.cc.cc
+    fuse3
+    alsa-lib
+    at-spi2-atk
+    at-spi2-core
+    atk
+    cairo
+    cups
+    curl
+    dbus
+    expat
+    fontconfig
+    freetype
+    gdk-pixbuf
+    glib
+    gtk3
+    libGL
+    libappindicator-gtk3
+    libdrm
+    libnotify
+    libpulseaudio
+    libuuid
+    libusb1
+    libxcrypt
+    libxcrypt-legacy
+    xorg.libX11
+    xorg.libXScrnSaver
+    xorg.libXcomposite
+    xorg.libXcursor
+    xorg.libXdamage
+    xorg.libXext
+    xorg.libXfixes
+    xorg.libXi
+    xorg.libXrandr
+    xorg.libXrender
+    xorg.libXtst
+    xorg.libxcb
+    xorg.libxkbfile
+    xorg.libxshmfence
+    mesa
+    nspr
+    nss
+    pango
+    pipewire
+    systemd
+    zlib
+    libsecret
+  ];
   
   # Enable the secret storage service
   services.gnome.gnome-online-accounts.enable = true;
@@ -118,6 +177,9 @@
     # Database tools
     dbeaver-bin
     
+    # Diff/merge tools
+    bcompare
+
     # Communication apps
     slack
     signal-desktop
@@ -151,6 +213,9 @@
     yq-go
     httpie
     direnv
+    atuin
+    fzf
+    zsh-vi-mode
     
     # Firefox browser
     firefox
@@ -158,6 +223,13 @@
     nodejs_24
     # AI 
     claude-code
+    
+    # Bluetooth utilities
+    bluez
+    bluez-tools
+    
+    # Credential storage for IDEs
+    libsecret
   ];
 
   # Programs configuration
@@ -167,7 +239,7 @@
       enable = true;
       ohMyZsh = {
         enable = true;
-        plugins = [ "git" "docker" "docker-compose" "aws" ];
+        plugins = [ "git" "docker" "docker-compose" "aws" "vi-mode" "fzf" ];
         theme = "robbyrussell";
       };
     };
@@ -208,6 +280,23 @@
 
   # Enable the OpenSSH daemon.
   services.openssh.enable = true;
+
+  # Enable Bluetooth
+  hardware.bluetooth.enable = true;
+  hardware.bluetooth.powerOnBoot = true;
+  services.blueman.enable = true;
+  
+  # Enable PipeWire for audio
+  services.pipewire = {
+    enable = true;
+    alsa.enable = true;
+    alsa.support32Bit = true;
+    pulse.enable = true;
+    jack.enable = true;
+  };
+  
+  # Disable PulseAudio since we're using PipeWire
+  services.pulseaudio.enable = false;
 
   # Open ports in the firewall.
   # networking.firewall.allowedTCPPorts = [ ... ];
