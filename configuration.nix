@@ -47,6 +47,7 @@
       slurp
       wf-recorder
       kanshi
+      polkit_gnome
     ];
   };
 
@@ -55,6 +56,15 @@
   # Enable PAM integration for keyring
   security.pam.services.login.enableGnomeKeyring = true;
   security.pam.services.sway.enableGnomeKeyring = true;
+  
+  # Enable Polkit for authentication dialogs
+  security.polkit.enable = true;
+  
+  # Enable D-Bus for inter-process communication
+  services.dbus.enable = true;
+  
+  # Enable the secret storage service
+  services.gnome.gnome-online-accounts.enable = true;
 
   xdg.portal = {
     enable = true;
