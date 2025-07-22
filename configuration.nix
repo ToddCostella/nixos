@@ -40,29 +40,22 @@
     LC_TELEPHONE = "en_US.UTF-8";
     LC_TIME = "en_US.UTF-8";
   };
-  programs.sway = {
-    enable = true;
-    wrapperFeatures.gtk = true;
-    extraPackages = with pkgs; [
-      swaylock
-      swayidle
-      wl-clipboard
-      mako
-      wofi
-      waybar
-      grim
-      slurp
-      wf-recorder
-      kanshi
-      polkit_gnome
-    ];
+  # Enable GNOME desktop environment
+  services.xserver.enable = true;
+  services.displayManager.gdm.enable = true;
+  services.desktopManager.gnome.enable = true;
+  
+  # Configure keymap for X11
+  services.xserver.xkb = {
+    layout = "us";
+    variant = "";
   };
 
   services.gnome.gnome-keyring.enable = true;
   
   # Enable PAM integration for keyring
   security.pam.services.login.enableGnomeKeyring = true;
-  security.pam.services.sway.enableGnomeKeyring = true;
+  security.pam.services.gdm.enableGnomeKeyring = true;
   
   # Enable Polkit for authentication dialogs
   security.polkit.enable = true;
@@ -125,10 +118,10 @@
   # Enable the secret storage service
   services.gnome.gnome-online-accounts.enable = true;
 
+  # XDG portal configuration for GNOME
   xdg.portal = {
     enable = true;
-    wlr.enable = true;
-    extraPortals = [pkgs.xdg-desktop-portal-gtk];
+    extraPortals = [ pkgs.xdg-desktop-portal-gnome ];
   };
  
   # Enable CUPS to print documents
@@ -153,6 +146,7 @@
 
 # Core development tools
    environment.systemPackages = with pkgs;[
+    # Development tools
     git
     neovim
     htop
@@ -163,7 +157,7 @@
     unzip
     
     # Terminal utilities
-    wezterm
+    alacritty
     feh
     playerctl
     brightnessctl
@@ -223,6 +217,9 @@
     nodejs_24
     # AI 
     claude-code
+    
+    # Keyboard configurator for Dygma keyboards
+    bazecor
     
     # Bluetooth utilities
     bluez
