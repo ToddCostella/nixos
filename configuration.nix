@@ -34,20 +34,20 @@
     LC_TIME = "en_US.UTF-8";
   };
   programs.sway = {
-  	enable = true;
-	wrapperFeatures.gtk = true;
-	extraPackages = with pkgs; [
-		swaylock
-		swayidle
-		wl-clipboard
-		mako
-		wofi
-		waybar
-		grim
-		slurp
-		wf-recorder
-		kanshi
-	];
+    enable = true;
+    wrapperFeatures.gtk = true;
+    extraPackages = with pkgs; [
+      swaylock
+      swayidle
+      wl-clipboard
+      mako
+      wofi
+      waybar
+      grim
+      slurp
+      wf-recorder
+      kanshi
+    ];
   };
 
   services.gnome.gnome-keyring.enable = true;
@@ -57,16 +57,16 @@
   security.pam.services.sway.enableGnomeKeyring = true;
 
   xdg.portal = {
-  	enable = true;
-	wlr.enable = true;
-	extraPortals = [pkgs.xdg-desktop-portal-gtk];
-	};
+    enable = true;
+    wlr.enable = true;
+    extraPortals = [pkgs.xdg-desktop-portal-gtk];
+  };
  
   # Enable CUPS to print documents
   services.printing.enable = true;
   nixpkgs.config.allowUnfree = true;
  
- virtualisation.docker = {
+  virtualisation.docker = {
     enable = true;
     enableOnBoot = true;  # Start Docker on boot
     autoPrune.enable = true;  # Automatic cleanup
@@ -100,7 +100,6 @@
     brightnessctl
     
     # Development tools
-    docker
     docker-compose
     awscli2
     lazygit
@@ -123,7 +122,10 @@
     uv
     
     # Fonts
-    # (nerdfonts.override { fonts = [ "FiraCode" "JetBrainsMono" "Hack" "SourceCodePro" ]; })
+    nerd-fonts.fira-code
+    nerd-fonts.jetbrains-mono
+    nerd-fonts.hack
+    nerd-fonts.sauce-code-pro
     
     # Build tools
     gcc
@@ -135,6 +137,10 @@
     fd
     bat
     tree
+    jq
+    yq-go
+    httpie
+    direnv
     
     # Firefox browser
     firefox
@@ -173,13 +179,13 @@
   };
 
   # Fonts
-  #fonts.packages = with pkgs; [
-  #  noto-fonts-cjk
-  #  noto-fonts-emoji
-  #  liberation_ttf
-  #  fira-code
-  #  fira-code-symbols
-  #];
+  fonts.packages = with pkgs; [
+    noto-fonts-cjk-sans
+    noto-fonts-emoji
+    liberation_ttf
+    fira-code
+    fira-code-symbols
+  ];
 
   # Some programs need SUID wrappers, can be configured further or are
   # started in user sessions.
@@ -199,6 +205,19 @@
   # Or disable the firewall altogether.
   # networking.firewall.enable = false;
 
+  # Nix settings
+  nix.settings = {
+    auto-optimise-store = true;
+    experimental-features = [ "nix-command" "flakes" ];
+  };
+
+  # Automatic garbage collection
+  nix.gc = {
+    automatic = true;
+    dates = "weekly";
+    options = "--delete-older-than 30d";
+  };
+
   # This value determines the NixOS release from which the default
   # settings for stateful data, like file locations and database versions
   # on your system were taken. It's perfectly fine and recommended to leave
@@ -208,18 +227,10 @@
   system.stateVersion = "24.05"; # Did not change this!
   # xdg.portal.enable = true;
 
-  # Additional configuration for specific tools
-
-  # JetBrains Toolbox - needs to be installed manually or via overlay
-  # You can download it from: https://www.jetbrains.com/toolbox-app/
-  
-  # Rainfrog - needs to be built from source or added as a custom package
-  # For now, you can install it manually after system setup
-
-  # Post-installation commands to run after first boot:
-  # 1. Install JetBrains Toolbox manually
-  # 2. Install Pika Backup via Flatpak: flatpak install flathub org.gnome.World.PikaBackup
-  # 3. Install rainfrog manually or build from source
-  # 4. Configure i3 in ~/.config/i3/config
+  # Enable direnv for development environments
+  programs.direnv = {
+    enable = true;
+    nix-direnv.enable = true;
+  };
 
 }
