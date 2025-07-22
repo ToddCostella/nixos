@@ -135,12 +135,13 @@
     fd
     bat
     tree
-    tmux
     
     # Firefox browser
     firefox
 
     nodejs_24
+    # AI 
+    claude-code
   ];
 
   # Programs configuration
