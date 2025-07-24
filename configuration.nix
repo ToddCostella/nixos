@@ -45,6 +45,9 @@
   services.displayManager.gdm.enable = true;
   services.desktopManager.gnome.enable = true;
   
+  # GNOME shell extensions (enabled automatically with GNOME desktop)
+  
+  
   # Configure keymap for X11
   services.xserver.xkb = {
     layout = "us";
@@ -157,7 +160,7 @@
     unzip
     
     # Terminal utilities
-    alacritty
+    wezterm
     feh
     playerctl
     brightnessctl
@@ -227,6 +230,13 @@
     
     # Credential storage for IDEs
     libsecret
+    
+    # GNOME extensions
+    gnomeExtensions.forge
+    gnomeExtensions.workspace-indicator
+    
+    # GNOME utilities
+    gnome-tweaks
   ];
 
   # Programs configuration
