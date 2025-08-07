@@ -6,6 +6,7 @@
   imports =
     [ # Include the results of the hardware scan.
       ./hardware-configuration.nix
+      ./esp32-dev.nix  # ESP32 development configuration
     ];
 
   # Boot loader configuration
@@ -137,11 +138,11 @@
     autoPrune.enable = true;  # Automatic cleanup
   };
 
-  # Define a user account. Don't forget to set a password with ‘passwd’.
+  # Define a user account. Don't forget to set a password with 'passwd'.
   users.users.todd = {
     isNormalUser = true;
     description = "Todd Costella";
-    extraGroups = [ "networkmanager" "wheel" "docker" ];
+    extraGroups = [ "networkmanager" "wheel" "docker" "dialout" ];
     packages = with pkgs; [];
     shell = pkgs.zsh;
   };
@@ -216,13 +217,25 @@
     
     # Firefox browser
     firefox
+    
+    # Chrome browser
+    google-chrome
 
     nodejs_24
     # AI 
     claude-code
     
+    # NPM comes with nodejs_24, yarn for alternative package management
+    yarn
+    
+    # Image editor
+    pinta
+    
     # Keyboard configurator for Dygma keyboards
     bazecor
+    
+    # Arduino IDE for microcontroller development
+    arduino-ide
     
     # Bluetooth utilities
     bluez
@@ -237,6 +250,12 @@
     
     # GNOME utilities
     gnome-tweaks
+    
+    # Office suite
+    libreoffice
+    
+    # Screenshot utility
+    maim
   ];
 
   # Programs configuration
@@ -249,6 +268,14 @@
         plugins = [ "git" "docker" "docker-compose" "aws" "vi-mode" "fzf" ];
         theme = "robbyrussell";
       };
+    };
+    
+    # Enable npm
+    npm = {
+      enable = true;
+      npmrc = ''
+        prefix = ''${HOME}/.npm-packages
+      '';
     };
 
     # Git configuration
@@ -337,6 +364,11 @@
   programs.direnv = {
     enable = true;
     nix-direnv.enable = true;
+  };
+
+  # Environment variables for npm global packages
+  environment.variables = {
+    PATH = [ "$HOME/.npm-packages/bin" ];
   };
 
 }
