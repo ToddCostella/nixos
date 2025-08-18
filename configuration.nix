@@ -46,8 +46,6 @@
   services.displayManager.gdm.enable = true;
   services.desktopManager.gnome.enable = true;
   
-  # GNOME shell extensions (enabled automatically with GNOME desktop)
-  
   
   # Configure keymap for X11
   services.xserver.xkb = {
@@ -237,6 +235,9 @@
     # Arduino IDE for microcontroller development
     arduino-ide
     
+    # Mu editor - simple Python editor for beginners and microcontrollers
+    mu
+    
     # Bluetooth utilities
     bluez
     bluez-tools
@@ -255,7 +256,23 @@
     libreoffice
     
     # Screenshot utility
-    maim
+    gnome-screenshot  # GNOME's native screenshot tool
+    
+    # Custom screenshot scripts
+    (pkgs.writeShellScriptBin "screenshot-area" ''
+      mkdir -p ~/Pictures/Screenshots
+      gnome-screenshot -a -f ~/dev/buoyancy-platform/tmp/screenshot-$(date +'%Y-%m-%d_%H-%M-%S').png
+    '')
+    
+    (pkgs.writeShellScriptBin "screenshot-full" ''
+      mkdir -p ~/Pictures/Screenshots  
+      gnome-screenshot -f ~/Pictures/Screenshots/screenshot-$(date +'%Y-%m-%d_%H-%M-%S').png
+    '')
+    
+    (pkgs.writeShellScriptBin "screenshot-window" ''
+      mkdir -p ~/Pictures/Screenshots
+      gnome-screenshot -w -f ~/Pictures/Screenshots/screenshot-$(date +'%Y-%m-%d_%H-%M-%S').png
+    '')
   ];
 
   # Programs configuration
@@ -366,9 +383,11 @@
     nix-direnv.enable = true;
   };
 
-  # Environment variables for npm global packages
+  # Environment variables for npm global packages and Wayland support
   environment.variables = {
     PATH = [ "$HOME/.npm-packages/bin" ];
+    QT_QPA_PLATFORM = "wayland;xcb";  # Enable Wayland support for Qt apps like flameshot
   };
+
 
 }

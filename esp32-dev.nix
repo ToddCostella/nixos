@@ -15,6 +15,11 @@
     screen
     minicom
     
+    # USB analysis tools
+    usbutils          # lsusb command
+    usb-modeswitch    # USB mode switching
+    sg3_utils         # SCSI generic utilities
+    
     # Python packages for ESP32 tools
     python3
     python3Packages.pyserial
