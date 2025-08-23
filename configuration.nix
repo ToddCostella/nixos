@@ -7,6 +7,7 @@
     [ # Include the results of the hardware scan.
       ./hardware-configuration.nix
       ./esp32-dev.nix  # ESP32 development configuration
+      ./photo-restoration.nix
     ];
 
   # Boot loader configuration
