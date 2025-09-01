@@ -8,6 +8,7 @@
       ./hardware-configuration.nix
       ./esp32-dev.nix  # ESP32 development configuration
       ./photo-restoration.nix
+      ./desktop-icons.nix  # Custom desktop icons for Nix applications
     ];
 
   # Boot loader configuration
@@ -219,6 +220,32 @@
     
     # Chrome browser
     google-chrome
+    
+    # Zen browser - Privacy-focused Firefox-based browser
+    (pkgs.appimageTools.wrapType2 {
+      pname = "zen-browser";
+      name = "zen-browser";
+      version = "1.15.2b";
+      src = pkgs.fetchurl {
+        url = "https://github.com/zen-browser/desktop/releases/download/1.15.2b/zen-x86_64.AppImage";
+        sha256 = "1g9c33gi2aa71x66k3xfr4gfcz7x01i56dxavxzzf0hija2w8dch";
+      };
+      extraInstallCommands = ''
+        mkdir -p $out/share/applications
+        cat > $out/share/applications/zen-browser.desktop <<EOF
+        [Desktop Entry]
+        Name=Zen Browser
+        Comment=Experience tranquil browsing
+        Exec=zen-browser %U
+        Terminal=false
+        Type=Application
+        Icon=zen-browser
+        Categories=Network;WebBrowser;
+        MimeType=text/html;text/xml;application/xhtml+xml;application/xml;application/rss+xml;application/rdf+xml;image/gif;image/jpeg;image/png;x-scheme-handler/http;x-scheme-handler/https;x-scheme-handler/ftp;x-scheme-handler/chrome;video/webm;application/x-xpinstall;
+        StartupNotify=true
+        EOF
+      '';
+    })
 
     nodejs_24
     # AI 
@@ -226,6 +253,9 @@
     
     # NPM comes with nodejs_24, yarn for alternative package management
     yarn
+    
+    # AWS CDK for infrastructure as code
+    nodePackages.aws-cdk
     
     # Image editor
     pinta
@@ -256,8 +286,12 @@
     # Office suite
     libreoffice
     
-    # Screenshot utility
+    # Screenshot utilities
     gnome-screenshot  # GNOME's native screenshot tool
+    grim             # Wayland screenshot utility
+    slurp            # Wayland area selection
+    swappy           # Wayland screenshot editor with markup
+    wl-clipboard     # Wayland clipboard utilities
     
     # Custom screenshot scripts
     (pkgs.writeShellScriptBin "screenshot-area" ''
@@ -387,7 +421,7 @@
   # Environment variables for npm global packages and Wayland support
   environment.variables = {
     PATH = [ "$HOME/.npm-packages/bin" ];
-    QT_QPA_PLATFORM = "wayland;xcb";  # Enable Wayland support for Qt apps like flameshot
+    QT_QPA_PLATFORM = "wayland;xcb";  # Enable Wayland support for Qt apps
   };
 
 
