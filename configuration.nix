@@ -215,6 +215,26 @@
     fzf
     zsh-vi-mode
     
+    # Network diagnostic tools
+    dig
+    traceroute
+    nmap
+    netcat
+    iperf3
+    mtr
+    whois
+    tcpdump
+    wireshark
+    inetutils  # Provides ping, telnet, etc.
+    net-tools  # Provides netstat, ifconfig, etc.
+    iproute2   # Modern networking tools (ip, ss, etc.)
+    dnsutils   # DNS utilities including dig, nslookup
+    ldns       # DNS tools including drill
+    socat      # Multipurpose network relay
+    iftop      # Network bandwidth monitor
+    nethogs    # Per-process network bandwidth monitor
+    vnstat     # Network traffic monitor
+    
     # Firefox browser
     firefox
     
@@ -279,6 +299,7 @@
     # GNOME extensions
     gnomeExtensions.forge
     gnomeExtensions.workspace-indicator
+    gnomeExtensions.just-perfection       # Customize GNOME Shell UI elements
     
     # GNOME utilities
     gnome-tweaks
