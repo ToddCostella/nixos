@@ -156,7 +156,6 @@
     htop
     zsh
     oh-my-zsh
-    curl
     wget
     unzip
     
@@ -293,9 +292,6 @@
     bluez
     bluez-tools
     
-    # Credential storage for IDEs
-    libsecret
-    
     # GNOME extensions
     gnomeExtensions.forge
     gnomeExtensions.workspace-indicator
@@ -307,25 +303,42 @@
     # Office suite
     libreoffice
     
+    # Backup software
+    pika-backup
+    
     # Screenshot utilities
     gnome-screenshot  # GNOME's native screenshot tool
     grim             # Wayland screenshot utility
     slurp            # Wayland area selection
     swappy           # Wayland screenshot editor with markup
     wl-clipboard     # Wayland clipboard utilities
+    ksnip            # Advanced screenshot tool with annotation features
     
     # Custom screenshot scripts
+    # Copy to clipboard by default (PrintScreen)
     (pkgs.writeShellScriptBin "screenshot-area" ''
-      mkdir -p ~/Pictures/Screenshots
+      gnome-screenshot -a -c
+    '')
+    
+    (pkgs.writeShellScriptBin "screenshot-area-file" ''
+      mkdir -p ~/dev/buoyancy-platform/tmp
       gnome-screenshot -a -f ~/dev/buoyancy-platform/tmp/screenshot-$(date +'%Y-%m-%d_%H-%M-%S').png
     '')
     
     (pkgs.writeShellScriptBin "screenshot-full" ''
+      gnome-screenshot -c
+    '')
+    
+    (pkgs.writeShellScriptBin "screenshot-full-file" ''
       mkdir -p ~/Pictures/Screenshots  
       gnome-screenshot -f ~/Pictures/Screenshots/screenshot-$(date +'%Y-%m-%d_%H-%M-%S').png
     '')
     
     (pkgs.writeShellScriptBin "screenshot-window" ''
+      gnome-screenshot -w -c
+    '')
+    
+    (pkgs.writeShellScriptBin "screenshot-window-file" ''
       mkdir -p ~/Pictures/Screenshots
       gnome-screenshot -w -f ~/Pictures/Screenshots/screenshot-$(date +'%Y-%m-%d_%H-%M-%S').png
     '')
