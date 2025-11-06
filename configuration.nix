@@ -9,6 +9,14 @@
       ./esp32-dev.nix  # ESP32 development configuration
       ./photo-restoration.nix
       ./desktop-icons.nix  # Custom desktop icons for Nix applications
+
+      # Desktop Environments - Comment/uncomment to enable/disable
+      ./desktop-gnome.nix     # GNOME Desktop
+      ./desktop-kde.nix       # KDE Plasma 6 Desktop
+      ./desktop-cinnamon.nix  # Cinnamon Desktop
+
+      # Multi-DE compatibility - must be imported AFTER desktop environments
+      ./desktop-multi-de-compat.nix
     ];
 
   # Boot loader configuration
@@ -17,7 +25,12 @@
 
   # Networking
   networking.hostName = "nixos-dev"; # Define your hostname
-  networking.networkmanager.enable = true;
+  networking.networkmanager = {
+    enable = true;
+    plugins = with pkgs; [
+      networkmanager-openvpn  # For NordVPN OpenVPN connections
+    ];
+  };
 
   # Filesystem mounts
   fileSystems."/mnt/debian" = {
@@ -43,27 +56,23 @@
     LC_TELEPHONE = "en_US.UTF-8";
     LC_TIME = "en_US.UTF-8";
   };
-  # Enable GNOME desktop environment
+  # Display Server and Display Manager
   services.xserver.enable = true;
-  services.displayManager.gdm.enable = true;
-  services.desktopManager.gnome.enable = true;
-  
-  
+  services.displayManager.gdm.enable = true;  # GDM works well with all desktop environments
+
   # Configure keymap for X11
   services.xserver.xkb = {
     layout = "us";
     variant = "";
   };
 
-  services.gnome.gnome-keyring.enable = true;
-  
   # Enable PAM integration for keyring
   security.pam.services.login.enableGnomeKeyring = true;
   security.pam.services.gdm.enableGnomeKeyring = true;
-  
+
   # Enable Polkit for authentication dialogs
   security.polkit.enable = true;
-  
+
   # Enable D-Bus for inter-process communication
   services.dbus.enable = true;
   
@@ -118,18 +127,25 @@
     zlib
     libsecret
   ];
-  
-  # Enable the secret storage service
-  services.gnome.gnome-online-accounts.enable = true;
 
-  # XDG portal configuration for GNOME
+  # XDG portal configuration
+  # Desktop-specific portals are configured in their respective modules
   xdg.portal = {
     enable = true;
-    extraPortals = [ pkgs.xdg-desktop-portal-gnome ];
+    # extraPortals are added by desktop environment modules
   };
  
   # Enable CUPS to print documents
   services.printing.enable = true;
+
+  # Enable Avahi for printer discovery and mDNS resolution
+  services.avahi = {
+    enable = true;
+    nssmdns4 = true;  # Enable mDNS for IPv4 .local domain resolution
+    nssmdns6 = true;  # Enable mDNS for IPv6 .local domain resolution
+    openFirewall = true;  # Allow mDNS traffic through firewall
+  };
+
   nixpkgs.config.allowUnfree = true;
  
   virtualisation.docker = {
@@ -138,11 +154,21 @@
     autoPrune.enable = true;  # Automatic cleanup
   };
 
+  # QEMU/KVM virtualization for running Windows 11 VMs
+  virtualisation.libvirtd = {
+    enable = true;
+    qemu = {
+      package = pkgs.qemu_kvm;
+      swtpm.enable = true;  # Enable TPM emulation for Windows 11
+      # OVMF (UEFI) is now available by default, no configuration needed
+    };
+  };
+
   # Define a user account. Don't forget to set a password with 'passwd'.
   users.users.todd = {
     isNormalUser = true;
     description = "Todd Costella";
-    extraGroups = [ "networkmanager" "wheel" "docker" "dialout" ];
+    extraGroups = [ "networkmanager" "wheel" "docker" "dialout" "libvirtd" ];
     packages = with pkgs; [];
     shell = pkgs.zsh;
   };
@@ -158,7 +184,8 @@
     oh-my-zsh
     wget
     unzip
-    
+    hugo
+
     # Terminal utilities
     wezterm
     feh
@@ -233,6 +260,10 @@
     iftop      # Network bandwidth monitor
     nethogs    # Per-process network bandwidth monitor
     vnstat     # Network traffic monitor
+
+    # VPN tools
+    openvpn    # OpenVPN client for NordVPN manual configuration
+    wgnord     # Unofficial NordVPN WireGuard client
     
     # Firefox browser
     firefox
@@ -267,8 +298,14 @@
     })
 
     nodejs_24
-    # AI 
+    # AI
     claude-code
+
+    # Virtualization tools
+    virt-manager      # GUI for managing VMs
+    virt-viewer       # VM display viewer
+    spice-gtk         # SPICE client for VM access
+    win-virtio        # Windows virtio drivers ISO
     
     # NPM comes with nodejs_24, yarn for alternative package management
     yarn
@@ -291,23 +328,8 @@
     # Bluetooth utilities
     bluez
     bluez-tools
-    
-    # GNOME extensions
-    gnomeExtensions.forge
-    gnomeExtensions.workspace-indicator
-    gnomeExtensions.just-perfection       # Customize GNOME Shell UI elements
-    
-    # GNOME utilities
-    gnome-tweaks
-    
-    # Office suite
-    libreoffice
-    
-    # Backup software
-    pika-backup
-    
-    # Screenshot utilities
-    gnome-screenshot  # GNOME's native screenshot tool
+
+    # Universal screenshot utilities (work across all DEs)
     grim             # Wayland screenshot utility
     slurp            # Wayland area selection
     swappy           # Wayland screenshot editor with markup
@@ -315,32 +337,91 @@
     ksnip            # Advanced screenshot tool with annotation features
     
     # Custom screenshot scripts
-    # Copy to clipboard by default (PrintScreen)
+    # SIMPLE SOLUTION: PrintScreen saves to /tmp/current-screenshot.png (static filename)
+    # Just reference /tmp/current-screenshot.png in Claude Code - no special key pasting needed!
+
+    # PrintScreen: Save to static filename AND copy to clipboard
     (pkgs.writeShellScriptBin "screenshot-area" ''
-      gnome-screenshot -a -c
+      gnome-screenshot -a -f /tmp/current-screenshot.png && \
+      ${pkgs.wl-clipboard}/bin/wl-copy --type image/png < /tmp/current-screenshot.png && \
+      echo "Screenshot saved to /tmp/current-screenshot.png and copied to clipboard"
     '')
-    
+
     (pkgs.writeShellScriptBin "screenshot-area-file" ''
       mkdir -p ~/dev/buoyancy-platform/tmp
       gnome-screenshot -a -f ~/dev/buoyancy-platform/tmp/screenshot-$(date +'%Y-%m-%d_%H-%M-%S').png
     '')
-    
+
     (pkgs.writeShellScriptBin "screenshot-full" ''
-      gnome-screenshot -c
+      mkdir -p ~/dev/buoyancy-platform/tmp
+      SCREENSHOT_FILE=~/dev/buoyancy-platform/tmp/screenshot-$(date +'%Y-%m-%d_%H-%M-%S').png
+      gnome-screenshot -f "$SCREENSHOT_FILE" && \
+      ${pkgs.wl-clipboard}/bin/wl-copy --type image/png < "$SCREENSHOT_FILE" && \
+      echo "Screenshot saved to $SCREENSHOT_FILE and copied to clipboard"
     '')
-    
+
     (pkgs.writeShellScriptBin "screenshot-full-file" ''
-      mkdir -p ~/Pictures/Screenshots  
+      mkdir -p ~/Pictures/Screenshots
       gnome-screenshot -f ~/Pictures/Screenshots/screenshot-$(date +'%Y-%m-%d_%H-%M-%S').png
     '')
-    
+
     (pkgs.writeShellScriptBin "screenshot-window" ''
-      gnome-screenshot -w -c
+      mkdir -p ~/dev/buoyancy-platform/tmp
+      SCREENSHOT_FILE=~/dev/buoyancy-platform/tmp/screenshot-$(date +'%Y-%m-%d_%H-%M-%S').png
+      gnome-screenshot -w -f "$SCREENSHOT_FILE" && \
+      ${pkgs.wl-clipboard}/bin/wl-copy --type image/png < "$SCREENSHOT_FILE" && \
+      echo "Screenshot saved to $SCREENSHOT_FILE and copied to clipboard"
     '')
-    
+
     (pkgs.writeShellScriptBin "screenshot-window-file" ''
       mkdir -p ~/Pictures/Screenshots
       gnome-screenshot -w -f ~/Pictures/Screenshots/screenshot-$(date +'%Y-%m-%d_%H-%M-%S').png
+    '')
+
+    # Helper to get the most recent screenshot path for easy Claude Code pasting
+    (pkgs.writeShellScriptBin "screenshot-latest" ''
+      LATEST=$(ls -t ~/dev/buoyancy-platform/tmp/screenshot-*.png 2>/dev/null | head -1)
+      if [ -n "$LATEST" ]; then
+        echo "$LATEST"
+        echo "$LATEST" | ${pkgs.wl-clipboard}/bin/wl-copy
+        echo "(Path copied to clipboard - paste with Ctrl+Shift+V)"
+      else
+        echo "No screenshots found in ~/dev/buoyancy-platform/tmp/"
+      fi
+    '')
+
+    # Wezterm clipboard-to-path converter for Claude Code image pasting
+    # Similar to Kitty's clip2path solution
+    (pkgs.writeShellScriptBin "wezterm-clip2path" ''
+      #!/usr/bin/env bash
+
+      # Get the pane ID from environment or argument
+      PANE_ID="''${1:-$WEZTERM_PANE}"
+
+      # Check if clipboard contains an image
+      MIME_TYPE=$(${pkgs.wl-clipboard}/bin/wl-paste --list-types 2>/dev/null | grep -E "^image/" | head -1)
+
+      if [ -n "$MIME_TYPE" ]; then
+        # Extract file extension from MIME type (e.g., image/png -> png)
+        EXT="''${MIME_TYPE#image/}"
+
+        # Create temp file with timestamp
+        TEMP_FILE="/tmp/claude-clipboard-$(date +%Y%m%d-%H%M%S).''${EXT}"
+
+        # Save image from clipboard to temp file
+        ${pkgs.wl-clipboard}/bin/wl-paste --type "$MIME_TYPE" > "$TEMP_FILE"
+
+        # Send the file path to the specified pane
+        if [ -n "$PANE_ID" ]; then
+          ${pkgs.wezterm}/bin/wezterm cli send-text --pane-id "$PANE_ID" --no-paste "$TEMP_FILE"
+        else
+          # Fallback: send to current pane
+          ${pkgs.wezterm}/bin/wezterm cli send-text --no-paste "$TEMP_FILE"
+        fi
+      else
+        # No image in clipboard, return failure so wezterm does normal paste
+        exit 1
+      fi
     '')
   ];
 
@@ -451,6 +532,9 @@
     enable = true;
     nix-direnv.enable = true;
   };
+
+  # Enable dconf for virt-manager settings
+  programs.dconf.enable = true;
 
   # Environment variables for npm global packages and Wayland support
   environment.variables = {
