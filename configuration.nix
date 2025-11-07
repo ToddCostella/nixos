@@ -305,7 +305,7 @@
     virt-manager      # GUI for managing VMs
     virt-viewer       # VM display viewer
     spice-gtk         # SPICE client for VM access
-    win-virtio        # Windows virtio drivers ISO
+    virtio-win        # Windows virtio drivers ISO
     
     # NPM comes with nodejs_24, yarn for alternative package management
     yarn
@@ -337,14 +337,15 @@
     ksnip            # Advanced screenshot tool with annotation features
     
     # Custom screenshot scripts
-    # SIMPLE SOLUTION: PrintScreen saves to /tmp/current-screenshot.png (static filename)
-    # Just reference /tmp/current-screenshot.png in Claude Code - no special key pasting needed!
+    # SIMPLE SOLUTION: PrintScreen saves to ~/dev/buoyancy-platform/tmp/current-screenshot.png (static filename)
+    # Just reference ~/dev/buoyancy-platform/tmp/current-screenshot.png in Claude Code - no special key pasting needed!
 
     # PrintScreen: Save to static filename AND copy to clipboard
     (pkgs.writeShellScriptBin "screenshot-area" ''
-      gnome-screenshot -a -f /tmp/current-screenshot.png && \
-      ${pkgs.wl-clipboard}/bin/wl-copy --type image/png < /tmp/current-screenshot.png && \
-      echo "Screenshot saved to /tmp/current-screenshot.png and copied to clipboard"
+      mkdir -p ~/dev/buoyancy-platform/tmp
+      gnome-screenshot -a -f ~/dev/buoyancy-platform/tmp/current-screenshot.png && \
+      ${pkgs.wl-clipboard}/bin/wl-copy --type image/png < ~/dev/buoyancy-platform/tmp/current-screenshot.png && \
+      echo "Screenshot saved to ~/dev/buoyancy-platform/tmp/current-screenshot.png and copied to clipboard"
     '')
 
     (pkgs.writeShellScriptBin "screenshot-area-file" ''
@@ -464,7 +465,7 @@
   # Fonts
   fonts.packages = with pkgs; [
     noto-fonts-cjk-sans
-    noto-fonts-emoji
+    noto-fonts-color-emoji
     liberation_ttf
     fira-code
     fira-code-symbols
@@ -510,6 +511,12 @@
     auto-optimise-store = true;
     experimental-features = [ "nix-command" "flakes" ];
   };
+
+  # Set NIX_PATH for nixos-rebuild
+  nix.nixPath = [
+    "nixpkgs=/nix/var/nix/profiles/per-user/root/channels/nixpkgs"
+    "nixos-config=/etc/nixos/configuration.nix"
+  ];
 
   # Automatic garbage collection
   nix.gc = {
