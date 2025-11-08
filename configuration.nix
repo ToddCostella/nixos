@@ -9,14 +9,7 @@
       ./esp32-dev.nix  # ESP32 development configuration
       ./photo-restoration.nix
       ./desktop-icons.nix  # Custom desktop icons for Nix applications
-
-      # Desktop Environments - Comment/uncomment to enable/disable
-      ./desktop-gnome.nix     # GNOME Desktop
-      ./desktop-kde.nix       # KDE Plasma 6 Desktop
-      ./desktop-cinnamon.nix  # Cinnamon Desktop
-
-      # Multi-DE compatibility - must be imported AFTER desktop environments
-      ./desktop-multi-de-compat.nix
+      ./desktop-gnome.nix  # GNOME Desktop
     ];
 
   # Boot loader configuration
