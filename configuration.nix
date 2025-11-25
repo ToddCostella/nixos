@@ -15,6 +15,7 @@
   # Boot loader configuration
   boot.loader.systemd-boot.enable = true;
   boot.loader.efi.canTouchEfiVariables = true;
+  boot.loader.systemd-boot.consoleMode = "1";  # Use lower resolution for readable text on high-DPI displays
 
   # Networking
   networking.hostName = "nixos-dev"; # Define your hostname
@@ -33,7 +34,8 @@
   };
 
   # Set your time zone
-  time.timeZone = "America/Vancouver"; # Adjust for your location
+#  time.timeZone = "America/Vancouver"; 
+ time.timeZone = "America/Edmonton";  
 
   # Internationalization properties
   i18n.defaultLocale = "en_US.UTF-8";
@@ -147,15 +149,32 @@
     autoPrune.enable = true;  # Automatic cleanup
   };
 
-  # QEMU/KVM virtualization for running Windows 11 VMs
+  # QEMU/KVM virtualization for Windows 11 with enhanced stability
   virtualisation.libvirtd = {
     enable = true;
     qemu = {
       package = pkgs.qemu_kvm;
-      swtpm.enable = true;  # Enable TPM emulation for Windows 11
-      # OVMF (UEFI) is now available by default, no configuration needed
+      runAsRoot = false;
+      swtpm.enable = true;  # TPM 2.0 emulation for Windows 11
+      # OVMF (UEFI with Secure Boot and TPM support) is available by default
     };
+    onBoot = "ignore";  # Don't auto-start VMs on boot
+    onShutdown = "shutdown";  # Graceful shutdown
+    parallelShutdown = 10;  # Shutdown timeout in seconds
   };
+
+  # Enable nested virtualization and VM optimizations
+  boot.extraModprobeConfig = ''
+    options kvm_intel nested=1
+    options kvm_intel emulate_invalid_guest_state=0
+    options kvm ignore_msrs=1
+  '';
+
+  # Enable IOMMU for better device passthrough support
+  boot.kernelParams = [ "intel_iommu=on" "iommu=pt" ];
+
+  # CPU governor for better VM performance
+  powerManagement.cpuFreqGovernor = "performance";
 
   # Define a user account. Don't forget to set a password with 'passwd'.
   users.users.todd = {
@@ -232,6 +251,8 @@
     direnv
     atuin
     fzf
+    yazi
+    zoxide
     zsh-vi-mode
     
     # Network diagnostic tools
@@ -295,10 +316,14 @@
     claude-code
 
     # Virtualization tools
-    virt-manager      # GUI for managing VMs
+    gnome-boxes       # Simple and stable VM management (replaces virt-manager)
     virt-viewer       # VM display viewer
     spice-gtk         # SPICE client for VM access
     virtio-win        # Windows virtio drivers ISO
+    qemu              # Full QEMU suite for advanced features
+    OVMFFull          # UEFI firmware with Secure Boot support for VMs
+    swtpm             # TPM 2.0 emulator for Windows 11 support
+    samba             # For shared folders between host and VM
     
     # NPM comes with nodejs_24, yarn for alternative package management
     yarn
@@ -308,7 +333,10 @@
     
     # Image editor
     pinta
-    
+
+    # Markdown editor
+    apostrophe
+
     # Keyboard configurator for Dygma keyboards
     bazecor
     
@@ -540,6 +568,7 @@
   environment.variables = {
     PATH = [ "$HOME/.npm-packages/bin" ];
     QT_QPA_PLATFORM = "wayland;xcb";  # Enable Wayland support for Qt apps
+    EDITOR = "nvim";  # Default editor for yazi and other programs
   };
 
 

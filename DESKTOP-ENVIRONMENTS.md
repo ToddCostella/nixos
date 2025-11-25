@@ -4,17 +4,18 @@ This NixOS configuration supports multiple desktop environments that can be easi
 
 ## Available Desktop Environments
 
-1. **GNOME** - Modern, clean desktop environment (default)
-2. **KDE Plasma 6** - Feature-rich, highly customizable desktop
-3. **Cinnamon** - Traditional desktop with modern features
+1. **GNOME** - Modern, clean desktop environment (currently active)
+2. **KDE Plasma 6** - Feature-rich, highly customizable desktop (disabled)
+3. **Cinnamon** - Traditional desktop with modern features (disabled)
 
 ## Current Configuration
 
-All three desktop environments are currently enabled. You can select which one to use from the GDM login screen:
-1. At the login screen, click your username
-2. Click the gear icon (⚙️) in the bottom right corner
-3. Select your preferred desktop environment
-4. Enter your password and login
+Only **GNOME** is currently enabled. The KDE and Cinnamon modules exist but are commented out in `configuration.nix`.
+
+### GNOME Extensions
+- **Forge** - Tiling window manager (requires GNOME 48 or earlier)
+- **Workspace Indicator** - Shows current workspace
+- **Just Perfection** - GNOME customization
 
 ## Enabling/Disabling Desktop Environments
 
