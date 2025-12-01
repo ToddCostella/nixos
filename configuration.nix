@@ -35,7 +35,7 @@
 
   # Set your time zone
 #  time.timeZone = "America/Vancouver"; 
- time.timeZone = "America/Edmonton";  
+ time.timeZone = "America/Vancouver";  
 
   # Internationalization properties
   i18n.defaultLocale = "en_US.UTF-8";
@@ -171,7 +171,8 @@
   '';
 
   # Enable IOMMU for better device passthrough support
-  boot.kernelParams = [ "intel_iommu=on" "iommu=pt" ];
+  # usbcore.autosuspend=-1 fixes USB controller resume issues after suspend
+  boot.kernelParams = [ "intel_iommu=on" "iommu=pt" "usbcore.autosuspend=-1" ];
 
   # CPU governor for better VM performance
   powerManagement.cpuFreqGovernor = "performance";
@@ -274,6 +275,7 @@
     iftop      # Network bandwidth monitor
     nethogs    # Per-process network bandwidth monitor
     vnstat     # Network traffic monitor
+    mitmproxy  # HTTP/HTTPS traffic interception proxy for debugging
 
     # VPN tools
     openvpn    # OpenVPN client for NordVPN manual configuration
@@ -412,6 +414,23 @@
       fi
     '')
 
+    # mitmproxy helper for capturing localhost HTTP traffic during React development
+    # Usage: mitm-localhost [output-file]
+    # Default output: network.log in current directory
+    (pkgs.writeShellScriptBin "mitm-localhost" ''
+      OUTPUT_FILE="''${1:-network.log}"
+      echo "Starting mitmproxy to capture localhost traffic..."
+      echo "Output file: $OUTPUT_FILE"
+      echo ""
+      echo "Firefox setup required:"
+      echo "  1. Set HTTP proxy to 127.0.0.1:8080 in Firefox Network Settings"
+      echo "  2. In about:config, set network.proxy.allow_hijacking_localhost = true"
+      echo ""
+      echo "Press Ctrl+C to stop capturing"
+      echo "---"
+      ${pkgs.mitmproxy}/bin/mitmdump --set flow_detail=2 --showhost "~d localhost" 2>&1 | tee "$OUTPUT_FILE"
+    '')
+
     # Wezterm clipboard-to-path converter for Claude Code image pasting
     # Similar to Kitty's clip2path solution
     (pkgs.writeShellScriptBin "wezterm-clip2path" ''
@@ -503,6 +522,16 @@
 
   # Enable the OpenSSH daemon.
   services.openssh.enable = true;
+
+  # Disable GNOME Tracker (file indexer) - was failing repeatedly
+  services.gnome.localsearch.enable = false;
+  services.gnome.tinysparql.enable = false;
+
+  # Limit journal size to save disk space
+  services.journald.extraConfig = ''
+    SystemMaxUse=500M
+    MaxRetentionSec=1month
+  '';
 
   # Enable Bluetooth
   hardware.bluetooth.enable = true;
