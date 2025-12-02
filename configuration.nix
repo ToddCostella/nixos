@@ -196,6 +196,7 @@
     zsh
     oh-my-zsh
     wget
+    zip
     unzip
     hugo
 
