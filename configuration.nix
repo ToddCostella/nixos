@@ -76,6 +76,8 @@
   programs.nix-ld.libraries = with pkgs; [
     stdenv.cc.cc
     fuse3
+    qt6.qtbase
+    libxkbcommon
     alsa-lib
     at-spi2-atk
     at-spi2-core
@@ -177,6 +179,19 @@
   # CPU governor for better VM performance
   powerManagement.cpuFreqGovernor = "performance";
 
+  # Fix Dell XPS touchscreen not working after suspend/resume
+  # Reloads the i2c-hid driver after resuming from sleep
+  systemd.services.fix-touchscreen-resume = {
+    description = "Reload i2c-hid after resume to fix touchscreen";
+    after = [ "suspend.target" "hibernate.target" "hybrid-sleep.target" ];
+    wantedBy = [ "suspend.target" "hibernate.target" "hybrid-sleep.target" ];
+    serviceConfig = {
+      Type = "oneshot";
+      ExecStart = "${pkgs.kmod}/bin/modprobe -r i2c_hid_acpi";
+      ExecStartPost = "${pkgs.kmod}/bin/modprobe i2c_hid_acpi";
+    };
+  };
+
   # Define a user account. Don't forget to set a password with 'passwd'.
   users.users.todd = {
     isNormalUser = true;
@@ -205,6 +220,7 @@
     feh
     playerctl
     brightnessctl
+    aerc            # Terminal email client
     
     # Development tools
     docker-compose
@@ -336,6 +352,9 @@
     
     # Image editor
     pinta
+
+    # SVG tools
+    librsvg  # Provides rsvg-convert for SVG to PNG/PDF conversion
 
     # Markdown editor
     apostrophe
