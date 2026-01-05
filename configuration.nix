@@ -10,6 +10,7 @@
       ./photo-restoration.nix
       ./desktop-icons.nix  # Custom desktop icons for Nix applications
       ./desktop-gnome.nix  # GNOME Desktop
+      ./playwright-dev.nix # Playwrite dependencies for browser based e2e testing
     ];
 
   # Boot loader configuration
@@ -243,6 +244,7 @@
     obsidian
     dropbox
     _1password-gui
+    figma-linux
     
     # Python tools
     uv
@@ -359,6 +361,10 @@
     # Markdown editor
     apostrophe
 
+    # Document conversion and LaTeX
+    pandoc
+    texlive.combined.scheme-medium  # Includes base + fonts-recommended + extras
+
     # Keyboard configurator for Dygma keyboards
     bazecor
     
@@ -372,66 +378,52 @@
     bluez
     bluez-tools
 
-    # Universal screenshot utilities (work across all DEs)
-    grim             # Wayland screenshot utility
-    slurp            # Wayland area selection
-    swappy           # Wayland screenshot editor with markup
+    # Screenshot utilities
+    satty            # Modern screenshot annotation tool (Swappy/Flameshot alternative)
     wl-clipboard     # Wayland clipboard utilities
-    ksnip            # Advanced screenshot tool with annotation features
     
-    # Custom screenshot scripts
-    # SIMPLE SOLUTION: PrintScreen saves to ~/dev/buoyancy-platform/tmp/current-screenshot.png (static filename)
-    # Just reference ~/dev/buoyancy-platform/tmp/current-screenshot.png in Claude Code - no special key pasting needed!
+    # Custom screenshot scripts using Satty (GNOME compatible)
+    # Uses gnome-screenshot for capture, Satty for annotation
+    # Output: ~/dev/buoyancy-platform/tmp/current-screenshot.png (static filename for Claude Code)
 
-    # PrintScreen: Save to static filename AND copy to clipboard
+    # Area screenshot with Satty annotation
     (pkgs.writeShellScriptBin "screenshot-area" ''
       mkdir -p ~/dev/buoyancy-platform/tmp
-      gnome-screenshot -a -f ~/dev/buoyancy-platform/tmp/current-screenshot.png && \
-      ${pkgs.wl-clipboard}/bin/wl-copy --type image/png < ~/dev/buoyancy-platform/tmp/current-screenshot.png && \
-      echo "Screenshot saved to ~/dev/buoyancy-platform/tmp/current-screenshot.png and copied to clipboard"
+      TMPFILE=$(mktemp /tmp/screenshot-XXXXXX.png)
+      gnome-screenshot -a -f "$TMPFILE" && \
+        ${pkgs.satty}/bin/satty -f "$TMPFILE" \
+        --output-filename ~/dev/buoyancy-platform/tmp/current-screenshot.png \
+        --copy-command "${pkgs.wl-clipboard}/bin/wl-copy"
+      rm -f "$TMPFILE"
     '')
 
-    (pkgs.writeShellScriptBin "screenshot-area-file" ''
-      mkdir -p ~/dev/buoyancy-platform/tmp
-      gnome-screenshot -a -f ~/dev/buoyancy-platform/tmp/screenshot-$(date +'%Y-%m-%d_%H-%M-%S').png
-    '')
-
+    # Full screen screenshot with Satty annotation
     (pkgs.writeShellScriptBin "screenshot-full" ''
       mkdir -p ~/dev/buoyancy-platform/tmp
-      SCREENSHOT_FILE=~/dev/buoyancy-platform/tmp/screenshot-$(date +'%Y-%m-%d_%H-%M-%S').png
-      gnome-screenshot -f "$SCREENSHOT_FILE" && \
-      ${pkgs.wl-clipboard}/bin/wl-copy --type image/png < "$SCREENSHOT_FILE" && \
-      echo "Screenshot saved to $SCREENSHOT_FILE and copied to clipboard"
+      TMPFILE=$(mktemp /tmp/screenshot-XXXXXX.png)
+      gnome-screenshot -f "$TMPFILE" && \
+        ${pkgs.satty}/bin/satty -f "$TMPFILE" \
+        --output-filename ~/dev/buoyancy-platform/tmp/current-screenshot.png \
+        --copy-command "${pkgs.wl-clipboard}/bin/wl-copy"
+      rm -f "$TMPFILE"
     '')
 
-    (pkgs.writeShellScriptBin "screenshot-full-file" ''
-      mkdir -p ~/Pictures/Screenshots
-      gnome-screenshot -f ~/Pictures/Screenshots/screenshot-$(date +'%Y-%m-%d_%H-%M-%S').png
-    '')
-
+    # Window screenshot with Satty annotation
     (pkgs.writeShellScriptBin "screenshot-window" ''
       mkdir -p ~/dev/buoyancy-platform/tmp
-      SCREENSHOT_FILE=~/dev/buoyancy-platform/tmp/screenshot-$(date +'%Y-%m-%d_%H-%M-%S').png
-      gnome-screenshot -w -f "$SCREENSHOT_FILE" && \
-      ${pkgs.wl-clipboard}/bin/wl-copy --type image/png < "$SCREENSHOT_FILE" && \
-      echo "Screenshot saved to $SCREENSHOT_FILE and copied to clipboard"
+      TMPFILE=$(mktemp /tmp/screenshot-XXXXXX.png)
+      gnome-screenshot -w -f "$TMPFILE" && \
+        ${pkgs.satty}/bin/satty -f "$TMPFILE" \
+        --output-filename ~/dev/buoyancy-platform/tmp/current-screenshot.png \
+        --copy-command "${pkgs.wl-clipboard}/bin/wl-copy"
+      rm -f "$TMPFILE"
     '')
 
-    (pkgs.writeShellScriptBin "screenshot-window-file" ''
-      mkdir -p ~/Pictures/Screenshots
-      gnome-screenshot -w -f ~/Pictures/Screenshots/screenshot-$(date +'%Y-%m-%d_%H-%M-%S').png
-    '')
-
-    # Helper to get the most recent screenshot path for easy Claude Code pasting
-    (pkgs.writeShellScriptBin "screenshot-latest" ''
-      LATEST=$(ls -t ~/dev/buoyancy-platform/tmp/screenshot-*.png 2>/dev/null | head -1)
-      if [ -n "$LATEST" ]; then
-        echo "$LATEST"
-        echo "$LATEST" | ${pkgs.wl-clipboard}/bin/wl-copy
-        echo "(Path copied to clipboard - paste with Ctrl+Shift+V)"
-      else
-        echo "No screenshots found in ~/dev/buoyancy-platform/tmp/"
-      fi
+    # Quick area screenshot (no annotation, just capture and copy)
+    (pkgs.writeShellScriptBin "screenshot-quick" ''
+      mkdir -p ~/dev/buoyancy-platform/tmp
+      gnome-screenshot -a -f ~/dev/buoyancy-platform/tmp/current-screenshot.png && \
+      ${pkgs.wl-clipboard}/bin/wl-copy --type image/png < ~/dev/buoyancy-platform/tmp/current-screenshot.png
     '')
 
     # mitmproxy helper for capturing localhost HTTP traffic during React development
@@ -571,7 +563,7 @@
   services.pulseaudio.enable = false;
 
   # Open ports in the firewall.
-  # networking.firewall.allowedTCPPorts = [ ... ];
+  networking.firewall.allowedTCPPorts = [ 3000 8080 ];  # GloomTable: Vite dev server + WebSocket backend
   # networking.firewall.allowedUDPPorts = [ ... ];
   # Or disable the firewall altogether.
   # networking.firewall.enable = false;
