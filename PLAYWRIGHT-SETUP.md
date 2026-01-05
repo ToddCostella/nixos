@@ -88,6 +88,9 @@ Once the configuration is applied and browsers are installed:
 ```bash
 cd /home/todd/dev/buoyancy-platform/frontend
 
+# Set library path (required until next rebuild)
+export LD_LIBRARY_PATH=/run/current-system/sw/share/nix-ld/lib:$LD_LIBRARY_PATH
+
 # Run all E2E tests
 npx playwright test
 
@@ -103,6 +106,8 @@ npx playwright test --headed
 # Run with debugging
 npx playwright test --debug
 ```
+
+**Note:** After running `sudo nixos-rebuild switch`, the LD_LIBRARY_PATH export should not be necessary as libraries will be available system-wide via nix-ld.
 
 ## Troubleshooting
 
