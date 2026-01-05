@@ -10,7 +10,12 @@ This is a NixOS system configuration repository for a development environment. I
 
 - `configuration.nix` - Main NixOS configuration file containing system settings, user accounts, packages, and services
 - `hardware-configuration.nix` - Auto-generated hardware-specific configuration (do not modify manually)
-- The configuration is designed for a development-focused desktop environment using Sway (Wayland compositor)
+- `playwright-dev.nix` - Playwright E2E testing dependencies module (system libraries for Chromium)
+- `esp32-dev.nix` - ESP32 microcontroller development tools
+- `photo-restoration.nix` - Photo editing and restoration applications
+- `desktop-gnome.nix` - GNOME desktop environment configuration
+- `desktop-icons.nix` - Custom desktop application icons
+- The configuration is designed for a development-focused desktop environment using GNOME
 
 ## Key System Components
 

@@ -46,7 +46,9 @@ sudo nixos-rebuild switch --rollback
 | `desktop-icons.nix` | Custom desktop icons for Nix applications |
 | `esp32-dev.nix` | ESP32 development environment |
 | `photo-restoration.nix` | Photo editing and restoration tools |
+| `playwright-dev.nix` | Playwright E2E testing dependencies |
 | `CLAUDE.md` | AI assistant guidance for repository maintenance |
+| `PLAYWRIGHT-SETUP.md` | Playwright setup and usage guide |
 
 Note: `desktop-kde.nix`, `desktop-cinnamon.nix`, and `desktop-multi-de-compat.nix` exist for multi-DE support but are currently disabled. Only GNOME is active.
 
@@ -74,6 +76,7 @@ Note: `desktop-kde.nix`, `desktop-cinnamon.nix`, and `desktop-multi-de-compat.ni
 | Python + uv | Python with modern package manager |
 | Claude Code | AI coding assistant |
 | AWS CDK | Infrastructure as code |
+| Playwright | E2E testing (see `playwright-dev.nix`) |
 
 #### Containers & Cloud
 | Tool | Description |
