@@ -41,6 +41,7 @@
 
     # Graphics
     mesa
+    mesa.drivers
     libGL
 
     # Font rendering
@@ -49,6 +50,9 @@
 
     # Audio
     alsa-lib
+
+    # System libraries
+    systemd  # Provides libudev
 
     # GTK and theming
     gtk3
