@@ -41,7 +41,7 @@
 
     # Graphics
     mesa
-    mesa.drivers
+    libgbm
     libGL
 
     # Font rendering
