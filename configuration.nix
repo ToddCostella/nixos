@@ -10,6 +10,7 @@
       ./photo-restoration.nix
       ./desktop-icons.nix  # Custom desktop icons for Nix applications
       ./desktop-gnome.nix  # GNOME Desktop
+      ./desktop-cosmic.nix # COSMIC Desktop (System76)
       ./playwright-dev.nix # Playwrite dependencies for browser based e2e testing
     ];
 
