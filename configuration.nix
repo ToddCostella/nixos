@@ -232,6 +232,8 @@
     
     # Database tools
     dbeaver-bin
+    postgresql      # PostgreSQL client (psql)
+    rainfrog        # Terminal-based database management with vim keybindings
     
     # Diff/merge tools
     bcompare
