@@ -227,6 +227,7 @@
     # Development tools
     docker-compose
     awscli2
+    gh              # GitHub CLI
     lazygit
     lazydocker
     
