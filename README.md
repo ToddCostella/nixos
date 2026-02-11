@@ -244,6 +244,51 @@ Screenshots are saved to a static filename (`current-screenshot.png`) for easy r
 | GNOME Keyring | Credential storage |
 | nix-ld | Dynamic linking support |
 
+## Remote Terminal Access from iOS
+
+Connect to persistent tmux sessions on this desktop from an iOS device (iPad/iPhone) using SSH or Mosh.
+
+### Prerequisites
+
+- An iOS SSH/Mosh client — [Blink Shell](https://blink.sh) (recommended, supports both) or Termius
+- iOS device on the same local network as the desktop
+
+### Setup
+
+1. **Find the desktop IP**:
+   ```bash
+   hostname -I
+   ```
+
+2. **Generate an SSH key on the iOS device** (in Blink Shell: `config` > Keys > Generate)
+
+3. **Copy the public key to the desktop** — transfer via AirDrop, email, or paste it manually:
+   ```bash
+   mkdir -p ~/.ssh && chmod 700 ~/.ssh
+   echo "ssh-ed25519 AAAA..." >> ~/.ssh/authorized_keys
+   chmod 600 ~/.ssh/authorized_keys
+   ```
+   Note: Password authentication is disabled — key-based auth is required.
+
+### Connecting
+
+```bash
+# SSH (basic)
+ssh todd@<desktop-ip>
+
+# Mosh (resilient — survives WiFi drops and sleep/wake)
+mosh todd@<desktop-ip>
+
+# Attach to a persistent tmux session
+tmux new-session -As main
+```
+
+### Verifying
+
+- **Session persistence**: Create a file in tmux, disconnect, reconnect, confirm it's still there
+- **Network resilience** (Mosh): Toggle airplane mode for 10 seconds while connected, toggle off — session resumes automatically
+- **Simultaneous access**: Connect from iOS and desktop WezTerm to the same tmux session (`tmux attach -t main`)
+
 ## Development Environment Startup
 
 The following tmux script creates a 5-window development session for the buoyancy-platform project. Save as `~/start-dev-env.sh` and run with `bash ~/start-dev-env.sh`.
