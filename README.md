@@ -46,6 +46,7 @@ sudo nixos-rebuild switch --rollback
 | `desktop-icons.nix` | Custom desktop icons for Nix applications |
 | `esp32-dev.nix` | ESP32 development environment |
 | `photo-restoration.nix` | Photo editing and restoration tools |
+| `remote-terminal.nix` | Remote terminal access (tmux + mosh + SSH hardening) |
 | `playwright-dev.nix` | Playwright E2E testing dependencies |
 | `CLAUDE.md` | AI assistant guidance for repository maintenance |
 | `PLAYWRIGHT-SETUP.md` | Playwright setup and usage guide |
@@ -106,7 +107,16 @@ Note: `desktop-kde.nix`, `desktop-cinnamon.nix`, and `desktop-multi-de-compat.ni
 - **IOMMU** configured for device passthrough
 
 ### Terminal & Shell
-- **Wezterm** - GPU-accelerated terminal emulator (default)
+- **WezTerm** - GPU-accelerated terminal emulator (default)
+- **tmux** - Persistent terminal multiplexer with vi keybindings
+  - Prefix: `Alt-a`
+  - Window switching: `Alt+1` through `Alt+9` (no prefix needed)
+  - Splits: `Alt-a |` (horizontal), `Alt-a -` (vertical)
+  - Pane navigation: `Alt+Arrow` keys (no prefix needed)
+  - Theme: tokyo-night-tmux (night variant)
+  - Plugins: sensible, yank, resurrect, continuum
+  - Session auto-save every 15 minutes with auto-restore on start
+- **Mosh** - Resilient remote terminal connections (survives network interruptions)
 - **Zsh** with Oh-My-Zsh
   - Plugins: git, docker, docker-compose, aws, vi-mode, fzf
   - Theme: robbyrussell
@@ -225,7 +235,7 @@ Screenshots are saved to a static filename (`current-screenshot.png`) for easy r
 | Service | Description |
 |---------|-------------|
 | NetworkManager | Network configuration (with OpenVPN plugin) |
-| OpenSSH | SSH server |
+| OpenSSH | SSH server (key-only auth, no root login) |
 | CUPS + Avahi | Printing with network discovery |
 | Docker | Container runtime (auto-start) |
 | libvirtd | Virtualization daemon |
@@ -233,6 +243,64 @@ Screenshots are saved to a static filename (`current-screenshot.png`) for easy r
 | PipeWire | Modern audio system |
 | GNOME Keyring | Credential storage |
 | nix-ld | Dynamic linking support |
+
+## Development Environment Startup
+
+The following tmux script creates a 5-window development session for the buoyancy-platform project. Save as `~/start-dev-env.sh` and run with `bash ~/start-dev-env.sh`.
+
+```bash
+#!/usr/bin/env bash
+
+# Development Environment Setup Script
+# Creates a tmux session with 5 windows for development
+
+BASE_DIR="/home/todd/dev/buoyancy-platform"
+SESSION="dev"
+
+# Kill existing session if it exists
+tmux kill-session -t "$SESSION" 2>/dev/null
+
+# Create session with first window: Frontend
+tmux new-session -d -s "$SESSION" -n "Frontend Dev" -c "$BASE_DIR/frontend"
+tmux send-keys -t "$SESSION:1" 'npm run dev' Enter
+
+# Window 2: Docker (compose watch top, lazydocker bottom)
+tmux new-window -t "$SESSION" -n "Docker" -c "$BASE_DIR"
+tmux send-keys -t "$SESSION:2" 'docker compose watch backend' Enter
+tmux split-window -v -t "$SESSION:2" -c "$BASE_DIR"
+tmux send-keys -t "$SESSION:2.2" 'lazydocker' Enter
+tmux select-pane -t "$SESSION:2.1"
+
+# Window 3: Backend Shell
+tmux new-window -t "$SESSION" -n "Backend Shell" -c "$BASE_DIR/backend"
+tmux send-keys -t "$SESSION:3" 'acv' Enter
+
+# Window 4: Claude AI
+tmux new-window -t "$SESSION" -n "Claude AI" -c "$BASE_DIR"
+tmux send-keys -t "$SESSION:4" 'claude' Enter
+
+# Window 5: Yazi
+tmux new-window -t "$SESSION" -n "Yazi" -c "$BASE_DIR"
+tmux send-keys -t "$SESSION:5" 'y' Enter
+
+# Select window 1 and attach
+tmux select-window -t "$SESSION:1"
+
+# Attach if not already in tmux, otherwise switch
+if [ -z "$TMUX" ]; then
+  tmux attach -t "$SESSION"
+else
+  tmux switch-client -t "$SESSION"
+fi
+```
+
+| Window | Name | Contents |
+|--------|------|----------|
+| 1 | Frontend Dev | `npm run dev` |
+| 2 | Docker | Top: `docker compose watch backend`, Bottom: `lazydocker` |
+| 3 | Backend Shell | Python virtualenv (`acv`) |
+| 4 | Claude AI | `claude` CLI |
+| 5 | Yazi | File manager |
 
 ## User Configuration
 

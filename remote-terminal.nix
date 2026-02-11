@@ -40,6 +40,11 @@
       # True color support
       set -ag terminal-overrides ",xterm-256color:RGB"
 
+      # Status bar at top (hook ensures it runs after tokyo-night-tmux theme)
+      set-hook -g after-new-session 'set -g status-position top'
+      set-hook -g after-new-window 'set -g status-position top'
+      set -g status-position top
+
       # Mouse support
       set -g mouse on
 
