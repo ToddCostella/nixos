@@ -12,6 +12,7 @@
       ./desktop-gnome.nix  # GNOME Desktop
       ./desktop-cosmic.nix # COSMIC Desktop (System76)
       ./playwright-dev.nix # Playwrite dependencies for browser based e2e testing
+      ./remote-terminal.nix # Remote terminal access: tmux + mosh + SSH hardening
     ];
 
   # Boot loader configuration
@@ -536,8 +537,7 @@
   };
   # List services that you want to enable:
 
-  # Enable the OpenSSH daemon.
-  services.openssh.enable = true;
+  # OpenSSH is configured in remote-terminal.nix
 
   # Disable GNOME Tracker (file indexer) - was failing repeatedly
   services.gnome.localsearch.enable = false;

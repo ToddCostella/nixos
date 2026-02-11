@@ -68,3 +68,10 @@ Git is pre-configured with user details:
 - User-specific packages should be added to the user's packages list
 - Docker is enabled and auto-starts on boot
 - The system uses systemd-boot as the bootloader
+
+## Active Technologies
+- Nix (NixOS configuration language) + tmux, mosh, openssh, wl-clipboard (001-remote-terminal-access)
+- N/A (no persistent data beyond tmux sessions) (001-remote-terminal-access)
+
+## Recent Changes
+- 001-remote-terminal-access: Added Nix (NixOS configuration language) + tmux, mosh, openssh, wl-clipboard
