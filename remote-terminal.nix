@@ -22,6 +22,7 @@
       resurrect
       continuum
       tokyo-night-tmux
+      tmux-sessionx
     ];
 
     extraConfigBeforePlugins = ''
@@ -29,6 +30,13 @@
       set -g @continuum-restore 'on'
       set -g @continuum-save-interval '15'
       set -g @tokyo-night-tmux_theme night
+
+      # tmux-sessionx settings
+      set -g @sessionx-bind 'o'
+      set -g @sessionx-zoxide-mode 'on'
+      set -g @sessionx-preview-enabled 'true'
+      set -g @sessionx-tree-mode 'on'
+      set -g @sessionx-custom-paths '~/dev/buoyancy-platform,~/dev/gloom-table,~/nixos-config,~/dev'
     '';
 
     extraConfig = ''
