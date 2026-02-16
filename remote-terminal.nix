@@ -21,7 +21,7 @@
       yank
       resurrect
       continuum
-      tokyo-night-tmux
+      catppuccin
       tmux-sessionx
     ];
 
@@ -29,7 +29,10 @@
       # Plugin settings (must be set before plugins are sourced)
       set -g @continuum-restore 'on'
       set -g @continuum-save-interval '15'
-      set -g @tokyo-night-tmux_theme night
+
+      # Catppuccin theme settings
+      set -g @catppuccin_flavor 'mocha'
+      set -g @catppuccin_window_status_style 'rounded'
 
       # tmux-sessionx settings
       set -g @sessionx-bind 'o'
@@ -48,7 +51,7 @@
       # True color support
       set -ag terminal-overrides ",xterm-256color:RGB"
 
-      # Status bar at top (hook ensures it runs after tokyo-night-tmux theme)
+      # Status bar at top (hook ensures it runs after catppuccin theme)
       set-hook -g after-new-session 'set -g status-position top'
       set-hook -g after-new-window 'set -g status-position top'
       set -g status-position top
