@@ -1,230 +1,178 @@
 # NixOS Development Environment Configuration
 
-A comprehensive NixOS system configuration for a development-focused desktop environment with support for web development, microcontroller programming, photo editing, virtualization, and DevOps workflows.
+A comprehensive NixOS system configuration for a development-focused desktop environment. Uses **Nix flakes** for reproducible builds and **Home Manager** for declarative dotfile management with **1Password** as the secrets backend.
 
 ## Quick Start
 
-### Apply Configuration Changes
 ```bash
-# Apply configuration changes (requires sudo)
-sudo nixos-rebuild switch
+# Apply configuration changes (system + dotfiles, requires sudo)
+sudo nixos-rebuild switch --flake ~/nixos-config#nixos-dev
 
-# Test configuration without making it default
-sudo nixos-rebuild test
-
-# Build configuration without switching
-sudo nixos-rebuild build
+# Dry-run to check for syntax errors
+sudo nixos-rebuild dry-build --flake ~/nixos-config#nixos-dev
 
 # Rollback to previous generation
 sudo nixos-rebuild rollback
-```
 
-### Configuration Testing
-```bash
-# Dry-run to check for syntax errors
-sudo nixos-rebuild dry-build
-```
-
-### Channel Management
-```bash
-# Update to latest packages
-sudo nix-channel --update
-sudo nixos-rebuild switch
-
-# Rollback channel (if update causes issues)
-sudo nix-env --profile /nix/var/nix/profiles/per-user/root/channels --rollback
-sudo nixos-rebuild switch --rollback
+# Update all dependency versions (nixpkgs + home-manager)
+nix flake update ~/nixos-config
 ```
 
 ## Repository Structure
 
 | File | Description |
 |------|-------------|
-| `configuration.nix` | Main NixOS configuration file |
+| `flake.nix` | Flake inputs and outputs — entry point for all builds |
+| `flake.lock` | Pinned dependency versions (committed to git) |
+| `configuration.nix` | System config: packages, services, hardware, virtualization |
+| `home.nix` | Home Manager: dotfiles, user packages, aliases, secrets |
 | `hardware-configuration.nix` | Auto-generated hardware config (do not modify) |
-| `desktop-gnome.nix` | GNOME desktop environment configuration |
-| `desktop-icons.nix` | Custom desktop icons for Nix applications |
+| `remote-terminal.nix` | Mosh + SSH server hardening |
+| `desktop-gnome.nix` | GNOME desktop environment |
+| `desktop-icons.nix` | Custom desktop icons |
 | `esp32-dev.nix` | ESP32 development environment |
 | `photo-restoration.nix` | Photo editing and restoration tools |
-| `remote-terminal.nix` | Remote terminal access (tmux + mosh + SSH hardening) |
 | `playwright-dev.nix` | Playwright E2E testing dependencies |
-| `CLAUDE.md` | AI assistant guidance for repository maintenance |
-| `PLAYWRIGHT-SETUP.md` | Playwright setup and usage guide |
-
-Note: `desktop-kde.nix`, `desktop-cinnamon.nix`, and `desktop-multi-de-compat.nix` exist for multi-DE support but are currently disabled. Only GNOME is active.
+| `start-dev.sh` | Launch tmux dev session for this repo |
 
 ## System Overview
 
 ### Desktop Environment
-- **GNOME** desktop with GDM display manager
-- **Extensions**:
-  - Forge (tiling window manager) - Note: Requires GNOME 48 or earlier
-  - Workspace Indicator
-  - Just Perfection
-- **GNOME Tweaks** for customization
-- **Papirus-Dark** icon theme
-- Wayland native with XDG portals
+- **GNOME** with GDM display manager (Wayland)
+- **Extensions**: Forge (tiling), Workspace Indicator, Just Perfection
+- **GNOME Tweaks** + **Papirus-Dark** icon theme
+- **WezTerm** as default terminal
+
+### Terminal & Shell
+- **WezTerm** — GPU-accelerated terminal emulator
+- **tmux** — persistent multiplexer (config in `home.nix`)
+  - Prefix: `Alt-a`
+  - Theme: Catppuccin Mocha
+  - Plugins: catppuccin, sensible, yank, resurrect, continuum, tmux-sessionx
+  - Window switch: `Alt+1`–`Alt+9` | Splits: `|`/`-` | Pane nav: `Alt+Arrow`
+  - Session switcher: `Alt-a o` (tmux-sessionx with zoxide)
+- **Mosh** — resilient remote connections (survives network interruptions)
+- **Zsh** + Oh-My-Zsh (robbyrussell theme, plugins: git, docker, docker-compose, aws, vi-mode, fzf)
+- **Atuin** — improved shell history | **Zoxide** — smart cd | **Yazi** — file manager
+
+### Shell Aliases
+| Alias | Command |
+|-------|---------|
+| `lg` | lazygit |
+| `acv` | activate Python venv |
+| `db/dbf/dbb` | cd to buoyancy-platform dirs |
+| `dc` | docker compose watch backend |
+| `nb` | npm run dev |
+| `sx` | tmux-sessionx |
+| `refresh-secrets` | regenerate `~/.secrets.env` from 1Password |
+
+### Secrets Management
+All sensitive values are sourced from **1Password** at runtime — nothing is committed in plaintext.
+
+| Secret | Where used | How resolved |
+|--------|-----------|--------------|
+| AWS access keys | `~/.aws/credentials` | `op --cache inject` via `credential_process` |
+| Anthropic API key | `~/.secrets.env` | `op inject` via `refresh-secrets` alias |
+| SSH keys | SSH agent | 1Password SSH agent (`~/.1password/agent.sock`) |
+| Git signing key | git commits | `op-ssh-sign` (automatic) |
+
+```bash
+# Regenerate ~/.secrets.env after rotating keys or first setup
+refresh-secrets
+```
 
 ### Development Tools
 
-#### Core Development
+#### Core
 | Tool | Description |
 |------|-------------|
-| Git | Pre-configured with user details |
-| Neovim | Text editor (default EDITOR) |
-| GCC, Make, pkg-config | Build tools |
+| Git | Managed by Home Manager — SSH signing via 1Password |
+| Neovim | Text editor (config NOT managed — edit `~/.config/nvim/` freely) |
 | Node.js 24 | With npm and Yarn |
 | Python + uv | Python with modern package manager |
 | Claude Code | AI coding assistant |
+| AWS CLI v2 | With 4 profiles (default, toddcostella, buoyancy-dev, buoyancy-root) |
 | AWS CDK | Infrastructure as code |
-| Playwright | E2E testing (see `playwright-dev.nix`) |
+| GCC, Make, pkg-config | Build tools |
 
 #### Containers & Cloud
 | Tool | Description |
 |------|-------------|
-| Docker | Container runtime with auto-start |
+| Docker | Container runtime (auto-start on boot) |
 | Docker Compose | Multi-container orchestration |
 | Lazydocker | Terminal UI for Docker |
-| AWS CLI v2 | Amazon Web Services CLI |
 
-#### Database & Version Control
+#### Database
 | Tool | Description |
 |------|-------------|
 | DBeaver | Universal database tool |
+| PostgreSQL client | `psql` |
+| Rainfrog | Terminal DB manager with vim keybindings |
+
+#### Version Control
+| Tool | Description |
+|------|-------------|
 | Lazygit | Terminal UI for Git |
-| Beyond Compare | Professional diff/merge tool |
+| GitHub CLI (`gh`) | GitHub operations from terminal |
+| Beyond Compare | Professional diff/merge |
 
 ### Virtualization
 
-#### QEMU/KVM (Windows 11 Support)
-- **GNOME Boxes** - Simple VM management
-- **libvirtd** - Full virtualization stack
-- **OVMF/UEFI** - Secure Boot support
-- **swtpm** - TPM 2.0 emulation for Windows 11
-- **virtio-win** - Windows virtio drivers
-- **Samba** - Shared folders between host and VM
-- **Nested virtualization** enabled
-- **IOMMU** configured for device passthrough
-
-### Terminal & Shell
-- **WezTerm** - GPU-accelerated terminal emulator (default)
-- **tmux** - Persistent terminal multiplexer with vi keybindings
-  - Prefix: `Alt-a`
-  - Window switching: `Alt+1` through `Alt+9` (no prefix needed)
-  - Splits: `Alt-a |` (horizontal), `Alt-a -` (vertical)
-  - Pane navigation: `Alt+Arrow` keys (no prefix needed)
-  - Theme: tokyo-night-tmux (night variant)
-  - Plugins: sensible, yank, resurrect, continuum
-  - Session auto-save every 15 minutes with auto-restore on start
-- **Mosh** - Resilient remote terminal connections (survives network interruptions)
-- **Zsh** with Oh-My-Zsh
-  - Plugins: git, docker, docker-compose, aws, vi-mode, fzf
-  - Theme: robbyrussell
-- **Direnv** - Environment variable management with nix-direnv
-- **Atuin** - Improved shell history
-- **Zoxide** - Smarter cd command
-- **Yazi** - Terminal file manager
+#### QEMU/KVM
+- **GNOME Boxes** — simple VM management
+- **libvirtd** — full virtualization stack
+- **OVMF/UEFI** — Secure Boot support
+- **swtpm** — TPM 2.0 emulation for Windows 11
+- **virtio-win** — Windows virtio drivers
+- **Nested virtualization** + **IOMMU** configured
+- **Samba** — shared folders between host and VM
 
 ### CLI Utilities
 
-#### Modern Replacements
 | Tool | Replaces | Description |
 |------|----------|-------------|
 | ripgrep | grep | Fast recursive search |
 | fd | find | User-friendly file finder |
 | bat | cat | Syntax highlighting |
-| fzf | - | Fuzzy finder |
+| fzf | — | Fuzzy finder |
 | zoxide | cd | Smart directory jumping |
-
-#### Data Processing
-- **jq** - JSON processor
-- **yq-go** - YAML processor
-- **httpie** - Modern HTTP client
-- **tree** - Directory listing
+| jq / yq-go | — | JSON/YAML processors |
+| httpie | curl | Modern HTTP client |
 
 ### Network Tools
-
-#### Diagnostics
-| Tool | Description |
-|------|-------------|
-| dig, nslookup, drill | DNS lookups |
-| traceroute, mtr | Network path analysis |
-| nmap | Network scanning |
-| netcat, socat | Network utilities |
-| tcpdump, wireshark | Packet analysis |
-| iperf3 | Bandwidth testing |
-| iftop, nethogs | Bandwidth monitoring |
-
-#### VPN
-- **OpenVPN** - For NordVPN manual configuration
-- **wgnord** - Unofficial NordVPN WireGuard client
-
-### Microcontroller Development
-
-#### ESP32
-- **esptool, espflash** - ESP-IDF tools
-- **PlatformIO** - Professional embedded IDE
-- **screen, picocom, minicom** - Serial monitors
-- **USB permissions** - Pre-configured for ESP32 devices
-
-#### Other
-- **Arduino IDE** - Arduino development
-- **Mu Editor** - Simple Python editor for microcontrollers
-- **Bazecor** - Dygma keyboard configurator
-
-### Photo & Image Editing
-
-#### GUI Applications
-| Tool | Description |
-|------|-------------|
-| Pinta | Simple image editor |
-| GIMP | Advanced editor with plugins |
-| Darktable | Professional photo workflow |
-| RawTherapee | RAW photo processor |
-| Upscayl | AI-powered image upscaler |
-| DigiKam | Photo management |
-| Hugin | Panorama stitcher |
-
-#### Command-Line
-- **ImageMagick** - Image processing suite
-- **G'MIC** - Image processing framework
-- **ExifTool** - Metadata tool
-
-#### Color Management
-- **DisplayCAL** - Display calibration
-- **ArgyllCMS** - Color management system
-
-### Productivity & Communication
-
-#### Productivity
-- **Obsidian** - Knowledge management
-- **LibreOffice** - Office suite
-- **Apostrophe** - Markdown editor
-- **1Password** - Password manager
-- **Dropbox** - Cloud storage
-- **Pika Backup** - Backup software
-
-#### Communication
-- **Slack** - Team collaboration
-- **Signal Desktop** - Secure messaging
-- **Zoom** - Video conferencing
-
-### Web Browsers
-- **Firefox** - Open-source browser
-- **Google Chrome** - Chromium-based browser
-- **Zen Browser** - Privacy-focused Firefox fork
+- **Diagnostics**: dig, traceroute, mtr, nmap, netcat, socat, tcpdump, wireshark, iperf3, iftop, nethogs
+- **Proxy/intercept**: mitmproxy (`mitm-localhost` helper script)
+- **VPN**: OpenVPN, wgnord (NordVPN WireGuard)
+- **Open ports**: 3000 (Vite dev server), 8080 (WebSocket / mitmproxy)
 
 ### Screenshot Tools
-Custom scripts save to `~/dev/buoyancy-platform/tmp/` for easy Claude Code integration:
+Custom scripts save to `~/dev/buoyancy-platform/tmp/current-screenshot.png` for Claude Code integration:
 
 | Command | Description |
 |---------|-------------|
-| `screenshot-area` | Capture selected area (saves + clipboard) |
-| `screenshot-full` | Capture full screen |
-| `screenshot-window` | Capture active window |
-| `screenshot-latest` | Get path of most recent screenshot |
+| `screenshot-area` | Area selection with Satty annotation |
+| `screenshot-full` | Full screen with Satty annotation |
+| `screenshot-window` | Active window with Satty annotation |
+| `screenshot-quick` | Quick area capture, no annotation |
 
-Screenshots are saved to a static filename (`current-screenshot.png`) for easy reference in Claude Code.
+### Microcontroller Development
+- **ESP32**: esptool, espflash, PlatformIO, screen, picocom, minicom (see `esp32-dev.nix`)
+- **Arduino IDE** + **Mu Editor**
+- **Bazecor** — Dygma keyboard configurator
+
+### Photo & Image Editing (see `photo-restoration.nix`)
+- **GUI**: Pinta, GIMP, Darktable, RawTherapee, Upscayl, DigiKam, Hugin
+- **CLI**: ImageMagick, G'MIC, ExifTool
+- **Color management**: DisplayCAL, ArgyllCMS
+
+### Productivity & Communication
+- **Obsidian**, **LibreOffice**, **Apostrophe** (markdown), **Figma**
+- **1Password** (GUI + CLI integration enabled)
+- **Dropbox**, **Pika Backup**
+- **Slack**, **Signal Desktop**, **Zoom**
+
+### Web Browsers
+- **Firefox**, **Google Chrome**, **Zen Browser** (privacy-focused Firefox fork)
 
 ### Fonts
 - **Nerd Fonts**: Fira Code, JetBrains Mono, Hack, Sauce Code Pro
@@ -234,128 +182,48 @@ Screenshots are saved to a static filename (`current-screenshot.png`) for easy r
 
 | Service | Description |
 |---------|-------------|
-| NetworkManager | Network configuration (with OpenVPN plugin) |
-| OpenSSH | SSH server (key-only auth, no root login) |
-| CUPS + Avahi | Printing with network discovery |
+| NetworkManager | Network (with OpenVPN plugin) |
+| OpenSSH | SSH server (key-only, no root login) |
+| Mosh | Resilient remote terminal (UDP 60000-61000) |
+| CUPS + Avahi | Printing + mDNS (`nixos-dev.local`) |
 | Docker | Container runtime (auto-start) |
 | libvirtd | Virtualization daemon |
 | Bluetooth + Blueman | Bluetooth support |
-| PipeWire | Modern audio system |
+| PipeWire | Audio (ALSA + PulseAudio compat + JACK) |
 | GNOME Keyring | Credential storage |
 | nix-ld | Dynamic linking support |
+| 1Password | SSH agent + CLI integration |
 
-## Remote Terminal Access from iOS
+## Remote Terminal Access
 
-Connect to persistent tmux sessions on this desktop from an iOS device (iPad/iPhone) using SSH or Mosh.
-
-### Prerequisites
-
-- An iOS SSH/Mosh client — [Blink Shell](https://blink.sh) (recommended, supports both) or Termius
-- iOS device on the same local network as the desktop
-
-### Setup
-
-1. **Find the desktop IP**:
-   ```bash
-   hostname -I
-   ```
-
-2. **Generate an SSH key on the iOS device** (in Blink Shell: `config` > Keys > Generate)
-
-3. **Copy the public key to the desktop** — transfer via AirDrop, email, or paste it manually:
-   ```bash
-   mkdir -p ~/.ssh && chmod 700 ~/.ssh
-   echo "ssh-ed25519 AAAA..." >> ~/.ssh/authorized_keys
-   chmod 600 ~/.ssh/authorized_keys
-   ```
-   Note: Password authentication is disabled — key-based auth is required.
-
-### Connecting
+Connect from iOS or any device via SSH or Mosh:
 
 ```bash
-# SSH (basic)
-ssh todd@<desktop-ip>
+# SSH
+ssh todd@nixos-dev.local
 
 # Mosh (resilient — survives WiFi drops and sleep/wake)
-mosh todd@<desktop-ip>
+mosh todd@nixos-dev.local
 
-# Attach to a persistent tmux session
+# Attach to persistent tmux session
 tmux new-session -As main
 ```
 
-### Verifying
+Add your public key to `~/.ssh/authorized_keys`. Password auth is disabled.
 
-- **Session persistence**: Create a file in tmux, disconnect, reconnect, confirm it's still there
-- **Network resilience** (Mosh): Toggle airplane mode for 10 seconds while connected, toggle off — session resumes automatically
-- **Simultaneous access**: Connect from iOS and desktop WezTerm to the same tmux session (`tmux attach -t main`)
+## Development Session Launcher
 
-## Development Environment Startup
-
-The following tmux script creates a 5-window development session for the buoyancy-platform project. Save as `~/start-dev-env.sh` and run with `bash ~/start-dev-env.sh`.
+`start-dev.sh` creates a tmux session with 3 windows for working on this repo:
 
 ```bash
-#!/usr/bin/env bash
-
-# Development Environment Setup Script
-# Creates a tmux session with 5 windows for development
-
-BASE_DIR="/home/todd/dev/buoyancy-platform"
-SESSION="dev"
-
-# Kill existing session if it exists
-tmux kill-session -t "$SESSION" 2>/dev/null
-
-# Create session with first window: Frontend
-tmux new-session -d -s "$SESSION" -n "Frontend Dev" -c "$BASE_DIR/frontend"
-tmux send-keys -t "$SESSION:1" 'npm run dev' Enter
-
-# Window 2: Docker (compose watch top, lazydocker bottom)
-tmux new-window -t "$SESSION" -n "Docker" -c "$BASE_DIR"
-tmux send-keys -t "$SESSION:2" 'docker compose watch backend' Enter
-tmux split-window -v -t "$SESSION:2" -c "$BASE_DIR"
-tmux send-keys -t "$SESSION:2.2" 'lazydocker' Enter
-tmux select-pane -t "$SESSION:2.1"
-
-# Window 3: Backend Shell
-tmux new-window -t "$SESSION" -n "Backend Shell" -c "$BASE_DIR/backend"
-tmux send-keys -t "$SESSION:3" 'acv' Enter
-
-# Window 4: Claude AI
-tmux new-window -t "$SESSION" -n "Claude AI" -c "$BASE_DIR"
-tmux send-keys -t "$SESSION:4" 'claude' Enter
-
-# Window 5: Yazi
-tmux new-window -t "$SESSION" -n "Yazi" -c "$BASE_DIR"
-tmux send-keys -t "$SESSION:5" 'y' Enter
-
-# Select window 1 and attach
-tmux select-window -t "$SESSION:1"
-
-# Attach if not already in tmux, otherwise switch
-if [ -z "$TMUX" ]; then
-  tmux attach -t "$SESSION"
-else
-  tmux switch-client -t "$SESSION"
-fi
+bash ~/nixos-config/start-dev.sh
 ```
 
-| Window | Name | Contents |
-|--------|------|----------|
-| 1 | Frontend Dev | `npm run dev` |
-| 2 | Docker | Top: `docker compose watch backend`, Bottom: `lazydocker` |
-| 3 | Backend Shell | Python virtualenv (`acv`) |
-| 4 | Claude AI | `claude` CLI |
-| 5 | Yazi | File manager |
-
-## User Configuration
-
-- **Primary User**: todd
-- **Shell**: Zsh with Oh-My-Zsh
-- **Groups**: networkmanager, wheel, docker, dialout, libvirtd
-- **Git**:
-  - Name: Todd Costella
-  - Email: ToddCostella@gmail.com
-  - Default branch: main
+| Window | Contents |
+|--------|----------|
+| 1 | Claude AI (`claude`) |
+| 2 | Terminal |
+| 3 | Yazi file manager |
 
 ## System Information
 
@@ -365,13 +233,17 @@ fi
 | Timezone | America/Vancouver |
 | Locale | en_US.UTF-8 |
 | Bootloader | systemd-boot |
-| State Version | 24.05 |
+| NixOS channel | nixos-unstable (via flake) |
+| Home Manager | master (via flake) |
 
 ## Important Notes
 
-- **Never modify** `hardware-configuration.nix` manually
-- **Forge extension** requires GNOME 48 or earlier (GNOME 49+ not yet supported)
-- Docker starts automatically on boot
-- Performance CPU governor is enabled for VM workloads
-- Flakes and nix-command experimental features are enabled
-- Weekly automatic garbage collection of old generations
+- **Never modify** `hardware-configuration.nix` — auto-generated
+- **`flake.lock` must be committed** — it pins exact dependency versions
+- **System packages** → `environment.systemPackages` in `configuration.nix`
+- **User packages + dotfiles** → `home.nix`
+- **SSH server** config is in `remote-terminal.nix`; **SSH client** config is in `home.nix`
+- **`~/.secrets.env` is not committed** — run `refresh-secrets` after a fresh clone
+- **Neovim config** (`~/.config/nvim/`) is intentionally unmanaged — edit freely without rebuilding
+- Forge GNOME extension requires GNOME 48 or earlier
+- Weekly automatic garbage collection of Nix store generations older than 30 days
