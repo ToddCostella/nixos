@@ -5,6 +5,12 @@
 **Status**: Draft
 **Input**: User description: "Migrate NixOS from traditional channels to Nix flakes, add Home Manager for declarative dotfile management, and integrate 1Password as the secrets backend so dotfiles can be version-controlled without exposing secrets."
 
+## Clarifications
+
+### Session 2026-02-17
+
+- Q: What level of AWS credential management should be included? → A: Multiple named profiles — AWS config file (~/.aws/config) managed declaratively with profile names, regions, and output formats; access keys for each profile sourced from 1Password at activation time.
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - Reproducible System Builds with Flakes (Priority: P1)
@@ -30,7 +36,7 @@ As a developer, I want my shell configuration, editor settings, terminal multipl
 
 **Why this priority**: Once the system build is reproducible, the next most valuable layer is managing user-level configuration. Currently dotfiles are unmanaged — they drift, get lost, and can't be reproduced on a fresh install. This story delivers the core value of "one repo defines everything."
 
-**Independent Test**: Can be fully tested by applying the configuration and verifying that the user's home directory contains the expected configuration files for git, zsh, tmux, and SSH, with correct content matching the declarative definitions.
+**Independent Test**: Can be fully tested by applying the configuration and verifying that the user's home directory contains the expected configuration files for git, zsh, tmux, SSH, and AWS CLI, with correct content matching the declarative definitions.
 
 **Acceptance Scenarios**:
 
@@ -38,7 +44,8 @@ As a developer, I want my shell configuration, editor settings, terminal multipl
 2. **Given** the declarative zsh configuration, **When** the system configuration is applied, **Then** the user has a working zsh shell with Oh-My-Zsh, the expected plugins (git, docker, docker-compose, aws, vi-mode, fzf), and the robbyrussell theme.
 3. **Given** the declarative tmux configuration, **When** the system configuration is applied, **Then** the user has a working tmux setup with the Catppuccin theme and existing plugins.
 4. **Given** the declarative SSH configuration, **When** the system configuration is applied, **Then** the user's SSH config contains the expected host entries, and no private key material appears in any configuration file or version control.
-5. **Given** the administrator adds a new dotfile to the declarative configuration, **When** the system is rebuilt, **Then** the new dotfile appears in the user's home directory with the correct content.
+5. **Given** the declarative AWS configuration with multiple named profiles, **When** the system configuration is applied, **Then** the user's AWS config file contains the expected profiles with regions and output formats, and credentials are resolved from 1Password.
+6. **Given** the administrator adds a new dotfile to the declarative configuration, **When** the system is rebuilt, **Then** the new dotfile appears in the user's home directory with the correct content.
 
 ---
 
@@ -90,8 +97,9 @@ As a developer, I want my SSH keys managed through 1Password's SSH agent, so tha
 - **FR-001**: The system MUST lock all dependency versions in a committed lockfile so that builds are reproducible across machines and time.
 - **FR-002**: The system MUST continue to function identically to the current configuration after migration — all existing packages, services, modules, and desktop environment settings MUST be preserved.
 - **FR-003**: All existing feature modules (remote-terminal.nix, desktop-gnome.nix, desktop-cosmic.nix, desktop-icons.nix, esp32-dev.nix, photo-restoration.nix, playwright-dev.nix) MUST continue to work without modification to their contents.
-- **FR-004**: The system MUST declaratively manage user dotfiles for the "todd" account, including at minimum: git configuration, zsh/Oh-My-Zsh configuration, tmux configuration, and SSH client configuration.
-- **FR-005**: The system MUST source all sensitive values (SSH keys, signing keys, API tokens) from 1Password at activation time, never storing them in plaintext in configuration files.
+- **FR-004**: The system MUST declaratively manage user dotfiles for the "todd" account, including at minimum: git configuration, zsh/Oh-My-Zsh configuration, tmux configuration, SSH client configuration, and AWS configuration (multiple named profiles).
+- **FR-005**: The system MUST source all sensitive values (SSH keys, signing keys, API tokens, AWS access keys and secret keys) from 1Password at activation time, never storing them in plaintext in configuration files.
+- **FR-015**: The system MUST declaratively manage AWS CLI configuration (~/.aws/config) with support for multiple named profiles, including region and output format per profile, while sourcing access key ID and secret access key for each profile from 1Password.
 - **FR-006**: The system MUST integrate with 1Password's SSH agent for SSH key management, eliminating the need for private key files on disk.
 - **FR-007**: The system MUST support git commit signing through 1Password-managed keys.
 - **FR-008**: The system MUST provide a clear, repeatable pattern for adding new secrets so that extending the configuration does not require understanding the internals of the secrets mechanism.
@@ -105,7 +113,8 @@ As a developer, I want my SSH keys managed through 1Password's SSH agent, so tha
 ### Key Entities
 
 - **System Configuration**: The declarative description of the entire NixOS system — packages, services, kernel parameters, user accounts. Currently defined in configuration.nix and feature modules.
-- **Dotfile**: A user-level configuration file (e.g., .gitconfig, .zshrc, .tmux.conf, ~/.ssh/config) that customizes the behavior of development tools. Managed declaratively and generated at activation time.
+- **Dotfile**: A user-level configuration file (e.g., .gitconfig, .zshrc, .tmux.conf, ~/.ssh/config, ~/.aws/config) that customizes the behavior of development tools. Managed declaratively and generated at activation time.
+- **AWS Profile**: A named configuration block within ~/.aws/config defining region, output format, and credential source for a specific AWS account or role. Non-sensitive profile metadata is committed; access keys are sourced from 1Password.
 - **Secret Reference**: A pointer to a value stored in 1Password (e.g., an `op://` URI) that is resolved at activation time. The reference itself is safe to commit; the resolved value is not.
 - **Lockfile**: A machine-generated file that records the exact versions of all dependencies used in a build, ensuring reproducibility.
 - **Feature Module**: A self-contained .nix file that encapsulates configuration for a specific feature area (e.g., remote-terminal.nix, desktop-gnome.nix). The new dotfile management module follows this pattern.
