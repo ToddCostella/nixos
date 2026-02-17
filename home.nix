@@ -59,6 +59,9 @@
       # Shell tool integrations
       eval "$(atuin init zsh)"
       eval "$(zoxide init zsh)"
+
+      # Load secrets if available (run `refresh-secrets` to update)
+      [ -f ~/.secrets.env ] && source ~/.secrets.env
     '';
 
     shellAliases = {
@@ -79,6 +82,9 @@
 
       # Session manager
       sx = "tmux-sessionx";
+
+      # Inject secrets from 1Password into ~/.secrets.env
+      refresh-secrets = "op inject --in-file ~/.secrets.env.tpl --out-file ~/.secrets.env --force";
     };
 
     sessionVariables = {
@@ -247,6 +253,12 @@
       AccessKeyId = "{{ op://Private/AWS buoyancy-dev/aws_access_key_id }}";
       SecretAccessKey = "{{ op://Private/AWS buoyancy-dev/aws_secret_access_key }}";
     };
+    # API key template — run `refresh-secrets` to inject into ~/.secrets.env
+    # Source this file in your shell or per-project .envrc
+    ".secrets.env.tpl".text = ''
+      export ANTHROPIC_API_KEY="{{ op://Private/Anthropic API Key/api-key }}"
+    '';
+
     ".ssh/allowed_signers".text = ''
       ToddCostella@gmail.com ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAILR93ztnY9HKCSLlFtwsdrEcwx8ovgpGhJTBB7XS2l5o
     '';
