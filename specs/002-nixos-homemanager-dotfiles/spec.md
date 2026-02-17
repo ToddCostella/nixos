@@ -12,6 +12,7 @@
 - Q: What level of AWS credential management should be included? → A: Multiple named profiles — AWS config file (~/.aws/config) managed declaratively with profile names, regions, and output formats; access keys for each profile sourced from 1Password at activation time.
 - Q: How should the GnuPG SSH agent conflict with 1Password SSH agent be resolved? → A: Disable GnuPG SSH support (`enableSSHSupport = false`), use 1Password SSH agent exclusively for SSH keys and git commit signing. GnuPG agent remains available for GPG encryption and signature verification, just without SSH support.
 - Q: How should existing manually-created dotfiles be handled when Home Manager takes over? → A: Back up existing dotfiles to `~/.dotfiles-backup/` before the first Home Manager activation, then let Home Manager overwrite them. The backup serves as a reference for any manual customizations that may need to be incorporated into the declarative config.
+- Q: How should Home Manager be integrated — as a NixOS module or standalone? → A: NixOS module — Home Manager runs as part of `nixos-rebuild switch`, so system config and dotfiles are applied atomically with a single command. No separate `home-manager switch` step.
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -145,4 +146,5 @@ As a developer, I want my SSH keys managed through 1Password's SSH agent, so tha
 - The existing tmux configuration (Catppuccin theme, current plugins) should be preserved in the new declarative management.
 - The existing git configuration (name: Todd Costella, email: ToddCostella@gmail.com, default branch: main) should be preserved.
 - The hostname `nixos-dev` will be used to identify this system's configuration.
+- Home Manager is integrated as a NixOS module (not standalone), so `sudo nixos-rebuild switch` applies both system and user configuration atomically.
 - NixOS 24.05 compatibility is required; no features exclusive to newer releases should be used.
