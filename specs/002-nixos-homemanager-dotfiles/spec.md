@@ -13,6 +13,7 @@
 - Q: How should the GnuPG SSH agent conflict with 1Password SSH agent be resolved? → A: Disable GnuPG SSH support (`enableSSHSupport = false`), use 1Password SSH agent exclusively for SSH keys and git commit signing. GnuPG agent remains available for GPG encryption and signature verification, just without SSH support.
 - Q: How should existing manually-created dotfiles be handled when Home Manager takes over? → A: Back up existing dotfiles to `~/.dotfiles-backup/` before the first Home Manager activation, then let Home Manager overwrite them. The backup serves as a reference for any manual customizations that may need to be incorporated into the declarative config.
 - Q: How should Home Manager be integrated — as a NixOS module or standalone? → A: NixOS module — Home Manager runs as part of `nixos-rebuild switch`, so system config and dotfiles are applied atomically with a single command. No separate `home-manager switch` step.
+- Q: Should Home Manager manage neovim configuration declaratively? → A: No — Home Manager installs neovim but does NOT manage `~/.config/nvim/`. Neovim configuration is left unmanaged so Todd can iterate on editor settings without requiring a full system rebuild. This keeps the scope focused on shell, git, and system dotfiles.
 
 ## User Scenarios & Testing *(mandatory)*
 
