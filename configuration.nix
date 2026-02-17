@@ -1,7 +1,7 @@
 # NixOS Configuration for Development Environment
 # Edit this file at /etc/nixos/configuration.nix
 
-{ config, pkgs, ... }:
+{ config, pkgs, inputs, ... }:
 {
   imports =
     [ # Include the results of the hardware scan.
@@ -10,7 +10,7 @@
       ./photo-restoration.nix
       ./desktop-icons.nix  # Custom desktop icons for Nix applications
       ./desktop-gnome.nix  # GNOME Desktop
-      ./desktop-cosmic.nix # COSMIC Desktop (System76)
+      # ./desktop-cosmic.nix # COSMIC Desktop (System76) — not available in nixos-24.05
       ./playwright-dev.nix # Playwrite dependencies for browser based e2e testing
       ./remote-terminal.nix # Remote terminal access: tmux + mosh + SSH hardening
     ];
@@ -248,7 +248,6 @@
     # Productivity apps
     obsidian
     dropbox
-    _1password-gui
     figma-linux
     
     # Python tools
@@ -528,12 +527,19 @@
     fira-code-symbols
   ];
 
+  # 1Password — use NixOS module for polkit integration
+  programs._1password.enable = true;
+  programs._1password-gui = {
+    enable = true;
+    polkitPolicyOwners = [ "todd" ];
+  };
+
   # Some programs need SUID wrappers, can be configured further or are
   # started in user sessions.
   programs.mtr.enable = true;
   programs.gnupg.agent = {
     enable = true;
-    enableSSHSupport = true;
+    enableSSHSupport = false; # 1Password SSH agent handles SSH keys
   };
   # List services that you want to enable:
 
@@ -578,11 +584,9 @@
     experimental-features = [ "nix-command" "flakes" ];
   };
 
-  # Set NIX_PATH for nixos-rebuild
-  nix.nixPath = [
-    "nixpkgs=/nix/var/nix/profiles/per-user/root/channels/nixpkgs"
-    "nixos-config=/etc/nixos/configuration.nix"
-  ];
+  # Set NIX_PATH and registry to use flake inputs for reproducibility
+  nix.nixPath = [ "nixpkgs=${inputs.nixpkgs}" ];
+  nix.registry.nixpkgs.flake = inputs.nixpkgs;
 
   # Automatic garbage collection
   nix.gc = {
