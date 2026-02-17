@@ -209,46 +209,22 @@
    environment.systemPackages = with pkgs;[
     # Development tools
     git
-    neovim
-    htop
     zsh
-    oh-my-zsh
     wget
     zip
     unzip
-    hugo
 
     # Terminal utilities
-    wezterm
     feh
     playerctl
     brightnessctl
-    aerc            # Terminal email client
-    
+
     # Development tools
     docker-compose
     awscli2
-    gh              # GitHub CLI
-    lazygit
-    lazydocker
-    
-    # Database tools
-    dbeaver-bin
-    postgresql      # PostgreSQL client (psql)
-    rainfrog        # Terminal-based database management with vim keybindings
-    
-    # Diff/merge tools
-    bcompare
 
-    # Communication apps
-    slack
-    signal-desktop
-    zoom-us
-    
-    # Productivity apps
-    obsidian
-    dropbox
-    figma-linux
+    # Database tools
+    postgresql      # PostgreSQL client (psql)
     
     # Python tools
     uv
@@ -265,18 +241,7 @@
     pkg-config
     
     # Additional utilities
-    ripgrep
-    fd
-    bat
-    tree
-    jq
-    yq-go
-    httpie
     direnv
-    atuin
-    fzf
-    yazi
-    zoxide
     zsh-vi-mode
     
     # Network diagnostic tools
@@ -356,14 +321,8 @@
     # AWS CDK for infrastructure as code
     nodePackages.aws-cdk
     
-    # Image editor
-    pinta
-
     # SVG tools
     librsvg  # Provides rsvg-convert for SVG to PNG/PDF conversion
-
-    # Markdown editor
-    apostrophe
 
     # Document conversion and LaTeX
     pandoc
@@ -484,15 +443,8 @@
 
   # Programs configuration
   programs = {
-    # Enable zsh system-wide
-    zsh = {
-      enable = true;
-      ohMyZsh = {
-        enable = true;
-        plugins = [ "git" "docker" "docker-compose" "aws" "vi-mode" "fzf" ];
-        theme = "robbyrussell";
-      };
-    };
+    # Enable zsh system-wide (registers /etc/shells; oh-my-zsh managed in home.nix)
+    zsh.enable = true;
     
     # Enable npm
     npm = {
@@ -502,17 +454,7 @@
       '';
     };
 
-    # Git configuration
-    git = {
-      enable = true;
-      config = {
-        user = {
-          name = "Todd Costella";
-          email = "ToddCostella@gmail.com";
-        };
-        init.defaultBranch = "main";
-      };
-    };
+    # Git is configured in home.nix via Home Manager
 
     # Enable Firefox
     firefox.enable = true;
