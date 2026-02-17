@@ -40,6 +40,50 @@
       plugins = [ "git" "docker" "docker-compose" "aws" "vi-mode" "fzf" ];
       theme = "robbyrussell";
     };
+
+    initContent = ''
+      # WezTerm Shell Integration - OSC 7 (new tab/pane inherits current directory)
+      precmd() {
+        print -Pn "\e]7;file://$\{HOSTNAME}$\{PWD}\e\\"
+      }
+
+      # Yazi wrapper - cd to last directory on exit
+      function y() {
+        local tmp="$(mktemp -t "yazi-cwd.XXXXXX")" cwd
+        yazi "$@" --cwd-file="$tmp"
+        IFS= read -r -d "" cwd < "$tmp"
+        [ -n "$cwd" ] && [ "$cwd" != "$PWD" ] && builtin cd -- "$cwd"
+        rm -f -- "$tmp"
+      }
+
+      # Shell tool integrations
+      eval "$(atuin init zsh)"
+      eval "$(zoxide init zsh)"
+    '';
+
+    shellAliases = {
+      # Git
+      lg = "lazygit";
+
+      # Python
+      acv = "source .venv/bin/activate";
+
+      # Project navigation
+      db  = "cd /home/todd/dev/buoyancy-platform/";
+      dbf = "cd /home/todd/dev/buoyancy-platform/frontend/";
+      dbb = "cd /home/todd/dev/buoyancy-platform/backend";
+
+      # Dev commands
+      dc = "docker compose watch backend";
+      nb = "npm run dev";
+
+      # Session manager
+      sx = "tmux-sessionx";
+    };
+
+    sessionVariables = {
+      PATH = "/home/todd/.local/bin:$PATH";
+    };
   };
 
   # --- Tmux ---
