@@ -200,8 +200,6 @@
         output = "json";
       };
       "profile buoyancy-dev" = {
-        role_arn = "arn:aws:iam::779846807083:role/developer-admin";
-        source_profile = "default";
         region = "ca-west-1";
         output = "json";
       };
@@ -212,34 +210,42 @@
     };
     credentials = {
       "default" = {
-        credential_process = "op --cache inject --in-file ~/.aws/1pw/default.json";
+        credential_process = "op --cache inject --in-file /home/todd/.aws/1pw/default.json";
       };
       "toddcostella" = {
-        credential_process = "op --cache inject --in-file ~/.aws/1pw/toddcostella.json";
+        credential_process = "op --cache inject --in-file /home/todd/.aws/1pw/toddcostella.json";
       };
       "buoyancy-root" = {
-        credential_process = "op --cache inject --in-file ~/.aws/1pw/buoyancy-root.json";
+        credential_process = "op --cache inject --in-file /home/todd/.aws/1pw/buoyancy-root.json";
+      };
+      "buoyancy-dev" = {
+        credential_process = "op --cache inject --in-file /home/todd/.aws/1pw/buoyancy-dev.json";
       };
     };
   };
 
   # --- 1Password credential templates (op:// URIs — safe to commit) ---
-  # Edit the op://vault/item/field references to match your 1Password vault.
+  # Resolved at runtime via `op --cache inject`; never stored in plaintext.
   home.file = {
     ".aws/1pw/default.json".text = builtins.toJSON {
       Version = 1;
-      AccessKeyId = "{{ op://Private/AWS default/access_key_id }}";
-      SecretAccessKey = "{{ op://Private/AWS default/secret_access_key }}";
+      AccessKeyId = "{{ op://Private/AWS toddcostella/aws_access_key_id }}";
+      SecretAccessKey = "{{ op://Private/AWS toddcostella/aws_secret_access_key }}";
     };
     ".aws/1pw/toddcostella.json".text = builtins.toJSON {
       Version = 1;
-      AccessKeyId = "{{ op://Private/AWS toddcostella/access_key_id }}";
-      SecretAccessKey = "{{ op://Private/AWS toddcostella/secret_access_key }}";
+      AccessKeyId = "{{ op://Private/AWS toddcostella/aws_access_key_id }}";
+      SecretAccessKey = "{{ op://Private/AWS toddcostella/aws_secret_access_key }}";
     };
     ".aws/1pw/buoyancy-root.json".text = builtins.toJSON {
       Version = 1;
-      AccessKeyId = "{{ op://Private/AWS buoyancy-root/access_key_id }}";
-      SecretAccessKey = "{{ op://Private/AWS buoyancy-root/secret_access_key }}";
+      AccessKeyId = "{{ op://Private/AWS buoyancy-root/aws_access_key_id }}";
+      SecretAccessKey = "{{ op://Private/AWS buoyancy-root/aws_secret_access_key }}";
+    };
+    ".aws/1pw/buoyancy-dev.json".text = builtins.toJSON {
+      Version = 1;
+      AccessKeyId = "{{ op://Private/AWS buoyancy-dev/aws_access_key_id }}";
+      SecretAccessKey = "{{ op://Private/AWS buoyancy-dev/aws_secret_access_key }}";
     };
     ".ssh/allowed_signers".text = ''
       ToddCostella@gmail.com ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAILR93ztnY9HKCSLlFtwsdrEcwx8ovgpGhJTBB7XS2l5o
