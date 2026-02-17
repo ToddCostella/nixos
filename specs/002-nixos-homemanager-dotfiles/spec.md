@@ -11,6 +11,7 @@
 
 - Q: What level of AWS credential management should be included? → A: Multiple named profiles — AWS config file (~/.aws/config) managed declaratively with profile names, regions, and output formats; access keys for each profile sourced from 1Password at activation time.
 - Q: How should the GnuPG SSH agent conflict with 1Password SSH agent be resolved? → A: Disable GnuPG SSH support (`enableSSHSupport = false`), use 1Password SSH agent exclusively for SSH keys and git commit signing. GnuPG agent remains available for GPG encryption and signature verification, just without SSH support.
+- Q: How should existing manually-created dotfiles be handled when Home Manager takes over? → A: Back up existing dotfiles to `~/.dotfiles-backup/` before the first Home Manager activation, then let Home Manager overwrite them. The backup serves as a reference for any manual customizations that may need to be incorporated into the declarative config.
 
 ## User Scenarios & Testing *(mandatory)*
 
