@@ -10,6 +10,7 @@
 ### Session 2026-02-17
 
 - Q: What level of AWS credential management should be included? → A: Multiple named profiles — AWS config file (~/.aws/config) managed declaratively with profile names, regions, and output formats; access keys for each profile sourced from 1Password at activation time.
+- Q: How should the GnuPG SSH agent conflict with 1Password SSH agent be resolved? → A: Disable GnuPG SSH support (`enableSSHSupport = false`), use 1Password SSH agent exclusively for SSH keys and git commit signing. GnuPG agent remains available for GPG encryption and signature verification, just without SSH support.
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -89,6 +90,7 @@ As a developer, I want my SSH keys managed through 1Password's SSH agent, so tha
 - What happens when an existing manually-created dotfile conflicts with a declaratively managed one? The declarative configuration should take precedence, and the administrator should be warned about conflicts during activation.
 - What happens when the administrator wants to temporarily override a managed dotfile for debugging? The system should support a clear mechanism for local overrides that don't get committed.
 - What happens when dependency versions need to be updated? There should be a clear, single command to update the lockfile and review changes before applying.
+- What happens if GnuPG SSH support is disabled but 1Password SSH agent is not yet configured? SSH authentication should fail with a clear error rather than silently falling back to no agent.
 
 ## Requirements *(mandatory)*
 
@@ -100,7 +102,7 @@ As a developer, I want my SSH keys managed through 1Password's SSH agent, so tha
 - **FR-004**: The system MUST declaratively manage user dotfiles for the "todd" account, including at minimum: git configuration, zsh/Oh-My-Zsh configuration, tmux configuration, SSH client configuration, and AWS configuration (multiple named profiles).
 - **FR-005**: The system MUST source all sensitive values (SSH keys, signing keys, API tokens, AWS access keys and secret keys) from 1Password at activation time, never storing them in plaintext in configuration files.
 - **FR-015**: The system MUST declaratively manage AWS CLI configuration (~/.aws/config) with support for multiple named profiles, including region and output format per profile, while sourcing access key ID and secret access key for each profile from 1Password.
-- **FR-006**: The system MUST integrate with 1Password's SSH agent for SSH key management, eliminating the need for private key files on disk.
+- **FR-006**: The system MUST integrate with 1Password's SSH agent for SSH key management, eliminating the need for private key files on disk. The existing GnuPG SSH agent support MUST be disabled to avoid conflict; GnuPG agent remains enabled for non-SSH uses (GPG encryption, signature verification).
 - **FR-007**: The system MUST support git commit signing through 1Password-managed keys.
 - **FR-008**: The system MUST provide a clear, repeatable pattern for adding new secrets so that extending the configuration does not require understanding the internals of the secrets mechanism.
 - **FR-009**: The system MUST be rebuildable with a single command from the repository root.
