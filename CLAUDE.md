@@ -72,6 +72,8 @@ Git is pre-configured with user details:
 ## Active Technologies
 - Nix (NixOS configuration language) + tmux, mosh, openssh, wl-clipboard (001-remote-terminal-access)
 - N/A (no persistent data beyond tmux sessions) (001-remote-terminal-access)
+- Nix (NixOS 24.05, stateVersion "24.05") + nixpkgs (nixos-24.05 branch), home-manager (release-24.05 branch), 1Password GUI + CLI (002-nixos-homemanager-dotfiles)
+- N/A (declarative configuration files only) (002-nixos-homemanager-dotfiles)
 
 ## Recent Changes
 - 001-remote-terminal-access: Added Nix (NixOS configuration language) + tmux, mosh, openssh, wl-clipboard
