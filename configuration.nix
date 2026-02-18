@@ -218,6 +218,7 @@
     feh
     playerctl
     brightnessctl
+    bc               # Required by tokyo-night-tmux git status widget
 
     # Development tools
     docker-compose
