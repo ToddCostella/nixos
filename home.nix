@@ -89,6 +89,9 @@
 
     sessionVariables = {
       PATH = "/home/todd/.local/bin:$PATH";
+      # Prevent SSH from falling back to GUI askpass (e.g. during git push/fetch).
+      # With 1Password as the SSH agent, GUI prompts are unnecessary and disruptive.
+      SSH_ASKPASS_REQUIRE = "never";
     };
   };
 
@@ -106,10 +109,9 @@
 
     plugins = with pkgs.tmuxPlugins; [
       {
-        plugin = catppuccin;
+        plugin = tokyo-night-tmux;
         extraConfig = ''
-          set -g @catppuccin_flavor 'mocha'
-          set -g @catppuccin_window_status_style 'rounded'
+          set -g @tokyo-night-tmux_night_style 'night'
         '';
       }
       sensible
@@ -146,7 +148,7 @@
       # True color support
       set -ag terminal-overrides ",xterm-256color:RGB"
 
-      # Status bar at top (hook ensures it runs after catppuccin theme)
+      # Status bar at top (hook ensures it runs after theme loads)
       set-hook -g after-new-session 'set -g status-position top'
       set-hook -g after-new-window 'set -g status-position top'
       set -g status-position top

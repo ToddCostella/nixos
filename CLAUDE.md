@@ -87,7 +87,7 @@ All profiles use `credential_process` — keys stored in 1Password `Private` vau
 ## tmux Configuration (home.nix)
 
 - **Prefix**: `Alt-a` (M-a)
-- **Theme**: Catppuccin Mocha (rounded window status)
+- **Theme**: Tokyo Night (night style)
 - **Plugins**: catppuccin, sensible, yank, resurrect, continuum, tmux-sessionx
 - **Session restore**: continuum auto-save every 15 min, auto-restore on start
 - **Session switcher**: tmux-sessionx bound to `o`, zoxide mode, custom paths
