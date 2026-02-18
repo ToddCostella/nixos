@@ -62,6 +62,12 @@
 
       # Load secrets if available (run `refresh-secrets` to update)
       [ -f ~/.secrets.env ] && source ~/.secrets.env
+
+      # Override SSH_AUTH_SOCK to always use 1Password agent.
+      # Must be set here (initContent) not sessionVariables — WezTerm overrides
+      # SSH_AUTH_SOCK after session vars are set, pointing to its own agent which
+      # has no keys and causes passphrase prompts / ssh-askpass dialogs.
+      export SSH_AUTH_SOCK="$HOME/.1password/agent.sock"
     '';
 
     shellAliases = {
