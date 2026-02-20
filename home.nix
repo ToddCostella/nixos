@@ -98,6 +98,8 @@
       # Prevent SSH from falling back to GUI askpass (e.g. during git push/fetch).
       # With 1Password as the SSH agent, GUI prompts are unnecessary and disruptive.
       SSH_ASKPASS_REQUIRE = "never";
+      # Ensure pandoc (used by Apostrophe) can write temp files.
+      TMPDIR = "/tmp";
     };
   };
 
