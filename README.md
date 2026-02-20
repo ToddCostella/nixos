@@ -28,7 +28,10 @@ nix flake update ~/nixos-config
 | `home.nix` | Home Manager: dotfiles, user packages, aliases, secrets |
 | `hardware-configuration.nix` | Auto-generated hardware config (do not modify) |
 | `remote-terminal.nix` | Mosh + SSH server hardening |
-| `desktop-gnome.nix` | GNOME desktop environment |
+| `desktop-gnome.nix` | GNOME desktop environment (default) |
+| `desktop-hyprland.nix` | Hyprland Wayland compositor (specialisation) |
+| `desktop-cosmic.nix` | COSMIC desktop — System76 (specialisation) |
+| `desktop-kde.nix` | KDE Plasma 6 (specialisation) |
 | `desktop-icons.nix` | Custom desktop icons |
 | `esp32-dev.nix` | ESP32 development environment |
 | `photo-restoration.nix` | Photo editing and restoration tools |
@@ -38,6 +41,28 @@ nix flake update ~/nixos-config
 ## System Overview
 
 ### Desktop Environment
+
+GNOME is the default. Three alternative DEs are baked into the build as [NixOS specialisations](https://nixos.wiki/wiki/NixOS_specialisations) — selectable at boot or switchable at runtime without a rebuild.
+
+| Specialisation | DE | Boot menu label |
+|---|---|---|
+| *(default)* | GNOME | NixOS |
+| `hyprland` | Hyprland | NixOS - Hyprland |
+| `cosmic` | COSMIC | NixOS - COSMIC |
+| `kde` | KDE Plasma 6 | NixOS - KDE-Plasma-6 |
+
+**Switch at runtime (no reboot):**
+```bash
+sudo /run/current-system/specialisation/hyprland/bin/switch-to-configuration switch
+sudo /run/current-system/specialisation/cosmic/bin/switch-to-configuration switch
+sudo /run/current-system/specialisation/kde/bin/switch-to-configuration switch
+
+# Back to default GNOME
+sudo nixos-rebuild switch --flake ~/nixos-config#nixos-dev
+```
+
+**Switch at boot:** Reboot and select from the systemd-boot menu.
+
 - **GNOME** with GDM display manager (Wayland)
 - **Extensions**: Forge (tiling), Workspace Indicator, Just Perfection
 - **GNOME Tweaks** + **Papirus-Dark** icon theme

@@ -1,7 +1,7 @@
 # NixOS Configuration for Development Environment
 # Edit this file at /etc/nixos/configuration.nix
 
-{ config, pkgs, inputs, ... }:
+{ config, pkgs, lib, inputs, ... }:
 {
   imports =
     [ # Include the results of the hardware scan.
@@ -563,5 +563,93 @@
     EDITOR = "nvim";  # Default editor for yazi and other programs
   };
 
+  # Specialisations — alternative desktop environments selectable at boot or runtime.
+  # Boot: systemd-boot shows entries like "NixOS - specialisation: Hyprland"
+  # Runtime switch: sudo /run/current-system/specialisation/<name>/bin/switch-to-configuration switch
+  # Back to default (GNOME): sudo nixos-rebuild switch --flake ~/nixos-config#nixos-dev
+  specialisation = {
+
+    hyprland.configuration = {
+      system.nixos.tags = [ "Hyprland" ];
+      # Disable GNOME and its services
+      services.desktopManager.gnome.enable = lib.mkForce false;
+      services.gnome.gnome-keyring.enable = lib.mkForce false;
+      services.gnome.gnome-online-accounts.enable = lib.mkForce false;
+      security.pam.services.gdm.enableGnomeKeyring = lib.mkForce false;
+      # Clear GNOME portal; Hyprland portal added below
+      xdg.portal.extraPortals = lib.mkForce [ pkgs.xdg-desktop-portal-hyprland ];
+      # Hyprland
+      programs.hyprland.enable = true;
+      programs.hyprland.xwayland.enable = true;
+      environment.systemPackages = with pkgs; [
+        waybar
+        wofi
+        hyprpaper
+        hypridle
+        hyprlock
+        hyprshot
+        wl-clipboard
+        dunst
+        kitty
+      ];
+      environment.variables = {
+        NIXOS_OZONE_WL = "1";
+        MOZ_ENABLE_WAYLAND = "1";
+      };
+    };
+
+    cosmic.configuration = {
+      system.nixos.tags = [ "COSMIC" ];
+      # Disable GNOME and its services
+      services.desktopManager.gnome.enable = lib.mkForce false;
+      services.gnome.gnome-keyring.enable = lib.mkForce false;
+      services.gnome.gnome-online-accounts.enable = lib.mkForce false;
+      security.pam.services.gdm.enableGnomeKeyring = lib.mkForce false;
+      # Clear GNOME portal; COSMIC portal added below
+      xdg.portal.extraPortals = lib.mkForce [ pkgs.xdg-desktop-portal-cosmic ];
+      # COSMIC desktop (available on nixos-unstable)
+      services.desktopManager.cosmic.enable = true;
+      environment.systemPackages = with pkgs; [
+        cosmic-files
+        cosmic-edit
+        cosmic-term
+        cosmic-store
+        cosmic-screenshot
+        wl-clipboard
+      ];
+    };
+
+    kde.configuration = {
+      system.nixos.tags = [ "KDE-Plasma-6" ];
+      # Disable GNOME and its services
+      services.desktopManager.gnome.enable = lib.mkForce false;
+      services.gnome.gnome-keyring.enable = lib.mkForce false;
+      services.gnome.gnome-online-accounts.enable = lib.mkForce false;
+      security.pam.services.gdm.enableGnomeKeyring = lib.mkForce false;
+      # Clear GNOME portal; KDE portal added below
+      xdg.portal.extraPortals = lib.mkForce [ pkgs.kdePackages.xdg-desktop-portal-kde ];
+      # KDE Plasma 6
+      services.desktopManager.plasma6.enable = true;
+      environment.variables = {
+        TERMINAL = "wezterm";
+      };
+      environment.systemPackages = with pkgs; [
+        kdePackages.kate
+        kdePackages.konsole
+        kdePackages.dolphin
+        kdePackages.ark
+        kdePackages.gwenview
+        kdePackages.okular
+        kdePackages.spectacle
+        kdePackages.kalk
+        kdePackages.kcalc
+        kdePackages.kfind
+        kdePackages.filelight
+        kdePackages.partitionmanager
+        kdePackages.kcolorchooser
+      ];
+    };
+
+  };
 
 }
