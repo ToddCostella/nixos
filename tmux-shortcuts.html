@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>tmux shortcuts</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Syne:wght@400;700;800&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0d0f14;
+    --surface: #161920;
+    --border: #252830;
+    --accent: #7fdbca;
+    --accent2: #f0c674;
+    --accent3: #cc99cd;
+    --text: #cdd6f4;
+    --muted: #6c7086;
+    --prefix: #f38ba8;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Syne', sans-serif;
+    min-height: 100vh;
+    padding: 48px 32px;
+  }
+
+  .container {
+    max-width: 900px;
+    margin: 0 auto;
+  }
+
+  header {
+    margin-bottom: 48px;
+    display: flex;
+    align-items: baseline;
+    gap: 16px;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 24px;
+  }
+
+  h1 {
+    font-size: 2.8rem;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    color: #fff;
+  }
+
+  .prefix-badge {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.85rem;
+    background: #1e1f2e;
+    border: 1px solid var(--prefix);
+    color: var(--prefix);
+    padding: 4px 10px;
+    border-radius: 4px;
+    white-space: nowrap;
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+    gap: 24px;
+  }
+
+  .section {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+
+  .section-header {
+    padding: 14px 20px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .section-header.sessions { background: #1a1f2e; color: var(--accent); border-bottom: 1px solid #1e2640; }
+  .section-header.windows  { background: #1a1e1a; color: #a3e635; border-bottom: 1px solid #1e281e; }
+  .section-header.panes    { background: #1f1a1e; color: var(--accent3); border-bottom: 1px solid #2a1f28; }
+  .section-header.misc     { background: #1f1d1a; color: var(--accent2); border-bottom: 1px solid #2a2518; }
+  .section-header.copy     { background: #1a1f1f; color: #94e2d5; border-bottom: 1px solid #1e2a2a; }
+
+  .dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: currentColor;
+    opacity: 0.7;
+  }
+
+  .shortcuts {
+    padding: 8px 0;
+  }
+
+  .row {
+    display: flex;
+    align-items: center;
+    padding: 9px 20px;
+    gap: 16px;
+    transition: background 0.1s;
+  }
+
+  .row:hover { background: rgba(255,255,255,0.03); }
+
+  .keys {
+    display: flex;
+    gap: 4px;
+    align-items: center;
+    min-width: 160px;
+    flex-shrink: 0;
+  }
+
+  kbd {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.78rem;
+    background: #0d0f14;
+    border: 1px solid #2e3045;
+    border-bottom: 2px solid #1a1c2e;
+    color: var(--text);
+    padding: 3px 7px;
+    border-radius: 4px;
+    display: inline-block;
+    line-height: 1.4;
+  }
+
+  kbd.prefix { color: var(--prefix); border-color: #3a1f25; border-bottom-color: #2a1520; }
+
+  .plus, .then {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--muted);
+  }
+
+  .desc {
+    font-size: 0.85rem;
+    color: #9399b2;
+    line-height: 1.4;
+  }
+
+  .divider {
+    height: 1px;
+    background: var(--border);
+    margin: 4px 20px;
+    opacity: 0.5;
+  }
+
+  footer {
+    margin-top: 40px;
+    text-align: center;
+    font-size: 0.75rem;
+    color: var(--muted);
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  @media (max-width: 600px) {
+    .grid { grid-template-columns: 1fr; }
+    h1 { font-size: 2rem; }
+    .keys { min-width: 130px; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1>tmux</h1>
+    <span class="prefix-badge">prefix = Alt+a</span>
+  </header>
+
+  <div class="grid">
+
+    <!-- Sessions -->
+    <div class="section">
+      <div class="section-header sessions"><span class="dot"></span>Sessions</div>
+      <div class="shortcuts">
+        <div class="row"><div class="keys"><kbd class="prefix">prefix</kbd><span class="then">then</span><kbd>o</kbd></div><div class="desc">Session switcher (sessionx + zoxide)</div></div>
+        <div class="row"><div class="keys"><kbd class="prefix">prefix</kbd><span class="then">then</span><kbd>$</kbd></div><div class="desc">Rename session</div></div>
+        <div class="row"><div class="keys"><kbd class="prefix">prefix</kbd><span class="then">then</span><kbd>d</kbd></div><div class="desc">Detach from session</div></div>
+        <div class="row"><div class="keys"><kbd class="prefix">prefix</kbd><span class="then">then</span><kbd>(</kbd> <kbd>)</kbd></div><div class="desc">Prev / next session</div></div>
+        <div class="divider"></div>
+        <div class="row"><div class="keys"><kbd>tmux new -s</kbd> <kbd>name</kbd></div><div class="desc">New named session (shell)</div></div>
+        <div class="row"><div class="keys"><kbd>tmux ls</kbd></div><div class="desc">List sessions (shell)</div></div>
+        <div class="row"><div class="keys"><kbd>tmux attach -t</kbd> <kbd>name</kbd></div><div class="desc">Attach to session (shell)</div></div>
+        <div class="divider"></div>
+        <div class="row"><div class="keys"><kbd>sx</kbd></div><div class="desc">Session switcher alias (shell)</div></div>
+      </div>
+    </div>
+
+    <!-- Windows -->
+    <div class="section">
+      <div class="section-header windows"><span class="dot"></span>Windows</div>
+      <div class="shortcuts">
+        <div class="row"><div class="keys"><kbd class="prefix">prefix</kbd><span class="then">then</span><kbd>c</kbd></div><div class="desc">New window (inherits current path)</div></div>
+        <div class="row"><div class="keys"><kbd class="prefix">prefix</kbd><span class="then">then</span><kbd>,</kbd></div><div class="desc">Rename window</div></div>
+        <div class="row"><div class="keys"><kbd class="prefix">prefix</kbd><span class="then">then</span><kbd>&</kbd></div><div class="desc">Close window (confirm)</div></div>
+        <div class="divider"></div>
+        <div class="row"><div class="keys"><kbd>Alt+1</kbd> – <kbd>Alt+9</kbd></div><div class="desc">Jump to window by number (no prefix)</div></div>
+        <div class="row"><div class="keys"><kbd class="prefix">prefix</kbd><span class="then">then</span><kbd>n</kbd> <kbd>p</kbd></div><div class="desc">Next / prev window</div></div>
+        <div class="row"><div class="keys"><kbd class="prefix">prefix</kbd><span class="then">then</span><kbd>w</kbd></div><div class="desc">List / choose window</div></div>
+        <div class="row"><div class="keys"><kbd class="prefix">prefix</kbd><span class="then">then</span><kbd>l</kbd></div><div class="desc">Last (previously active) window</div></div>
+        <div class="row"><div class="keys"><kbd class="prefix">prefix</kbd><span class="then">then</span><kbd>f</kbd></div><div class="desc">Find window by name</div></div>
+      </div>
+    </div>
+
+    <!-- Panes -->
+    <div class="section">
+      <div class="section-header panes"><span class="dot"></span>Panes</div>
+      <div class="shortcuts">
+        <div class="row"><div class="keys"><kbd class="prefix">prefix</kbd><span class="then">then</span><kbd>|</kbd></div><div class="desc">Split pane horizontally (current path)</div></div>
+        <div class="row"><div class="keys"><kbd class="prefix">prefix</kbd><span class="then">then</span><kbd>-</kbd></div><div class="desc">Split pane vertically (current path)</div></div>
+        <div class="row"><div class="keys"><kbd class="prefix">prefix</kbd><span class="then">then</span><kbd>x</kbd></div><div class="desc">Close pane (confirm)</div></div>
+        <div class="divider"></div>
+        <div class="row"><div class="keys"><kbd>Alt+←↑↓→</kbd></div><div class="desc">Navigate panes (no prefix)</div></div>
+        <div class="row"><div class="keys"><kbd class="prefix">prefix</kbd><span class="then">then</span><kbd>;</kbd></div><div class="desc">Toggle last active pane</div></div>
+        <div class="divider"></div>
+        <div class="row"><div class="keys"><kbd class="prefix">prefix</kbd><span class="then">then</span><kbd>z</kbd></div><div class="desc">Zoom / unzoom pane (fullscreen)</div></div>
+        <div class="row"><div class="keys"><kbd class="prefix">prefix</kbd><span class="then">then</span><kbd>!</kbd></div><div class="desc">Break pane into new window</div></div>
+        <div class="row"><div class="keys"><kbd class="prefix">prefix</kbd><span class="then">then</span><kbd>q</kbd></div><div class="desc">Show pane numbers</div></div>
+        <div class="row"><div class="keys"><kbd class="prefix">prefix</kbd><span class="then">then</span><kbd>{ }</kbd></div><div class="desc">Swap pane left / right</div></div>
+        <div class="row"><div class="keys"><kbd class="prefix">prefix</kbd><span class="then">then</span><kbd>space</kbd></div><div class="desc">Cycle pane layouts</div></div>
+      </div>
+    </div>
+
+    <!-- Copy Mode -->
+    <div class="section">
+      <div class="section-header copy"><span class="dot"></span>Copy Mode (vi)</div>
+      <div class="shortcuts">
+        <div class="row"><div class="keys"><kbd class="prefix">prefix</kbd><span class="then">then</span><kbd>[</kbd></div><div class="desc">Enter copy mode (scroll)</div></div>
+        <div class="row"><div class="keys"><kbd>q</kbd> or <kbd>Esc</kbd></div><div class="desc">Exit copy mode</div></div>
+        <div class="divider"></div>
+        <div class="row"><div class="keys"><kbd>v</kbd></div><div class="desc">Begin selection</div></div>
+        <div class="row"><div class="keys"><kbd>y</kbd></div><div class="desc">Yank selection → Wayland clipboard</div></div>
+        <div class="row"><div class="keys"><kbd class="prefix">prefix</kbd><span class="then">then</span><kbd>]</kbd></div><div class="desc">Paste buffer</div></div>
+        <div class="divider"></div>
+        <div class="row"><div class="keys"><kbd>/</kbd></div><div class="desc">Search forward</div></div>
+        <div class="row"><div class="keys"><kbd>?</kbd></div><div class="desc">Search backward</div></div>
+        <div class="row"><div class="keys"><kbd>n</kbd> <kbd>N</kbd></div><div class="desc">Next / prev search match</div></div>
+        <div class="row"><div class="keys"><kbd>g</kbd> <kbd>G</kbd></div><div class="desc">Jump to top / bottom</div></div>
+      </div>
+    </div>
+
+    <!-- Misc -->
+    <div class="section">
+      <div class="section-header misc"><span class="dot"></span>Misc</div>
+      <div class="shortcuts">
+        <div class="row"><div class="keys"><kbd class="prefix">prefix</kbd><span class="then">then</span><kbd>?</kbd></div><div class="desc">Show all key bindings</div></div>
+        <div class="row"><div class="keys"><kbd class="prefix">prefix</kbd><span class="then">then</span><kbd>:</kbd></div><div class="desc">Open command prompt</div></div>
+        <div class="row"><div class="keys"><kbd class="prefix">prefix</kbd><span class="then">then</span><kbd>t</kbd></div><div class="desc">Show clock (24h)</div></div>
+        <div class="row"><div class="keys"><kbd class="prefix">prefix</kbd><span class="then">then</span><kbd>~</kbd></div><div class="desc">Show tmux messages</div></div>
+        <div class="divider"></div>
+        <div class="row"><div class="keys"><kbd class="prefix">prefix</kbd><span class="then">then</span><kbd>M-a</kbd></div><div class="desc">Send prefix to inner session</div></div>
+        <div class="divider"></div>
+        <div class="row"><div class="keys"><kbd>mouse</kbd></div><div class="desc">Click pane / scroll / drag pane border</div></div>
+      </div>
+    </div>
+
+  </div>
+
+  <footer>prefix = Alt+a &nbsp;·&nbsp; vi-mode copy &nbsp;·&nbsp; windows base-index 1 &nbsp;·&nbsp; yank → wl-copy</footer>
+</div>
+</body>
+</html>
