@@ -224,6 +224,10 @@
     docker-compose
     awscli2
 
+    # AWS TUI tools
+    claws            # k9s-inspired TUI for AWS resource management (EC2, S3, Lambda, RDS, etc.)
+    e1s              # TUI for AWS ECS container management
+
     # Database tools
     postgresql      # PostgreSQL client (psql)
     
