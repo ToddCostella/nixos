@@ -486,6 +486,9 @@
   };
   # List services that you want to enable:
 
+  # fwupd - Firmware update daemon for Dell and other hardware
+  services.fwupd.enable = true;
+
   # OpenSSH is configured in remote-terminal.nix
 
   # Disable GNOME Tracker (file indexer) - was failing repeatedly
