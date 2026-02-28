@@ -4,39 +4,64 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Repository Overview
 
-This is a NixOS system configuration repository for a development environment on a Dell XPS laptop (hostname: `nixos-dev`). It contains declarative system configuration files that define the entire system state, including packages, services, and user settings. The system uses **Nix flakes** for reproducible builds and **Home Manager** (as a NixOS module) for declarative dotfile management.
+This is a multi-host NixOS configuration repository. It manages two hosts declaratively using **Nix flakes** and **Home Manager** (as a NixOS module):
+- `nixos-dev` — Dell XPS laptop, full desktop environment
+- `home-server` — Headless mini PC for DNS / home-lab services (hardware TBD)
 
 ## Architecture
 
-### System modules (imported by `configuration.nix`)
-- `configuration.nix` - Main NixOS configuration: system packages, services, hardware, virtualization
-- `hardware-configuration.nix` - Auto-generated hardware config (do not modify manually)
-- `remote-terminal.nix` - Mosh + SSH server hardening (tmux moved to home.nix)
-- `desktop-gnome.nix` - GNOME desktop environment
-- `desktop-icons.nix` - Custom desktop application icons
-- `playwright-dev.nix` - Playwright E2E testing dependencies (system libraries for Chromium)
-- `esp32-dev.nix` - ESP32 microcontroller development tools
-- `photo-restoration.nix` - Photo editing and restoration applications
-- `desktop-cosmic.nix` - COSMIC desktop (commented out — not available in current nixpkgs)
+```
+nixos-config/
+├── flake.nix                            # Two hosts, split home modules
+├── flake.lock                           # Pinned dependency versions
+├── hosts/
+│   ├── nixos-dev/
+│   │   ├── configuration.nix            # Laptop-specific config
+│   │   └── hardware-configuration.nix   # Auto-generated (do not modify manually)
+│   └── home-server/
+│       ├── configuration.nix            # Headless server config
+│       └── hardware-configuration.nix   # Placeholder until hardware is known
+├── modules/
+│   ├── common.nix                       # Shared base: nix settings, locale, avahi, core CLI
+│   ├── remote-terminal.nix              # Mosh + SSH hardening (imported by common.nix)
+│   ├── desktop-gnome.nix                # GNOME desktop environment
+│   ├── desktop-icons.nix                # Custom desktop application icons
+│   ├── playwright-dev.nix               # Playwright E2E testing dependencies
+│   ├── esp32-dev.nix                    # ESP32 microcontroller development tools
+│   ├── photo-restoration.nix            # Photo editing and restoration applications
+│   ├── desktop-cosmic.nix               # COSMIC desktop (commented out — not in current nixpkgs)
+│   ├── desktop-hyprland.nix             # Hyprland compositor
+│   ├── desktop-kde.nix                  # KDE Plasma desktop
+│   ├── desktop-cinnamon.nix             # Cinnamon desktop
+│   └── desktop-multi-de-compat.nix      # Multi-DE compatibility layer
+└── home/
+    ├── todd-base.nix                    # Headless-safe: git, zsh, tmux, SSH, AWS, CLI tools
+    └── todd-desktop.nix                 # GUI apps only (nixos-dev)
+```
 
 ### Flake & Home Manager
-- `flake.nix` - Flake inputs (nixpkgs unstable + home-manager/master), wraps `configuration.nix` and `home.nix`
+- `flake.nix` - Defines both `nixos-dev` and `home-server` nixosConfigurations
 - `flake.lock` - Pinned dependency versions (committed, update with `nix flake update`)
-- `home.nix` - Home Manager config for user "todd": git, zsh, tmux, SSH, AWS CLI, packages, aliases
+- `home/todd-base.nix` - Home Manager config for all hosts: git, zsh, tmux, SSH, AWS CLI, CLI packages
+- `home/todd-desktop.nix` - GUI packages imported only for `nixos-dev`
+
+### Module layers
+- `modules/common.nix` — Imported by both hosts. Handles: nix settings, locale, time zone, avahi, journald, core CLI packages, and imports `remote-terminal.nix`
+- `hosts/<name>/configuration.nix` — Host-specific settings. Sets `system.stateVersion`, `networking.hostName`, and imports relevant feature modules from `../../modules/`
 
 ## Key System Components
 
-- **Hostname**: `nixos-dev` (accessible as `nixos-dev.local` via mDNS)
-- **Desktop**: GNOME with GDM display manager (Wayland)
+- **Hosts**: `nixos-dev` (Dell XPS laptop, `nixos-dev.local`), `home-server` (headless, hardware TBD)
+- **Desktop**: GNOME with GDM display manager (Wayland) — nixos-dev only
 - **Terminal**: WezTerm (default), tmux for session management
-- **Shell**: zsh with oh-my-zsh (robbyrussell theme) — configured in `home.nix`
-- **Virtualization**: Docker (auto-start) + QEMU/KVM/libvirtd with nested virtualization
-- **Audio**: PipeWire (ALSA, PulseAudio compat, JACK)
-- **User**: Primary user "todd" — groups: networkmanager, wheel, docker, dialout, libvirtd
+- **Shell**: zsh with oh-my-zsh (robbyrussell theme) — configured in `home/todd-base.nix`
+- **Virtualization**: Docker (auto-start) + QEMU/KVM/libvirtd with nested virtualization — nixos-dev only
+- **Audio**: PipeWire (ALSA, PulseAudio compat, JACK) — nixos-dev only
+- **User**: Primary user "todd" — groups: networkmanager, wheel, docker, dialout, libvirtd (nixos-dev)
 
-## Home Manager (home.nix)
+## Home Manager (home/)
 
-All user-level dotfiles are managed declaratively in `home.nix`. Changes here apply atomically with `sudo nixos-rebuild switch`.
+All user-level dotfiles are managed declaratively. Changes apply atomically with `sudo nixos-rebuild switch`.
 
 ### Managed dotfiles
 | File | Tool |
@@ -50,7 +75,7 @@ All user-level dotfiles are managed declaratively in `home.nix`. Changes here ap
 | `~/.secrets.env.tpl` | `home.file` (API key template) |
 | `~/.ssh/allowed_signers` | `home.file` |
 
-### Shell aliases (defined in home.nix)
+### Shell aliases (defined in home/todd-base.nix)
 - `lg` — lazygit
 - `acv` — activate Python venv
 - `db/dbf/dbb` — navigate to buoyancy-platform dirs
@@ -81,10 +106,10 @@ All profiles use `credential_process` — keys stored in 1Password `Private` vau
 
 ### Adding a new secret
 1. Add the value to 1Password
-2. Add `op://vault/item/field` reference to `~/.secrets.env.tpl` in `home.nix` (or a new `home.file` template)
+2. Add `op://vault/item/field` reference to `~/.secrets.env.tpl` in `home/todd-base.nix` (or a new `home.file` template)
 3. Rebuild and run `refresh-secrets`
 
-## tmux Configuration (home.nix)
+## tmux Configuration (home/todd-base.nix)
 
 - **Prefix**: `Alt-a` (M-a)
 - **Theme**: Tokyo Night (night style)
@@ -97,13 +122,13 @@ All profiles use `credential_process` — keys stored in 1Password `Private` vau
 ## 1Password SSH Agent
 
 - SSH keys managed by 1Password SSH agent — no private key files needed on disk
-- Agent socket: `~/.1password/agent.sock` (configured in `programs.ssh` in `home.nix`)
+- Agent socket: `~/.1password/agent.sock` (configured in `programs.ssh` in `home/todd-base.nix`)
 - Git commit signing via `op-ssh-sign` using key `ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAILR93ztnY9HKCSLlFtwsdrEcwx8ovgpGhJTBB7XS2l5o`
 - GnuPG SSH support is disabled (`enableSSHSupport = false`) — 1Password handles SSH exclusively
 
 ## Screenshot Tools
 
-Custom shell scripts installed as system packages:
+Custom shell scripts installed as system packages (nixos-dev only):
 - `screenshot-area` - Area selection with Satty annotation
 - `screenshot-full` - Full screen with Satty annotation
 - `screenshot-window` - Window capture with Satty annotation
@@ -118,8 +143,8 @@ Custom shell scripts installed as system packages:
 
 ## Network & Firewall
 
-- Open TCP ports: 3000 (Vite dev server), 8080 (WebSocket backend / mitmproxy)
-- mDNS enabled via Avahi (`nixos-dev.local`)
+- Open TCP ports: 3000/8080 (nixos-dev: Vite dev server + WebSocket/mitmproxy), 53/80 (home-server: DNS/HTTP)
+- mDNS enabled via Avahi on all hosts
 - SSH: key-only auth, no root login, allows user `todd`
 - Mosh: enabled (auto-opens UDP 60000-61000)
 
@@ -127,7 +152,7 @@ Custom shell scripts installed as system packages:
 
 ### System Management
 ```bash
-# Apply configuration changes (requires sudo) — applies BOTH system and home.nix
+# Apply configuration changes (requires sudo) — applies BOTH system and home manager
 sudo nixos-rebuild switch --flake ~/nixos-config#nixos-dev
 
 # Dry-run to check for syntax errors
@@ -141,6 +166,10 @@ sudo nixos-rebuild rollback
 
 # Update all flake inputs (nixpkgs + home-manager)
 nix flake update ~/nixos-config
+
+# Deploy to home-server remotely (once hardware is ready)
+nixos-rebuild switch --flake ~/nixos-config#home-server \
+  --target-host todd@home-server.local --use-remote-sudo
 ```
 
 ### Secrets
@@ -154,20 +183,31 @@ aws sts get-caller-identity --profile toddcostella
 
 ## Development Workflow
 
-1. Edit the relevant `.nix` file (`configuration.nix`, `home.nix`, or a module)
+1. Edit the relevant `.nix` file (a module in `modules/`, a host config in `hosts/`, or `home/`)
 2. Test with `sudo nixos-rebuild dry-build --flake ~/nixos-config#nixos-dev`
 3. Apply with `sudo nixos-rebuild switch --flake ~/nixos-config#nixos-dev`
 4. Commit and push after successful application
 
 ## Important Notes
 
-- Never modify `hardware-configuration.nix` — it's auto-generated
-- System packages go in `environment.systemPackages` in `configuration.nix`
-- User packages and dotfiles go in `home.nix`
-- SSH server config is in `remote-terminal.nix`; SSH client config is in `home.nix`
+- Never modify `hosts/nixos-dev/hardware-configuration.nix` — it's auto-generated
+- Shared settings (locale, nix gc, avahi, etc.) go in `modules/common.nix`
+- Laptop/desktop packages go in `hosts/nixos-dev/configuration.nix`
+- CLI user packages go in `home/todd-base.nix`; GUI user packages in `home/todd-desktop.nix`
+- SSH server config is in `modules/remote-terminal.nix`; SSH client config is in `home/todd-base.nix`
 - `flake.lock` must be committed — it pins exact dependency versions
 - The Debian partition is mounted at `/mnt/debian` (nvme0n1p2)
 - Weekly garbage collection removes generations older than 30 days
 - Journal capped at 500MB / 1 month retention
 - GNOME Tracker (localsearch/tinysparql) is disabled
 - `~/.secrets.env` is NOT committed — regenerate with `refresh-secrets`
+- `users.users.todd.extraGroups` is NOT merged by NixOS — each host must declare the full list
+- `system.stateVersion` is set per-host, NOT in `modules/common.nix`
+
+## Adding a New Host
+
+1. Create `hosts/<hostname>/configuration.nix` and `hosts/<hostname>/hardware-configuration.nix`
+2. Add the host to `flake.nix` following the existing pattern
+3. Import `modules/common.nix` and any needed feature modules
+4. Set `system.stateVersion` to match the NixOS installer ISO version used
+5. Replace the placeholder hardware config with output of `nixos-generate-config --root /mnt`

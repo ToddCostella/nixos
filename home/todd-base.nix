@@ -1,5 +1,5 @@
-# Home Manager configuration for todd
-# Manages user-level dotfiles declaratively alongside system configuration.
+# Home Manager base configuration for todd — headless-safe.
+# Applied on all hosts. GUI packages are in todd-desktop.nix.
 #
 # Secrets pattern: sensitive values are never stored here. Instead:
 #   - SSH keys: managed by 1Password SSH agent (IdentityAgent ~/.1password/agent.sock)
@@ -96,7 +96,6 @@
     sessionVariables = {
       PATH = "/home/todd/.local/bin:$PATH";
       # Prevent SSH from falling back to GUI askpass (e.g. during git push/fetch).
-      # With 1Password as the SSH agent, GUI prompts are unnecessary and disruptive.
       SSH_ASKPASS_REQUIRE = "never";
       # Ensure pandoc (used by Apostrophe) can write temp files.
       TMPDIR = "/tmp";
@@ -241,7 +240,6 @@
   };
 
   # --- 1Password credential templates (op:// URIs — safe to commit) ---
-  # Resolved at runtime via `op --cache inject`; never stored in plaintext.
   home.file = {
     ".aws/1pw/default.json".text = builtins.toJSON {
       Version = 1;
@@ -264,7 +262,6 @@
       SecretAccessKey = "{{ op://Private/AWS buoyancy-dev/aws_secret_access_key }}";
     };
     # API key template — run `refresh-secrets` to inject into ~/.secrets.env
-    # Source this file in your shell or per-project .envrc
     ".secrets.env.tpl".text = ''
       export ANTHROPIC_API_KEY="{{ op://Private/Anthropic API Key/api-key }}"
     '';
@@ -274,9 +271,7 @@
     '';
   };
 
-  # --- User packages ---
-  # Dev tools moved here from environment.systemPackages.
-  # Note: neovim is installed as a package only — ~/.config/nvim/ is NOT managed here.
+  # --- User packages (CLI tools — headless-safe) ---
   home.packages = with pkgs; [
     neovim
     htop
@@ -294,19 +289,5 @@
     atuin
     tree
     gh
-    slack
-    obsidian
-    signal-desktop
-    zoom-us
-    figma-linux
-    dbeaver-bin
-    bcompare
-    wezterm
-    aerc
-    hugo
-    dropbox
-    pinta
-    apostrophe
-    rainfrog
   ];
 }
