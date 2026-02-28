@@ -44,9 +44,6 @@
     LC_TIME = "en_US.UTF-8";
   };
 
-  # Allow unfree packages
-  nixpkgs.config.allowUnfree = true;
-
   # Base user definition (headless defaults; host overrides extraGroups)
   users.users.todd = {
     isNormalUser = true;

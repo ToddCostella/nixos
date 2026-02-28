@@ -16,12 +16,16 @@
       home-manager.useUserPackages = true;
       home-manager.backupFileExtension = "hm-backup";
     };
+    nixpkgsConfig = {
+      nixpkgs.config.allowUnfree = true;
+    };
   in
   {
     nixosConfigurations.nixos-dev = nixpkgs.lib.nixosSystem {
       system = "x86_64-linux";
       specialArgs = { inherit inputs; };
       modules = [
+        nixpkgsConfig
         ./modules/common.nix
         ./hosts/nixos-dev/configuration.nix
         home-manager.nixosModules.home-manager
@@ -37,6 +41,7 @@
       system = "x86_64-linux";
       specialArgs = { inherit inputs; };
       modules = [
+        nixpkgsConfig
         ./modules/common.nix
         ./hosts/home-server/configuration.nix
         home-manager.nixosModules.home-manager
