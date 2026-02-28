@@ -12,12 +12,9 @@
   outputs = { self, nixpkgs, home-manager, ... }@inputs:
   let
     hmBase = {
-      home-manager.useGlobalPkgs = true;
+      home-manager.useGlobalPkgs = false;
       home-manager.useUserPackages = true;
       home-manager.backupFileExtension = "hm-backup";
-    };
-    nixpkgsConfig = {
-      nixpkgs.config.allowUnfree = true;
     };
   in
   {
@@ -25,7 +22,6 @@
       system = "x86_64-linux";
       specialArgs = { inherit inputs; };
       modules = [
-        nixpkgsConfig
         ./modules/common.nix
         ./hosts/nixos-dev/configuration.nix
         home-manager.nixosModules.home-manager
@@ -41,7 +37,6 @@
       system = "x86_64-linux";
       specialArgs = { inherit inputs; };
       modules = [
-        nixpkgsConfig
         ./modules/common.nix
         ./hosts/home-server/configuration.nix
         home-manager.nixosModules.home-manager
