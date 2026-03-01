@@ -14,6 +14,11 @@
   # Full user group list for server
   users.users.todd.extraGroups = [ "networkmanager" "wheel" ];
 
+  # Authorize Todd's 1Password SSH key for remote access and nixos-rebuild --target-host
+  users.users.todd.openssh.authorizedKeys.keys = [
+    "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAILR93ztnY9HKCSLlFtwsdrEcwx8ovgpGhJTBB7XS2l5o"
+  ];
+
   # 1Password (needed for git signing in todd-base.nix)
   programs._1password.enable = true;
   programs._1password-gui = {
