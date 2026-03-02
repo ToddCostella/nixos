@@ -8,6 +8,10 @@
   boot.loader.systemd-boot.enable = true;
   boot.loader.efi.canTouchEfiVariables = true;
 
+  # Blacklist Broadcom WiFi driver — causes CPU soft lockups on this hardware
+  # Using wired ethernet only
+  boot.blacklistedKernelModules = [ "brcmfmac" "brcmfmac_wcc" ];
+
   networking.hostName = "home-server";
   networking.networkmanager.enable = true;
 
