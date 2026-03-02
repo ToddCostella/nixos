@@ -29,6 +29,9 @@
   # DNS server (configure once hardware is known)
   # services.adguardhome = { enable = true; ... };
 
+  # Allow passwordless sudo so nixos-rebuild --target-host works without a local password set
+  security.sudo.wheelNeedsPassword = false;
+
   networking.firewall.allowedTCPPorts = [ 53 80 ];
 
   environment.systemPackages = with pkgs; [ tmux ];
