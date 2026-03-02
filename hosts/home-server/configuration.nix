@@ -13,7 +13,7 @@
 
   # Full user group list for server
   users.users.todd.extraGroups = [ "networkmanager" "wheel" ];
-  users.users.todd.hashedPassword = "$6$D7R52TwNzggZjJXx$1kW5hXS5F5/q9VVlO25oSOhJ.DOW0fWw8eHcHGQx.QFO7fJegLzeVRkqPGiK1iOTrvV251IYdwBNAoPPAYZ7T1";
+  users.users.todd.hashedPassword = "$6$6UQ72RZ1aVbpnGbT$gMYijN0DCJwP73sqjrfwSuXg.ZAgXCX5XDs1MuJoj0eLm2sr/XMv6gBmn0Be/HSwRqAT97ZYqX3xAfWYGT.o..";
 
   # Authorize Todd's 1Password SSH key for remote access and nixos-rebuild --target-host
   users.users.todd.openssh.authorizedKeys.keys = [
