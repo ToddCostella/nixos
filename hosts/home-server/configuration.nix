@@ -15,6 +15,14 @@
   networking.hostName = "home-server";
   networking.networkmanager.enable = true;
 
+  # Static IP on wired interface
+  networking.interfaces.enp1s0.ipv4.addresses = [{
+    address = "10.0.0.22";
+    prefixLength = 24;
+  }];
+  networking.defaultGateway = "10.0.0.1";
+  networking.nameservers = [ "127.0.0.1" "1.1.1.1" ];  # Use local AdGuard, fallback to Cloudflare
+
   # Full user group list for server
   users.users.todd.extraGroups = [ "networkmanager" "wheel" ];
 
