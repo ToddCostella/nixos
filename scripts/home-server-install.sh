@@ -5,7 +5,7 @@
 
 set -euo pipefail
 
-DRIVE="/dev/mmcblk1"
+DRIVE="/dev/mmcblk0"
 REPO="https://github.com/ToddCostella/nixos.git"
 
 echo "==> Verifying drive: $DRIVE"
