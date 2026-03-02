@@ -25,9 +25,9 @@ mkfs.fat -F 32 -n boot "${DRIVE}p1"
 mkfs.ext4 -L nixos -F "${DRIVE}p2"
 
 echo "==> Mounting"
-mount /dev/disk/by-label/nixos /mnt
+mount "${DRIVE}p2" /mnt
 mkdir -p /mnt/boot
-mount /dev/disk/by-label/boot /mnt/boot
+mount "${DRIVE}p1" /mnt/boot
 
 echo "==> Generating hardware configuration"
 nixos-generate-config --root /mnt
