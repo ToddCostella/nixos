@@ -13,6 +13,7 @@
 
   # Full user group list for server
   users.users.todd.extraGroups = [ "networkmanager" "wheel" ];
+  users.users.todd.hashedPassword = "$6$D7R52TwNzggZjJXx$1kW5hXS5F5/q9VVlO25oSOhJ.DOW0fWw8eHcHGQx.QFO7fJegLzeVRkqPGiK1iOTrvV251IYdwBNAoPPAYZ7T1";
 
   # Authorize Todd's 1Password SSH key for remote access and nixos-rebuild --target-host
   users.users.todd.openssh.authorizedKeys.keys = [
@@ -28,8 +29,6 @@
 
   # DNS server (configure once hardware is known)
   # services.adguardhome = { enable = true; ... };
-
-  security.sudo.wheelNeedsPassword = false;
 
   networking.firewall.allowedTCPPorts = [ 53 80 ];
 
