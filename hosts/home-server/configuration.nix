@@ -8,10 +8,14 @@
   boot.loader.systemd-boot.enable = true;
   boot.loader.efi.canTouchEfiVariables = true;
 
-  # Blacklist Broadcom WiFi driver at initrd stage — causes CPU soft lockups
-  # that corrupt the eMMC filesystem. Using wired ethernet only.
+  # Blacklist Broadcom WiFi driver — causes CPU soft lockups on this hardware
+  # Using wired ethernet only.
   boot.blacklistedKernelModules = [ "brcmfmac" "brcmfmac_wcc" ];
   boot.initrd.blacklistedKernelModules = [ "brcmfmac" "brcmfmac_wcc" ];
+
+  # Load eMMC modules early in initrd — Intel Cherryview eMMC is slow to initialise
+  # and times out waiting for the root device without this
+  boot.initrd.availableKernelModules = [ "sdhci_acpi" "mmc_block" "mmc_core" ];
 
   networking.hostName = "home-server";
   networking.networkmanager.enable = true;
