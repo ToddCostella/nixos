@@ -26,13 +26,32 @@
     polkitPolicyOwners = [ "todd" ];
   };
 
-  # DNS server (configure once hardware is known)
-  # services.adguardhome = { enable = true; ... };
+  # AdGuard Home — local DNS server with ad blocking
+  services.adguardhome = {
+    enable = true;
+    mutableSettings = true;  # Allow changes via web UI to persist
+    settings = {
+      http.address = "0.0.0.0:3000";  # Web UI on port 3000
+      dns = {
+        bind_hosts = [ "0.0.0.0" ];
+        port = 53;
+        upstream_dns = [
+          "https://dns.cloudflare.com/dns-query"  # Cloudflare DoH
+          "https://dns.google/dns-query"           # Google DoH fallback
+        ];
+        bootstrap_dns = [
+          "1.1.1.1"
+          "8.8.8.8"
+        ];
+      };
+    };
+  };
 
   # Allow passwordless sudo so nixos-rebuild --target-host works without a local password set
   security.sudo.wheelNeedsPassword = false;
 
-  networking.firewall.allowedTCPPorts = [ 53 80 ];
+  networking.firewall.allowedTCPPorts = [ 53 80 3000 ];  # DNS, HTTP, AdGuard web UI
+  networking.firewall.allowedUDPPorts = [ 53 ];           # DNS over UDP
 
   environment.systemPackages = with pkgs; [ tmux ];
 
