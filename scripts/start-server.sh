@@ -7,7 +7,7 @@
 HOST="todd@home-server.local"
 SESSION="🖥️ home-server"
 
-ssh "$HOST" bash <<'REMOTE'
+ssh -t "$HOST" bash <<'REMOTE'
 SESSION="🖥️ home-server"
 
 # If session already exists, just attach
