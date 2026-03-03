@@ -20,7 +20,7 @@
   networking.networkmanager.enable = true;
 
   # Static IP — update interface name after first boot if different (check with `ip addr`)
-  networking.interfaces.enp2s0.ipv4.addresses = [{
+  networking.interfaces.eno1.ipv4.addresses = [{
     address = "10.0.0.8";
     prefixLength = 24;
   }];
