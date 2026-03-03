@@ -8,24 +8,23 @@
   boot.loader.systemd-boot.enable = true;
   boot.loader.efi.canTouchEfiVariables = true;
 
-  # Blacklist Broadcom WiFi driver — causes CPU soft lockups on this hardware
-  # Using wired ethernet only.
-  boot.blacklistedKernelModules = [ "brcmfmac" "brcmfmac_wcc" ];
+  # ZFS support for media pool (sdb+sdd mirror, sdc cache)
+  boot.supportedFilesystems = [ "zfs" ];
+  boot.zfs.forceImportRoot = false;
+  services.zfs.autoScrub.enable = true;   # Weekly integrity check
+  services.zfs.autoSnapshot.enable = true; # Automatic snapshots
 
-  # Load eMMC modules early in initrd — Intel Cherryview eMMC is slow to initialise
-  # and times out waiting for the root device without this
-  boot.initrd.availableKernelModules = [ "sdhci_acpi" "mmc_block" "mmc_core" ];
 
   networking.hostName = "home-server";
   networking.networkmanager.enable = true;
 
-  # Static IP on wired interface
-  networking.interfaces.enp1s0.ipv4.addresses = [{
-    address = "10.0.0.20";
-    prefixLength = 24;
-  }];
-  networking.defaultGateway = "10.0.0.1";
-  networking.nameservers = [ "127.0.0.1" "1.1.1.1" ];  # Use local AdGuard, fallback to Cloudflare
+  # Static IP — interface name set after first boot (check with `ip addr`)
+  # networking.interfaces.enp1s0.ipv4.addresses = [{
+  #   address = "10.0.0.20";
+  #   prefixLength = 24;
+  # }];
+  # networking.defaultGateway = "10.0.0.1";
+  # networking.nameservers = [ "127.0.0.1" "1.1.1.1" ];
 
   # Full user group list for server
   users.users.todd.extraGroups = [ "networkmanager" "wheel" ];
