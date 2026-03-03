@@ -1,19 +1,32 @@
 #!/usr/bin/env bash
 
-# Open home-server SSH connections as windows in the current tmux session.
+# Home Server Management Environment Setup Script
+# Creates a tmux session with windows for managing home-server
 
 HOST="todd@home-server.local"
+SESSION="🖥️ home-server"
 
-# Get current session name
-SESSION=$(tmux display-message -p '#S')
+# Kill existing session if it exists
+tmux kill-session -t "$SESSION" 2>/dev/null
 
-tmux new-window -t "$SESSION" -n "🖥️ shell"
-tmux send-keys -t "$SESSION:🖥️ shell" "ssh $HOST" Enter
+# Create session with first window: Shell
+tmux new-session -d -s "$SESSION" -n "Shell"
+tmux send-keys -t "$SESSION:1" "ssh $HOST" Enter
 
-tmux new-window -t "$SESSION" -n "🖥️ logs"
-tmux send-keys -t "$SESSION:🖥️ logs" "ssh $HOST 'sudo journalctl -f'" Enter
+# Window 2: Logs
+tmux new-window -t "$SESSION" -n "Logs"
+tmux send-keys -t "$SESSION:2" "ssh $HOST 'sudo journalctl -f'" Enter
 
-tmux new-window -t "$SESSION" -n "🖥️ adguard"
-tmux send-keys -t "$SESSION:🖥️ adguard" "ssh $HOST 'sudo journalctl -f -u adguardhome'" Enter
+# Window 3: AdGuard
+tmux new-window -t "$SESSION" -n "AdGuard"
+tmux send-keys -t "$SESSION:3" "ssh $HOST 'sudo journalctl -f -u adguardhome'" Enter
 
-tmux select-window -t "$SESSION:🖥️ shell"
+# Select window 1 and attach
+tmux select-window -t "$SESSION:1"
+
+# Attach if not already in tmux, otherwise switch
+if [ -z "$TMUX" ]; then
+  tmux attach -t "$SESSION"
+else
+  tmux switch-client -t "$SESSION"
+fi
