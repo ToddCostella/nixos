@@ -16,6 +16,7 @@
 
 
   networking.hostName = "home-server";
+  networking.hostId = "a1b2c3d4";  # Required for ZFS — must be unique per host
   networking.networkmanager.enable = true;
 
   # Static IP — update interface name after first boot if different (check with `ip addr`)

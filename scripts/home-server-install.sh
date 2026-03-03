@@ -27,6 +27,21 @@ echo ""
 read -rp "This will WIPE sda, sdb, sdc, sdd. Type 'yes' to continue: " confirm
 [ "$confirm" = "yes" ] || { echo "Aborted."; exit 1; }
 
+echo "==> Cleaning up any previous install state"
+umount /mnt/boot 2>/dev/null || true
+umount /mnt 2>/dev/null || true
+zpool destroy media 2>/dev/null || true
+wipefs -a "$SYSTEM_DRIVE" || true
+wipefs -a "$ZFS_MIRROR_1" || true
+wipefs -a "$ZFS_MIRROR_2" || true
+wipefs -a "$ZFS_CACHE" || true
+sgdisk --zap-all "$SYSTEM_DRIVE" || true
+sgdisk --zap-all "$ZFS_MIRROR_1" || true
+sgdisk --zap-all "$ZFS_MIRROR_2" || true
+sgdisk --zap-all "$ZFS_CACHE" || true
+partprobe 2>/dev/null || true
+sleep 2
+
 echo "==> Partitioning system drive $SYSTEM_DRIVE"
 parted "$SYSTEM_DRIVE" -- mklabel gpt
 parted "$SYSTEM_DRIVE" -- mkpart ESP fat32 1MiB 512MiB
