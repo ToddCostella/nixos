@@ -31,6 +31,7 @@
 
   # Networking
   networking.hostName = "nixos-dev";
+  networking.nameservers = [ "10.0.0.8" "1.1.1.1" ];  # AdGuard Home, Cloudflare fallback
   networking.networkmanager = {
     enable = true;
     plugins = with pkgs; [
