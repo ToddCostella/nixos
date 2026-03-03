@@ -91,6 +91,9 @@
       # Session manager
       sx = "tmux-sessionx";
 
+      # Connect to home-server with distinct tmux session
+      hs = "~/nixos-config/scripts/start-server.sh";
+
       # Inject secrets from 1Password into ~/.secrets.env
       refresh-secrets = "op inject --in-file ~/.secrets.env.tpl --out-file ~/.secrets.env --force";
     };
