@@ -25,7 +25,7 @@
     prefixLength = 24;
   }];
   networking.defaultGateway = "10.0.0.1";
-  networking.nameservers = [ "1.1.1.1" "8.8.8.8" ];  # Update to 10.0.0.20 once AdGuard confirmed working
+  networking.nameservers = [ "127.0.0.1" "1.1.1.1" ];  # AdGuard on localhost, Cloudflare fallback
 
   # Full user group list for server
   users.users.todd.extraGroups = [ "networkmanager" "wheel" ];
@@ -66,10 +66,20 @@
   # Allow passwordless sudo so nixos-rebuild --target-host works without a local password set
   security.sudo.wheelNeedsPassword = false;
 
-  networking.firewall.allowedTCPPorts = [ 53 80 3000 ];  # DNS, HTTP, AdGuard web UI
-  networking.firewall.allowedUDPPorts = [ 53 ];           # DNS over UDP
+  # Jellyfin — media server, serves from ZFS media pool
+  services.jellyfin = {
+    enable = true;
+    dataDir = "/var/lib/jellyfin";
+    openFirewall = true;
+  };
+
+  # Give jellyfin user access to media pool
+  users.users.jellyfin.extraGroups = [ "render" "video" ];
+
+  networking.firewall.allowedTCPPorts = [ 53 80 3000 8096 ];  # DNS, HTTP, AdGuard web UI, Jellyfin
+  networking.firewall.allowedUDPPorts = [ 53 ];                # DNS over UDP
 
   environment.systemPackages = with pkgs; [ tmux ];
 
-  system.stateVersion = "25.05";  # Update to match installer ISO version
+  system.stateVersion = "25.11";
 }
