@@ -52,7 +52,7 @@ zpool create -f \
   media mirror "$ZFS_MIRROR_1" "$ZFS_MIRROR_2"
 
 echo "==> Adding L2ARC cache to ZFS pool"
-zpool add media cache "$ZFS_CACHE"
+zpool add -f media cache "$ZFS_CACHE"
 
 echo "==> Creating ZFS datasets"
 zfs create media/jellyfin
