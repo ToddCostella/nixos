@@ -1,33 +1,19 @@
 #!/usr/bin/env bash
 
-# Launch a tmux session on home-server and attach to it.
-# The remote session uses a red status bar so it's visually distinct
-# from local sessions.
+# Open home-server SSH connections as windows in the current tmux session.
 
 HOST="todd@home-server.local"
-SESSION="🖥️ home-server"
 
-ssh -t "$HOST" "
-  SESSION='🖥️ home-server'
+# Get current session name
+SESSION=$(tmux display-message -p '#S')
 
-  if tmux has-session -t \"\$SESSION\" 2>/dev/null; then
-    tmux attach -t \"\$SESSION\"
-    exit 0
-  fi
+tmux new-window -t "$SESSION" -n "🖥️ shell"
+tmux send-keys -t "$SESSION:🖥️ shell" "ssh $HOST" Enter
 
-  tmux new-session -d -s \"\$SESSION\" -n 'Shell'
+tmux new-window -t "$SESSION" -n "🖥️ logs"
+tmux send-keys -t "$SESSION:🖥️ logs" "ssh $HOST 'sudo journalctl -f'" Enter
 
-  tmux new-window -t \"\$SESSION\" -n 'Logs'
-  tmux send-keys -t \"\$SESSION:2\" 'sudo journalctl -f' Enter
+tmux new-window -t "$SESSION" -n "🖥️ adguard"
+tmux send-keys -t "$SESSION:🖥️ adguard" "ssh $HOST 'sudo journalctl -f -u adguardhome'" Enter
 
-  tmux new-window -t \"\$SESSION\" -n 'AdGuard'
-  tmux send-keys -t \"\$SESSION:3\" 'sudo journalctl -f -u adguardhome' Enter
-
-  tmux set-option -t \"\$SESSION\" status-style 'bg=colour160,fg=colour255'
-  tmux set-option -t \"\$SESSION\" window-status-current-style 'bg=colour88,fg=colour255,bold'
-  tmux set-option -t \"\$SESSION\" status-left '#[bg=colour88,fg=colour255,bold] 🖥️ home-server #[default] '
-  tmux set-option -t \"\$SESSION\" status-right '#[fg=colour255] %H:%M %d-%b '
-
-  tmux select-window -t \"\$SESSION:1\"
-  tmux attach -t \"\$SESSION\"
-"
+tmux select-window -t "$SESSION:🖥️ shell"
