@@ -21,7 +21,7 @@
 
   # Static IP on wired interface
   networking.interfaces.enp1s0.ipv4.addresses = [{
-    address = "10.0.0.22";
+    address = "10.0.0.20";
     prefixLength = 24;
   }];
   networking.defaultGateway = "10.0.0.1";
