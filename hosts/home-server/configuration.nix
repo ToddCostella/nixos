@@ -18,13 +18,13 @@
   networking.hostName = "home-server";
   networking.networkmanager.enable = true;
 
-  # Static IP — interface name set after first boot (check with `ip addr`)
-  # networking.interfaces.enp1s0.ipv4.addresses = [{
-  #   address = "10.0.0.20";
-  #   prefixLength = 24;
-  # }];
-  # networking.defaultGateway = "10.0.0.1";
-  # networking.nameservers = [ "127.0.0.1" "1.1.1.1" ];
+  # Static IP — update interface name after first boot if different (check with `ip addr`)
+  networking.interfaces.enp2s0.ipv4.addresses = [{
+    address = "10.0.0.8";
+    prefixLength = 24;
+  }];
+  networking.defaultGateway = "10.0.0.1";
+  networking.nameservers = [ "1.1.1.1" "8.8.8.8" ];  # Update to 10.0.0.20 once AdGuard confirmed working
 
   # Full user group list for server
   users.users.todd.extraGroups = [ "networkmanager" "wheel" ];
