@@ -76,7 +76,22 @@
   # Give jellyfin user access to media pool
   users.users.jellyfin.extraGroups = [ "render" "video" ];
 
-  networking.firewall.allowedTCPPorts = [ 53 80 3000 8096 ];  # DNS, HTTP, AdGuard web UI, Jellyfin
+  # Navidrome — music server, Subsonic-compatible API
+  services.navidrome = {
+    enable = true;
+    openFirewall = true;
+    settings = {
+      MusicFolder = "/media/music";
+      Address = "0.0.0.0";
+      Port = 4533;
+      EnableInsightsCollector = false;
+    };
+  };
+
+  # Allow Navidrome to read the ZFS music dataset (systemd sandboxing)
+  systemd.services.navidrome.serviceConfig.BindReadOnlyPaths = [ "/media/music" ];
+
+  networking.firewall.allowedTCPPorts = [ 53 80 3000 4533 8096 ];  # DNS, HTTP, AdGuard web UI, Navidrome, Jellyfin
   networking.firewall.allowedUDPPorts = [ 53 ];                # DNS over UDP
 
   environment.systemPackages = with pkgs; [ tmux ];
