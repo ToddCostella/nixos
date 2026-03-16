@@ -6,8 +6,15 @@
 BASE_DIR="/home/todd/nixos-config"
 SESSION="🛠️ nixos"
 
-# Kill existing session if it exists
-tmux kill-session -t "$SESSION" 2>/dev/null
+# Kill existing session if it exists (safe when called from within tmux)
+if tmux has-session -t "$SESSION" 2>/dev/null; then
+  # If we're currently attached to this session, switch away first
+  if [ -n "$TMUX" ] && [ "$(tmux display-message -p '#S')" = "$SESSION" ]; then
+    tmux new-session -d -s "__tmp_safe$$" 2>/dev/null
+    tmux switch-client -t "__tmp_safe$$"
+  fi
+  tmux kill-session -t "$SESSION"
+fi
 
 # Create session with first window: Claude AI
 tmux new-session -d -s "$SESSION" -n "Claude AI" -c "$BASE_DIR"

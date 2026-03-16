@@ -261,6 +261,24 @@ bash ~/nixos-config/start-dev.sh
 | NixOS channel | nixos-unstable (via flake) |
 | Home Manager | master (via flake) |
 
+## Troubleshooting
+
+### Numbered tmux sessions accumulating (11, 13, 14, 16…)
+
+These are created by **tmux-resurrect** during restore when it can't match a saved session to a running named session. They get saved by continuum and recreated on every restore, perpetuating the cycle.
+
+**Fix:** kill them all, then let continuum save a clean snapshot:
+
+```bash
+# Kill all purely numeric sessions
+tmux list-sessions -F '#{session_name}' | grep -E '^[0-9]+$' | xargs -I{} tmux kill-session -t {}
+
+# Force continuum to save the clean state immediately
+~/.config/tmux/plugins/tmux-resurrect/scripts/save.sh
+```
+
+Make sure your named sessions (nixos, dev-buoyancy, gloom) are running before the save fires, otherwise they'll be missing from the snapshot and the cycle may repeat.
+
 ## Important Notes
 
 - **Never modify** `hardware-configuration.nix` — auto-generated

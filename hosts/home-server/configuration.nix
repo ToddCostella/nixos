@@ -94,7 +94,62 @@
   networking.firewall.allowedTCPPorts = [ 53 80 3000 4533 8096 ];  # DNS, HTTP, AdGuard web UI, Navidrome, Jellyfin
   networking.firewall.allowedUDPPorts = [ 53 ];                # DNS over UDP
 
-  environment.systemPackages = with pkgs; [ tmux ];
+  environment.systemPackages = with pkgs; [
+    tmux
+    beets
+  ];
+
+  # Beets config for user todd
+  environment.etc."beets/config.yaml".text = ''
+    directory: /media/music
+    library: /var/lib/beets/library.db
+
+    import:
+      move: yes
+      write: yes
+      timid: no
+      quiet: yes
+      log: /var/log/beets/import.log
+
+    match:
+      strong_rec_thresh: 0.10   # Accept low-confidence matches (best guess)
+
+    plugins: fetchart chroma
+
+    fetchart:
+      auto: yes
+
+    paths:
+      default: $albumartist/$album/$track - $title
+      singleton: $artist/Singles/$title
+      comp: Various Artists/$album/$track - $title
+  '';
+
+  # Ensure beets library and log dirs exist
+  systemd.tmpfiles.rules = [
+    "d /var/lib/beets 0755 todd users -"
+    "d /var/log/beets  0755 todd users -"
+  ];
+
+  # Beets import service — runs as todd, tags and reorganises /media/music
+  systemd.services.beets-import = {
+    description = "Beets music library auto-import and tagging";
+    serviceConfig = {
+      Type = "oneshot";
+      User = "todd";
+      ExecStart = "${pkgs.beets}/bin/beet --config /etc/beets/config.yaml import /media/music";
+    };
+  };
+
+  # Nightly timer — runs at 2am
+  systemd.timers.beets-import = {
+    description = "Nightly beets music library import";
+    wantedBy = [ "timers.target" ];
+    timerConfig = {
+      OnCalendar = "*-*-* 02:00:00";
+      Persistent = true;  # Run on next boot if missed
+    };
+  };
 
   system.stateVersion = "25.11";
 }
