@@ -283,7 +283,7 @@
   # --- User packages (CLI tools — headless-safe) ---
   home.packages = with pkgs; [
     neovim
-    htop
+    btop
     lazygit
     lazydocker
     bat

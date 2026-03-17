@@ -169,7 +169,7 @@ nix flake update ~/nixos-config
 
 # Deploy to home-server remotely (once hardware is ready)
 nixos-rebuild switch --flake ~/nixos-config#home-server \
-  --target-host todd@home-server.local --use-remote-sudo
+  --target-host todd@10.0.0.8 --sudo
 ```
 
 ### Secrets

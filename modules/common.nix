@@ -114,7 +114,7 @@
     vnstat
 
     # System utilities
-    htop
+    btop
     jq
     ripgrep
     fd
