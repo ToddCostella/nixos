@@ -18,12 +18,29 @@
     TERMINAL = "wezterm";
   };
 
+  # Declaratively enable GNOME extensions
+  programs.dconf.profiles.user.databases = [{
+    settings = {
+      "org/gnome/shell" = {
+        enabled-extensions = [
+          "forge@jmmaranan.com"
+          "workspace-indicator@gnome-shell-extensions.gcampax.github.com"
+          "just-perfection-desktop@just-perfection"
+          "tactile@lundal.io"
+          "switcher@landau.fi"
+          "sound-output-device-chooser@kgshank.net"
+        ];
+      };
+    };
+  }];
+
   # GNOME-specific packages
   environment.systemPackages = with pkgs; [
     # GNOME Extensions
     gnomeExtensions.forge
     gnomeExtensions.workspace-indicator
     gnomeExtensions.just-perfection
+    gnomeExtensions.sound-output-device-chooser
 
     # GNOME Utilities
     gnome-tweaks
