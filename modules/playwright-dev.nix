@@ -32,12 +32,12 @@
     libxkbcommon
 
     # X11 libraries
-    xorg.libX11
-    xorg.libXcomposite
-    xorg.libXdamage
-    xorg.libXext
-    xorg.libXfixes
-    xorg.libXrandr
+    libx11
+    libxcomposite
+    libxdamage
+    libxext
+    libxfixes
+    libxrandr
 
     # Graphics
     mesa
