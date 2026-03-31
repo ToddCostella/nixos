@@ -1,6 +1,6 @@
 # NixOS Development Environment Configuration
 
-A comprehensive NixOS system configuration for a development-focused desktop environment. Uses **Nix flakes** for reproducible builds and **Home Manager** for declarative dotfile management with **1Password** as the secrets backend.
+A multi-host NixOS configuration for a development-focused desktop and headless home server. Uses **Nix flakes** for reproducible builds and **Home Manager** for declarative dotfile management with **1Password** as the secrets backend.
 
 ## Quick Start
 
@@ -20,23 +20,38 @@ nix flake update ~/nixos-config
 
 ## Repository Structure
 
-| File | Description |
-|------|-------------|
-| `flake.nix` | Flake inputs and outputs — entry point for all builds |
-| `flake.lock` | Pinned dependency versions (committed to git) |
-| `configuration.nix` | System config: packages, services, hardware, virtualization |
-| `home.nix` | Home Manager: dotfiles, user packages, aliases, secrets |
-| `hardware-configuration.nix` | Auto-generated hardware config (do not modify) |
-| `remote-terminal.nix` | Mosh + SSH server hardening |
-| `desktop-gnome.nix` | GNOME desktop environment (default) |
-| `desktop-hyprland.nix` | Hyprland Wayland compositor (specialisation) |
-| `desktop-cosmic.nix` | COSMIC desktop — System76 (specialisation) |
-| `desktop-kde.nix` | KDE Plasma 6 (specialisation) |
-| `desktop-icons.nix` | Custom desktop icons |
-| `esp32-dev.nix` | ESP32 development environment |
-| `photo-restoration.nix` | Photo editing and restoration tools |
-| `playwright-dev.nix` | Playwright E2E testing dependencies |
-| `start-dev.sh` | Launch tmux dev session for this repo |
+```
+nixos-config/
+├── flake.nix                        # Two hosts, split home modules
+├── flake.lock                       # Pinned dependency versions
+├── hosts/
+│   ├── nixos-dev/
+│   │   ├── configuration.nix        # Laptop-specific config + specialisations
+│   │   └── hardware-configuration.nix
+│   └── home-server/
+│       ├── configuration.nix        # Headless server config
+│       └── hardware-configuration.nix
+├── modules/
+│   ├── common.nix                   # Shared: nix settings, locale, avahi, core CLI
+│   ├── remote-terminal.nix          # Mosh + SSH hardening
+│   ├── desktop-gnome.nix            # GNOME desktop environment
+│   ├── desktop-icons.nix            # Custom desktop application icons
+│   ├── playwright-dev.nix           # Playwright E2E testing dependencies
+│   ├── esp32-dev.nix                # ESP32 microcontroller development tools
+│   ├── photo-restoration.nix        # Photo editing and restoration applications
+│   ├── desktop-multi-de-compat.nix  # Multi-DE compatibility layer
+│   ├── desktop-hyprland.nix         # Hyprland compositor (unused, in specialisation)
+│   ├── desktop-kde.nix              # KDE Plasma (unused, in specialisation)
+│   ├── desktop-cinnamon.nix         # Cinnamon desktop
+│   └── desktop-cosmic.nix           # COSMIC desktop (unused, in specialisation)
+├── home/
+│   ├── todd-base.nix                # Headless-safe: git, zsh, tmux, SSH, AWS, CLI tools
+│   └── todd-desktop.nix             # GUI apps only (nixos-dev)
+├── scripts/
+│   ├── start-server.sh              # SSH into home-server via tmux
+│   └── home-server-install.sh       # Home server bootstrap script
+└── start-dev.sh                     # Launch tmux dev session for this repo
+```
 
 ## System Overview
 
@@ -64,18 +79,17 @@ sudo nixos-rebuild switch --flake ~/nixos-config#nixos-dev
 **Switch at boot:** Reboot and select from the systemd-boot menu.
 
 - **GNOME** with GDM display manager (Wayland)
-- **Extensions**: Forge (tiling), Workspace Indicator, Just Perfection
-- **GNOME Tweaks** + **Papirus-Dark** icon theme
-- **WezTerm** as default terminal
+- **Extensions**: Forge (tiling), Workspace Indicator, Just Perfection, Tactile, Switcher, Sound Output Device Chooser
+- **GNOME Tweaks** + **WezTerm** as default terminal
 
 ### Terminal & Shell
 - **WezTerm** — GPU-accelerated terminal emulator
-- **tmux** — persistent multiplexer (config in `home.nix`)
+- **tmux** — persistent multiplexer (config in `home/todd-base.nix`)
   - Prefix: `Alt-a`
-  - Theme: Catppuccin Mocha
-  - Plugins: catppuccin, sensible, yank, resurrect, continuum, tmux-sessionx
+  - Theme: Tokyo Night (night style)
+  - Plugins: tokyo-night-tmux, sensible, yank, resurrect, continuum, tmux-sessionx
   - Window switch: `Alt+1`–`Alt+9` | Splits: `|`/`-` | Pane nav: `Alt+Arrow`
-  - Session switcher: `Alt-a o` (tmux-sessionx with zoxide)
+  - Session switcher: bound to `o` (tmux-sessionx with zoxide)
 - **Mosh** — resilient remote connections (survives network interruptions)
 - **Zsh** + Oh-My-Zsh (robbyrussell theme, plugins: git, docker, docker-compose, aws, vi-mode, fzf)
 - **Atuin** — improved shell history | **Zoxide** — smart cd | **Yazi** — file manager
@@ -89,6 +103,7 @@ sudo nixos-rebuild switch --flake ~/nixos-config#nixos-dev
 | `dc` | docker compose watch backend |
 | `nb` | npm run dev |
 | `sx` | tmux-sessionx |
+| `hs` | SSH into home-server (start-server.sh) |
 | `refresh-secrets` | regenerate `~/.secrets.env` from 1Password |
 
 ### Secrets Management
@@ -163,6 +178,7 @@ refresh-secrets
 | zoxide | cd | Smart directory jumping |
 | jq / yq-go | — | JSON/YAML processors |
 | httpie | curl | Modern HTTP client |
+| btop | htop | Resource monitor |
 
 ### Network Tools
 - **Diagnostics**: dig, traceroute, mtr, nmap, netcat, socat, tcpdump, wireshark, iperf3, iftop, nethogs
@@ -191,10 +207,11 @@ Custom scripts save to `~/dev/buoyancy-platform/tmp/current-screenshot.png` for 
 - **Color management**: DisplayCAL, ArgyllCMS
 
 ### Productivity & Communication
-- **Obsidian**, **LibreOffice**, **Apostrophe** (markdown), **Figma**
+- **Obsidian**, **LibreOffice**, **Apostrophe** (markdown), **Figma**, **Hugo** (static site generator)
 - **1Password** (GUI + CLI integration enabled)
 - **Dropbox**, **Pika Backup**
 - **Slack**, **Signal Desktop**, **Zoom**
+- **Aerc** — terminal email client
 
 ### Web Browsers
 - **Firefox**, **Google Chrome**, **Zen Browser** (privacy-focused Firefox fork)
@@ -218,6 +235,7 @@ Custom scripts save to `~/dev/buoyancy-platform/tmp/current-screenshot.png` for 
 | GNOME Keyring | Credential storage |
 | nix-ld | Dynamic linking support |
 | 1Password | SSH agent + CLI integration |
+| fwupd | Firmware update daemon |
 
 ## Remote Terminal Access
 
@@ -232,6 +250,9 @@ mosh todd@nixos-dev.local
 
 # Attach to persistent tmux session
 tmux new-session -As main
+
+# Connect to home-server
+hs
 ```
 
 Add your public key to `~/.ssh/authorized_keys`. Password auth is disabled.
@@ -283,10 +304,9 @@ Make sure your named sessions (nixos, dev-buoyancy, gloom) are running before th
 
 - **Never modify** `hardware-configuration.nix` — auto-generated
 - **`flake.lock` must be committed** — it pins exact dependency versions
-- **System packages** → `environment.systemPackages` in `configuration.nix`
-- **User packages + dotfiles** → `home.nix`
-- **SSH server** config is in `remote-terminal.nix`; **SSH client** config is in `home.nix`
+- **System packages** → `environment.systemPackages` in `hosts/<name>/configuration.nix`
+- **CLI user packages + dotfiles** → `home/todd-base.nix`; GUI packages → `home/todd-desktop.nix`
+- **SSH server** config is in `modules/remote-terminal.nix`; **SSH client** config is in `home/todd-base.nix`
 - **`~/.secrets.env` is not committed** — run `refresh-secrets` after a fresh clone
 - **Neovim config** (`~/.config/nvim/`) is intentionally unmanaged — edit freely without rebuilding
-- Forge GNOME extension requires GNOME 48 or earlier
 - Weekly automatic garbage collection of Nix store generations older than 30 days
