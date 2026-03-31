@@ -300,6 +300,15 @@ tmux list-sessions -F '#{session_name}' | grep -E '^[0-9]+$' | xargs -I{} tmux k
 
 Make sure your named sessions (nixos, dev-buoyancy, gloom) are running before the save fires, otherwise they'll be missing from the snapshot and the cycle may repeat.
 
+## Recent Changes
+
+Generation history (use `nix run nixpkgs#nvd -- diff /nix/var/nix/profiles/system-{N}-link /nix/var/nix/profiles/system-{N+1}-link` to inspect any pair):
+
+| Date | Generation | What changed |
+|------|-----------|--------------|
+| 2026-03-23 | 134 → 136 | Added `sound-output-device-chooser` GNOME extension and enabled it declaratively via dconf |
+| 2026-03-16 | 132 → 133 | Replaced `htop` with `btop`; added iPad Termius SSH key to `authorized_keys` |
+
 ## Important Notes
 
 - **Never modify** `hardware-configuration.nix` — auto-generated
