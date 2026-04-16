@@ -7,6 +7,7 @@
   nixpkgs.config.allowUnfree = true;
 
   home.packages = with pkgs; [
+    claude-desktop-fhs
     slack
     obsidian
     signal-desktop

@@ -7,9 +7,10 @@
       url = "github:nix-community/home-manager/master";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    claude-desktop.url = "github:aaddrick/claude-desktop-debian";
   };
 
-  outputs = { self, nixpkgs, home-manager, ... }@inputs:
+  outputs = { self, nixpkgs, home-manager, claude-desktop, ... }@inputs:
   let
     hmBase = {
       home-manager.useGlobalPkgs = false;
@@ -22,12 +23,14 @@
       system = "x86_64-linux";
       specialArgs = { inherit inputs; };
       modules = [
+        { nixpkgs.overlays = [ claude-desktop.overlays.default ]; }
         ./modules/common.nix
         ./hosts/nixos-dev/configuration.nix
         home-manager.nixosModules.home-manager
         (hmBase // {
           home-manager.users.todd = {
             imports = [ ./home/todd-base.nix ./home/todd-desktop.nix ];
+            nixpkgs.overlays = [ claude-desktop.overlays.default ];
           };
         })
       ];

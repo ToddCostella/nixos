@@ -318,7 +318,7 @@
 
     # Package management
     yarn
-    nodePackages.aws-cdk
+    aws-cdk-cli
 
     # SVG tools
     librsvg
