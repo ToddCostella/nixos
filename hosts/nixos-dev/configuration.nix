@@ -149,8 +149,12 @@
     parallelShutdown = 10;
   };
 
-  # CPU governor for better VM performance
+  # CPU governor for better VM performance.
+  # power-profiles-daemon (enabled by GNOME by default) overrides intel_pstate EPP
+  # and was silently pinning all cores to 900 MHz. Disabling it lets cpuFreqGovernor
+  # actually take effect.
   powerManagement.cpuFreqGovernor = "performance";
+  services.power-profiles-daemon.enable = false;
 
   # Fix Dell XPS touchscreen not working after suspend/resume
   systemd.services.fix-touchscreen-resume = {
