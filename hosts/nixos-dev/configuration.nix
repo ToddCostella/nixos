@@ -309,6 +309,7 @@
 
     # AI
     claude-code
+    gemini-cli
 
     # Virtualization tools
     gnome-boxes

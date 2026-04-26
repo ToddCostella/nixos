@@ -269,6 +269,7 @@
     # API key template — run `refresh-secrets` to inject into ~/.secrets.env
     ".secrets.env.tpl".text = ''
       export ANTHROPIC_API_KEY="{{ op://Private/Anthropic API Key/api-key }}"
+      export GEMINI_API_KEY="{{ op://Private/Gemini API Key/api-key }}"
     '';
 
     ".ssh/allowed_signers".text = ''
