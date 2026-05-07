@@ -27,7 +27,7 @@
 
   # Enable IOMMU for better device passthrough support
   # usbcore.autosuspend=-1 fixes USB controller resume issues after suspend
-  boot.kernelParams = [ "intel_iommu=on" "iommu=pt" "usbcore.autosuspend=-1" ];
+  boot.kernelParams = [ "intel_iommu=on" "iommu=pt" "usbcore.autosuspend=-1" "hugepagesz=2M" ];
 
   # Networking
   networking.hostName = "nixos-dev";
@@ -148,6 +148,10 @@
     onShutdown = "shutdown";
     parallelShutdown = 10;
   };
+
+  # Hugepages for Windows VM (16GB = 8192 x 2MB pages)
+  # Only allocated on-demand by libvirt when VM starts
+  boot.kernel.sysctl."vm.nr_hugepages" = 8192;
 
   # CPU governor for better VM performance.
   # power-profiles-daemon (enabled by GNOME by default) overrides intel_pstate EPP
@@ -313,7 +317,9 @@
 
     # Virtualization tools
     gnome-boxes
+    virt-manager
     virt-viewer
+    looking-glass-client
     spice-gtk
     virtio-win
     qemu
