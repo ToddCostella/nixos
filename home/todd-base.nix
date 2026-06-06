@@ -227,6 +227,10 @@
         region = "ca-west-1";
         output = "json";
       };
+      "profile buoyancy-prod" = {
+        region = "ca-west-1";
+        output = "json";
+      };
     };
     credentials = {
       "default" = {
@@ -240,6 +244,9 @@
       };
       "buoyancy-dev" = {
         credential_process = "op --cache inject --in-file /home/todd/.aws/1pw/buoyancy-dev.json";
+      };
+      "buoyancy-prod" = {
+        credential_process = "op --cache inject --in-file /home/todd/.aws/1pw/buoyancy-prod.json";
       };
     };
   };
@@ -265,6 +272,11 @@
       Version = 1;
       AccessKeyId = "{{ op://Private/AWS buoyancy-dev/aws_access_key_id }}";
       SecretAccessKey = "{{ op://Private/AWS buoyancy-dev/aws_secret_access_key }}";
+    };
+    ".aws/1pw/buoyancy-prod.json".text = builtins.toJSON {
+      Version = 1;
+      AccessKeyId = "{{ op://Private/AWS buoyancy-prod/aws_access_key_id }}";
+      SecretAccessKey = "{{ op://Private/AWS buoyancy-prod/aws_secret_access_key }}";
     };
     # API key template — run `refresh-secrets` to inject into ~/.secrets.env
     ".secrets.env.tpl".text = ''
