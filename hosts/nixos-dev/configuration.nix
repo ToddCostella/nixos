@@ -153,6 +153,11 @@
   # Only allocated on-demand by libvirt when VM starts
   boot.kernel.sysctl."vm.nr_hugepages" = 8192;
 
+  # Inotify watch limit — raised for IDEs (IntelliJ, VS Code) that watch every
+  # directory in large projects. Default (~8192) is easily exceeded, forcing the
+  # IDE into slow recursive directory scans.
+  boot.kernel.sysctl."fs.inotify.max_user_watches" = 1048576;
+
   # CPU governor for better VM performance.
   # power-profiles-daemon (enabled by GNOME by default) overrides intel_pstate EPP
   # and was silently pinning all cores to 900 MHz. Disabling it lets cpuFreqGovernor
