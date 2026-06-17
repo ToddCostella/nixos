@@ -11,6 +11,7 @@
     ../../modules/desktop-gnome.nix
     # ../../modules/desktop-cosmic.nix  # COSMIC Desktop — not available in current nixpkgs
     ../../modules/playwright-dev.nix
+    ../../modules/nordvpn.nix
   ];
 
   # Boot loader configuration
@@ -280,9 +281,8 @@
     direnv
     zsh-vi-mode
 
-    # VPN tools
+    # VPN tools (NordVPN via wgnord is configured in modules/nordvpn.nix)
     openvpn
-    wgnord
 
     # Browsers
     firefox
