@@ -227,9 +227,15 @@
         region = "ca-west-1";
         output = "json";
       };
+      # Delegated access: assume OrganizationAccountAccessRole in the prod
+      # account (126697143246) using buoyancy-root (mgmt account) as the source.
+      # No long-lived prod IAM keys — short-lived STS creds minted per use.
       "profile buoyancy-prod" = {
         region = "ca-west-1";
         output = "json";
+        source_profile = "buoyancy-root";
+        role_arn = "arn:aws:iam::126697143246:role/OrganizationAccountAccessRole";
+        role_session_name = "todd-prod";
       };
     };
     credentials = {
@@ -245,9 +251,9 @@
       "buoyancy-dev" = {
         credential_process = "op --cache inject --in-file /home/todd/.aws/1pw/buoyancy-dev.json";
       };
-      "buoyancy-prod" = {
-        credential_process = "op --cache inject --in-file /home/todd/.aws/1pw/buoyancy-prod.json";
-      };
+      # buoyancy-prod intentionally omitted — it assumes a role via
+      # source_profile = buoyancy-root (see profile block above), so it has
+      # no static credentials of its own.
     };
   };
 
@@ -272,11 +278,6 @@
       Version = 1;
       AccessKeyId = "{{ op://Private/AWS buoyancy-dev/aws_access_key_id }}";
       SecretAccessKey = "{{ op://Private/AWS buoyancy-dev/aws_secret_access_key }}";
-    };
-    ".aws/1pw/buoyancy-prod.json".text = builtins.toJSON {
-      Version = 1;
-      AccessKeyId = "{{ op://Private/AWS buoyancy-prod/aws_access_key_id }}";
-      SecretAccessKey = "{{ op://Private/AWS buoyancy-prod/aws_secret_access_key }}";
     };
     # API key template — run `refresh-secrets` to inject into ~/.secrets.env
     ".secrets.env.tpl".text = ''
