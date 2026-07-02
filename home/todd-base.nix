@@ -91,6 +91,10 @@
       # Session manager
       sx = "tmux-sessionx";
 
+      # Kill all unnamed (numeric-named) tmux sessions — leftovers from
+      # continuum restores / no-name `tmux` invocations. Named sessions are kept.
+      tmux-clean = "tmux list-sessions -F '#{session_name}' | grep -E '^[0-9]+$' | while read s; do tmux kill-session -t \"$s\"; done";
+
       # Connect to home-server with distinct tmux session
       hs = "~/nixos-config/scripts/start-server.sh";
 
