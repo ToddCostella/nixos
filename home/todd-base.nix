@@ -283,6 +283,9 @@
     ".secrets.env.tpl".text = ''
       export ANTHROPIC_API_KEY="{{ op://Private/Anthropic API Key/api-key }}"
       export GEMINI_API_KEY="{{ op://Private/Gemini API Key/api-key }}"
+      # Proton Mail Bridge password (local IMAP/SMTP on 127.0.0.1:1143/1025).
+      # Item title has an '@' so reference by item ID, not name.
+      export PROTON_BRIDGE_PASS="{{ op://Private/emcficrzzff7fk4z24uq6hmjoi/bridge_password }}"
     '';
 
     ".ssh/allowed_signers".text = ''
