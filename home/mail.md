@@ -115,9 +115,27 @@ clients and never risks the bulk-op stall.
   sync with the sieve.
   - Its IMAP MOVE targets DO use the `Folders/...` path (opposite of Sieve).
 
-To add a sender: put the domain in both the sieve (correct block) and
-`sort_inbox.py`'s `RULES`. `The Feed` folder was created over IMAP; new folders
-need creating on Proton before `fileinto` can target them.
+- **[`analyze_senders.py`](./analyze_senders.py)** — weekly tuning helper.
+  Reports the top bulk senders (newsletter/receipt headers) that are NOT yet
+  matched by the current rules, so you review real candidates instead of
+  guessing. Imports `dest_for` from `sort_inbox.py`, so "already handled" is
+  always accurate. `python3 analyze_senders.py [--box INBOX] [--limit N]`.
+
+### Weekly update loop
+1. `python3 home/analyze_senders.py` — see new uncategorized bulk senders.
+2. For each you want to sort, add its domain to BOTH:
+   - `proton-filters.sieve` (the right `anyof` block), and
+   - `sort_inbox.py`'s `RULES` dict (same domain -> FEED or PAPER).
+3. Commit + push.
+4. **Re-paste the sieve into Proton** (Settings -> Filters -> edit -> save).
+   This is the only manual sync — git and Proton's live filter are separate
+   copies; the file is authoritative only if you always edit-then-paste.
+5. Optionally `python3 home/sort_inbox.py --apply` to sort existing Inbox mail
+   from the newly-added senders.
+
+New destination folders must be created on Proton first (over IMAP or the web)
+before `fileinto` / the IMAP MOVE can target them — that is how `The Feed` was
+made.
 
 ## ⚠️ Bridge chokes on large bulk IMAP operations
 
