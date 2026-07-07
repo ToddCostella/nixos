@@ -93,6 +93,32 @@ cache or notmuch index — the two clients coexist safely.
    makes mbsync issue one `UID FETCH 1:<82k> (FLAGS)`, which Bridge chokes on.
    Excluding it removed the stall and ~7.5 GB of local disk.
 
+## Inbox categorization (receipts / newsletters)
+
+Hey-style sorting: receipts -> `Paper Trail`, newsletters/promotions ->
+`The Feed`. Sender-domain based, first-pass. Ambiguous senders that send both
+receipts AND marketing (Amazon, Namecheap, WestJet, Petro-Canada, VRBO) are
+intentionally left in the Inbox so no real receipt gets buried.
+
+**Runs server-side on Proton**, not on Bridge — so it works 24/7 for all
+clients and never risks the bulk-op stall.
+
+- **[`proton-filters.sieve`](./proton-filters.sieve)** — the rules. Install by
+  pasting into Proton web: Settings -> Filters -> Add sieve filter. This is the
+  one non-declarative piece (Proton has no API for it); the file is the source
+  of truth, re-paste after edits.
+  - `fileinto` uses the Proton DISPLAY name (`The Feed`), NOT the Bridge path
+    (`Folders/The Feed`).
+- **[`sort_inbox.py`](./sort_inbox.py)** — applies the same rules over IMAP to
+  mail ALREADY in the Inbox (Sieve only acts on new arrivals). Chunked/batched
+  for Bridge; dry-run by default, `--apply` to move. Keep its `RULES` dict in
+  sync with the sieve.
+  - Its IMAP MOVE targets DO use the `Folders/...` path (opposite of Sieve).
+
+To add a sender: put the domain in both the sieve (correct block) and
+`sort_inbox.py`'s `RULES`. `The Feed` folder was created over IMAP; new folders
+need creating on Proton before `fileinto` can target them.
+
 ## ⚠️ Bridge chokes on large bulk IMAP operations
 
 The single most important gotcha. Bridge (its gluon IMAP engine) stalls on big
