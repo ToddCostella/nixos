@@ -133,6 +133,17 @@ in
       msmtp.enable = true;
       notmuch.enable = true; # aerc auto-selects the notmuch:// backend from this
       aerc.enable = true; # generates ~/.config/aerc/accounts.conf
+
+      # Thunderbird GUI client, pointed at the same Bridge (127.0.0.1) via the
+      # imap/smtp blocks above. Coexists with aerc — its own local store is
+      # separate from ~/Mail/proton, so it does not touch the mbsync cache.
+      # NOTE: after first launch, unsubscribe from the "All Mail" folder in
+      # Thunderbird (~82k msgs) — a full sync of it makes Bridge choke, same
+      # reason mbsync excludes it. See mail.md.
+      thunderbird = {
+        enable = true;
+        profiles = [ "todd" ];
+      };
     };
   };
 
@@ -140,6 +151,17 @@ in
   # aerc need their top-level programs.* enabled explicitly.
   programs.mbsync.enable = true;
   programs.msmtp.enable = true;
+
+  # Thunderbird GUI client. The account wiring lives in the proton account's
+  # `thunderbird` block above; this enables the program and declares the profile
+  # it binds to. Bridge password is entered once at first launch (Thunderbird
+  # stores it in its own credential store; HM can't inject it).
+  programs.thunderbird = {
+    enable = true;
+    profiles.todd = {
+      isDefault = true;
+    };
+  };
   programs.aerc = {
     enable = true;
     extraConfig = {
