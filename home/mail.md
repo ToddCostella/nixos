@@ -1,4 +1,4 @@
-# Mail setup runbook (Proton Bridge + mbsync + notmuch + aerc)
+# Mail setup runbook (Proton Bridge + mbsync + notmuch + aerc + Thunderbird)
 
 Operational notes for the decoupled Maildir email stack defined in
 [`mail.nix`](./mail.nix). Read that file's header for the *why*; this file is
@@ -14,11 +14,13 @@ Proton servers
    │  (Bridge's account sync, upstream over HTTPS)
    ▼
 Proton Mail Bridge          systemd user service, 127.0.0.1:1143 IMAP / :1025 SMTP
-   │  (mbsync, every 5 min, STARTTLS)
-   ▼
-~/Mail/proton/              LOCAL MAILDIR CACHE — a mirror, NOT the source of truth
-   ├── Inbox/  Archive/  Sent/  Drafts/  Spam/  Trash/  Starred/
-   ├── Folders/…  Labels/…      (custom Proton folders + kept labels)
+   │                                    │
+   │  (mbsync, every 5 min, STARTTLS)   │  (Thunderbird, direct IMAP/SMTP, STARTTLS)
+   ▼                                    ▼
+~/Mail/proton/                     ~/.thunderbird/todd/ImapMail/…
+   LOCAL MAILDIR CACHE — a mirror,     Thunderbird's OWN store — separate from
+   NOT the source of truth            the Maildir; the two never share files
+   ├── Inbox/ Archive/ Sent/ …
    └── each is Maildir: cur/ new/ tmp/ + .mbsyncstate
    │  (notmuch new, after each sync)
    ▼
@@ -28,6 +30,10 @@ Proton Mail Bridge          systemd user service, 127.0.0.1:1143 IMAP / :1025 SM
 aerc                        reads the notmuch backend (offline, fast)
 msmtp                       sends via Bridge :1025
 ```
+
+Two clients share the one Bridge: **aerc** (via the mbsync/notmuch Maildir) and
+**Thunderbird** (direct IMAP). IMAP supports concurrent clients, so this is
+fine; they keep independent local stores.
 
 `~/Mail/proton/` is a **synced cache**. The authoritative copy lives on Proton.
 Deleting the cache is safe — a fresh mbsync repopulates it — but a full cold
@@ -41,6 +47,30 @@ re-sync is slow and can hit the bulk-op stall below, so avoid it casually.
   `refresh-secrets`. mbsync/msmtp/the archive service all read it from there.
 - Bridge's TLS cert is self-signed; exported once to
   `~/.config/protonmail/bridge.pem` (see `home.activation.exportBridgeCert`).
+
+## Clients
+
+**aerc** — the primary client. Offline, fast, reads the notmuch index over the
+mbsync Maildir. Configured entirely declaratively; nothing to do at first run.
+
+**Thunderbird** — GUI client, added via `programs.thunderbird` + the proton
+account's `thunderbird` block in `mail.nix`. Servers/ports/STARTTLS are derived
+from the same Bridge config, so the account is pre-built. Two manual steps the
+first time (HM cannot do these):
+
+1. **Enter the Bridge password** when prompted at first launch. It's the
+   Bridge-specific password (`PROTON_BRIDGE_PASS` in `~/.secrets.env` /
+   1Password), NOT the Proton login. Thunderbird stores it in its own credential
+   store thereafter.
+2. **Unsubscribe from the `All Mail` folder** immediately (right-click the
+   folder → Unsubscribe), BEFORE it syncs. All Mail is ~82k messages and a full
+   sync makes Bridge choke — the same bulk-op stall mbsync avoids by excluding
+   it (see below). Sync Inbox/Archive/Sent/etc. instead.
+
+If Thunderbird's first sync wedges Bridge anyway, see the bulk-op recovery
+below (`systemctl --user restart protonmail-bridge.service`). Thunderbird keeps
+its own store under `~/.thunderbird/todd/`, so it never disturbs the Maildir
+cache or notmuch index — the two clients coexist safely.
 
 ## The three config decisions (and why)
 
