@@ -26,6 +26,30 @@
     rainfrog
   ];
 
+  # --- Dropbox ---
+  # Custom systemd user service (NOT the upstream services.dropbox module — that
+  # module remaps HOME to ~/.dropbox-hm and scrambled the existing linked-account
+  # config). This runs the self-updating daemon with the normal HOME, keeping
+  # state at the canonical ~/.dropbox and files at ~/Dropbox. Starts on login,
+  # restarts on crash. Re-establishes inotify watches that the unsupervised
+  # daemon had lost.
+  systemd.user.services.dropbox = {
+    Unit.Description = "Dropbox daemon";
+    Install.WantedBy = [ "default.target" ];
+    Service = {
+      # The nixpkgs `dropbox` binary is a launcher that forks the real daemon
+      # (in ~/.dropbox-dist) and exits — so Type=simple loses track of it.
+      # Type=forking + PIDFile lets systemd supervise the actual daemon.
+      Type = "forking";
+      PIDFile = "%h/.dropbox/dropbox.pid";
+      ExecStart = "${pkgs.dropbox}/bin/dropbox start";
+      ExecStop = "${pkgs.dropbox}/bin/dropbox stop";
+      Restart = "on-failure";
+      RestartSec = 5;
+      Nice = 10;
+    };
+  };
+
   # --- Proton Mail Bridge ---
   # Runs headless as a systemd user service (protonmail-bridge --noninteractive),
   # exposing standard IMAP/SMTP on localhost for any mail client (e.g. aerc):

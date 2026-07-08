@@ -1,3 +1,7 @@
 result
 test-results/
 nixos-minimal-*.iso
+
+# Python bytecode from home/ helper scripts
+home/__pycache__/
+__pycache__/
