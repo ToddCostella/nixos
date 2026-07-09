@@ -20,32 +20,40 @@
     wezterm
     aerc
     hugo
-    dropbox
     pinta
     apostrophe
     rainfrog
+    maestral
   ];
 
-  # --- Dropbox ---
-  # Custom systemd user service (NOT the upstream services.dropbox module — that
-  # module remaps HOME to ~/.dropbox-hm and scrambled the existing linked-account
-  # config). This runs the self-updating daemon with the normal HOME, keeping
-  # state at the canonical ~/.dropbox and files at ~/Dropbox. Starts on login,
-  # restarts on crash. Re-establishes inotify watches that the unsupervised
-  # daemon had lost.
-  systemd.user.services.dropbox = {
-    Unit.Description = "Dropbox daemon";
+  # --- Dropbox (via Maestral) ---
+  # Maestral is an open-source Dropbox client. We switched away from the official
+  # nixpkgs `dropbox` package: its bwrap FHS sandbox never completed the link
+  # handshake on this GNOME/Wayland setup (kept rewriting unlink.db, never armed
+  # inotify watches), and it can't surface the browser link flow from the sandbox.
+  # Maestral runs unsandboxed, links via a URL it prints to the terminal, and is
+  # designed for headless/systemd use.
+  #
+  # First-time setup is interactive (run once in a terminal):
+  #   maestral auth link          # prints an auth URL; paste the token back
+  #   maestral start              # or let the service below run it
+  # Point it at the existing ~/Dropbox when prompted so it matches local files
+  # instead of re-downloading. See the systemd service below for supervision.
+  # (maestral is in home.packages above.)
+
+  systemd.user.services.maestral = {
+    Unit = {
+      Description = "Maestral Dropbox sync daemon";
+      After = [ "network-online.target" ];
+      Wants = [ "network-online.target" ];
+    };
     Install.WantedBy = [ "default.target" ];
     Service = {
-      # The nixpkgs `dropbox` binary is a launcher that forks the real daemon
-      # (in ~/.dropbox-dist) and exits — so Type=simple loses track of it.
-      # Type=forking + PIDFile lets systemd supervise the actual daemon.
-      Type = "forking";
-      PIDFile = "%h/.dropbox/dropbox.pid";
-      ExecStart = "${pkgs.dropbox}/bin/dropbox start";
-      ExecStop = "${pkgs.dropbox}/bin/dropbox stop";
+      Type = "exec";
+      ExecStart = "${pkgs.maestral}/bin/maestral start -f";
+      ExecStop = "${pkgs.maestral}/bin/maestral stop";
       Restart = "on-failure";
-      RestartSec = 5;
+      RestartSec = 10;
       Nice = 10;
     };
   };
