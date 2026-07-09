@@ -236,6 +236,7 @@ Custom scripts save to `~/dev/buoyancy-platform/tmp/current-screenshot.png` for 
 | nix-ld | Dynamic linking support |
 | 1Password | SSH agent + CLI integration |
 | fwupd | Firmware update daemon |
+| Maestral | Dropbox sync (`~/Dropbox`) — see [DROPBOX-MAESTRAL.md](DROPBOX-MAESTRAL.md) |
 
 ## Remote Terminal Access
 
@@ -299,6 +300,12 @@ tmux list-sessions -F '#{session_name}' | grep -E '^[0-9]+$' | xargs -I{} tmux k
 ```
 
 Make sure your named sessions (nixos, dev-buoyancy, gloom) are running before the save fires, otherwise they'll be missing from the snapshot and the cycle may repeat.
+
+### Dropbox not syncing
+
+Dropbox runs via **Maestral**, not the official client (which couldn't complete
+syncing in the bwrap sandbox on GNOME/Wayland). Check `maestral status`; for
+setup, the why, and gotchas see [DROPBOX-MAESTRAL.md](DROPBOX-MAESTRAL.md).
 
 ## Recent Changes
 
