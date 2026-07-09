@@ -36,10 +36,12 @@
 
   # GNOME-specific packages
   environment.systemPackages = with pkgs; [
-    # GNOME Extensions
+    # GNOME Extensions (must match the enabled-extensions dconf list above)
     gnomeExtensions.forge
     gnomeExtensions.workspace-indicator
     gnomeExtensions.just-perfection
+    gnomeExtensions.tactile
+    gnomeExtensions.switcher
     gnomeExtensions.sound-output-device-chooser
 
     # GNOME Utilities
