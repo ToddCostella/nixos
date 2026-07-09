@@ -36,21 +36,23 @@ nixos-config/
 │   ├── remote-terminal.nix          # Mosh + SSH hardening
 │   ├── desktop-gnome.nix            # GNOME desktop environment
 │   ├── desktop-icons.nix            # Custom desktop application icons
+│   ├── nordvpn.nix                  # NordVPN WireGuard (wgnord)
 │   ├── playwright-dev.nix           # Playwright E2E testing dependencies
 │   ├── esp32-dev.nix                # ESP32 microcontroller development tools
 │   ├── photo-restoration.nix        # Photo editing and restoration applications
-│   ├── desktop-multi-de-compat.nix  # Multi-DE compatibility layer
-│   ├── desktop-hyprland.nix         # Hyprland compositor (unused, in specialisation)
-│   ├── desktop-kde.nix              # KDE Plasma (unused, in specialisation)
 │   ├── desktop-cinnamon.nix         # Cinnamon desktop
 │   └── desktop-cosmic.nix           # COSMIC desktop (unused, in specialisation)
+│   #  (hyprland + KDE specialisations are defined inline in nixos-dev/configuration.nix)
 ├── home/
 │   ├── todd-base.nix                # Headless-safe: git, zsh, tmux, SSH, AWS, CLI tools
-│   └── todd-desktop.nix             # GUI apps only (nixos-dev)
+│   ├── todd-desktop.nix             # GUI apps + Maestral/Proton Bridge (nixos-dev)
+│   ├── mail.nix                     # Email stack: mbsync/msmtp/notmuch/aerc/Thunderbird
+│   └── *.py                         # Mail helpers (archive_old_inbox, analyze_senders, …)
 ├── scripts/
 │   ├── start-server.sh              # SSH into home-server via tmux
 │   └── home-server-install.sh       # Home server bootstrap script
-└── start-dev.sh                     # Launch tmux dev session for this repo
+├── start-dev.sh                     # Launch tmux dev session for this repo
+└── DROPBOX-MAESTRAL.md              # Dropbox-via-Maestral setup + rationale
 ```
 
 ## System Overview
@@ -104,6 +106,8 @@ sudo nixos-rebuild switch --flake ~/nixos-config#nixos-dev
 | `nb` | npm run dev |
 | `sx` | tmux-sessionx |
 | `hs` | SSH into home-server (start-server.sh) |
+| `mail` | launch mail tmux session (aerc + shell + yazi + Claude) |
+| `tmux-clean` | kill all numbered (unnamed) tmux sessions |
 | `refresh-secrets` | regenerate `~/.secrets.env` from 1Password |
 
 ### Secrets Management
@@ -131,7 +135,7 @@ refresh-secrets
 | Node.js 24 | With npm and Yarn |
 | Python + uv | Python with modern package manager |
 | Claude Code | AI coding assistant |
-| AWS CLI v2 | With 4 profiles (default, toddcostella, buoyancy-dev, buoyancy-root) |
+| AWS CLI v2 | 5 profiles: default, toddcostella, buoyancy-dev, buoyancy-root, buoyancy-prod (assumes role via buoyancy-root) |
 | AWS CDK | Infrastructure as code |
 | GCC, Make, pkg-config | Build tools |
 
@@ -209,9 +213,16 @@ Custom scripts save to `~/dev/buoyancy-platform/tmp/current-screenshot.png` for 
 ### Productivity & Communication
 - **Obsidian**, **LibreOffice**, **Apostrophe** (markdown), **Figma**, **Hugo** (static site generator)
 - **1Password** (GUI + CLI integration enabled)
-- **Dropbox**, **Pika Backup**
+- **Maestral** (Dropbox sync — see [DROPBOX-MAESTRAL.md](DROPBOX-MAESTRAL.md)), **Pika Backup**
 - **Slack**, **Signal Desktop**, **Zoom**
-- **Aerc** — terminal email client
+
+#### Email (Proton, via `home/mail.nix`)
+Proton mail synced locally through **Proton Mail Bridge** (systemd service exposing
+IMAP/SMTP on `127.0.0.1`), with a decoupled Maildir stack:
+- **mbsync** (isync) — pulls Bridge IMAP → local Maildir on a 5-min timer
+- **notmuch** — indexes the Maildir for instant local search
+- **msmtp** — sends via the Bridge
+- **aerc** (terminal, notmuch backend) and **Thunderbird** (GUI) as clients
 
 ### Web Browsers
 - **Firefox**, **Google Chrome**, **Zen Browser** (privacy-focused Firefox fork)
@@ -237,6 +248,8 @@ Custom scripts save to `~/dev/buoyancy-platform/tmp/current-screenshot.png` for 
 | 1Password | SSH agent + CLI integration |
 | fwupd | Firmware update daemon |
 | Maestral | Dropbox sync (`~/Dropbox`) — see [DROPBOX-MAESTRAL.md](DROPBOX-MAESTRAL.md) |
+| Proton Mail Bridge | Local IMAP/SMTP for Proton mail (`127.0.0.1:1143`/`1025`) |
+| mbsync | Proton → Maildir sync (systemd user timer, every 5 min) |
 
 ## Remote Terminal Access
 
