@@ -41,8 +41,12 @@
   };
 
   # Filesystem mounts
-  fileSystems."/mnt/debian" = {
-    device = "/dev/nvme0n1p2";
+  # Internal backup drive (WD_BLACK SN770 1TB, nvme0n1) — repurposed from the
+  # former Debian dual-boot install. Single ext4 partition (label: backup-internal)
+  # holding the local Pika/Borg backup repo. `nofail` so a missing/unformatted
+  # drive never blocks boot.
+  fileSystems."/mnt/backup-internal" = {
+    device = "/dev/disk/by-label/backup-internal";
     fsType = "ext4";
     options = [ "defaults" "nofail" ];
   };

@@ -196,7 +196,7 @@ aws sts get-caller-identity --profile toddcostella
 - CLI user packages go in `home/todd-base.nix`; GUI user packages in `home/todd-desktop.nix`
 - SSH server config is in `modules/remote-terminal.nix`; SSH client config is in `home/todd-base.nix`
 - `flake.lock` must be committed — it pins exact dependency versions
-- The Debian partition is mounted at `/mnt/debian` (nvme0n1p2)
+- The internal backup drive (`nvme0n1`, formerly Debian) is mounted at `/mnt/backup-internal` — holds the local Pika/Borg backup repo
 - Weekly garbage collection removes generations older than 30 days
 - Journal capped at 500MB / 1 month retention
 - GNOME Tracker (localsearch/tinysparql) is disabled

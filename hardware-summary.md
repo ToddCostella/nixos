@@ -21,8 +21,9 @@ Generated: 2026-03-05
 
 | Device | Model | Size | Role |
 |--------|-------|------|------|
-| `nvme0n1` | WD Black SN750 2TB | 1.8 TB | Primary (NixOS `/boot`, Debian `/mnt/debian`, swap) |
-| `nvme1n1` | WD Black SN770 1TB | 931.5 GB | Secondary (NixOS root `/`) |
+| `nvme1n1` | WD Black SN750 2TB | 1.8 TB | Primary (NixOS `/boot` + root `/`, swap) |
+| `nvme0n1` | WD Black SN770 1TB | 931.5 GB | Internal backup drive (`/mnt/backup-internal`, Pika/Borg repo) — formerly Debian dual-boot |
+| `sda` | Samsung PSSD T7 | 1.8 TB | External backup (legacy Pika/Borg repo, offline archive) |
 
 ### GPU
 - **Integrated**: Intel UHD Graphics 630 (`8086:9bc4`) — driver: i915
