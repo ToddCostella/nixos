@@ -31,7 +31,6 @@
           "just-perfection-desktop@just-perfection"
           "tactile@lundal.io"
           "switcher@landau.fi"
-          "sound-output-device-chooser@kgshank.net"
         ];
       };
 
@@ -165,7 +164,6 @@
     gnomeExtensions.just-perfection
     gnomeExtensions.tactile
     gnomeExtensions.switcher
-    gnomeExtensions.sound-output-device-chooser
 
     # GNOME Utilities
     gnome-tweaks

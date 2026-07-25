@@ -14,6 +14,18 @@
     ../../modules/nordvpn.nix
   ];
 
+  # Overlay: mitmproxy 12.2.3 fails its pythonRuntimeDepsCheckHook in current
+  # nixpkgs because it pins msgpack<=1.1.2 but nixpkgs ships msgpack 1.2.1. The
+  # cap is conservative (no real ABI break), so we disable the runtime-deps
+  # check. Remove this overlay once upstream relaxes the pin.
+  nixpkgs.overlays = [
+    (final: prev: {
+      mitmproxy = prev.mitmproxy.overridePythonAttrs (old: {
+        dontCheckRuntimeDeps = true;
+      });
+    })
+  ];
+
   # Boot loader configuration
   boot.loader.systemd-boot.enable = true;
   boot.loader.efi.canTouchEfiVariables = true;
@@ -345,7 +357,7 @@
 
     # Document conversion and LaTeX
     pandoc
-    texlive.combined.scheme-medium
+    texliveMedium
 
     # Keyboard configurator for Dygma keyboards
     bazecor

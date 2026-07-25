@@ -326,6 +326,7 @@ Generation history (use `nix run nixpkgs#nvd -- diff /nix/var/nix/profiles/syste
 
 | Date | Generation | What changed |
 |------|-----------|--------------|
+| 2026-07-25 | — | Updated flake inputs (~2mo); removed `sound-output-device-chooser` (dropped from nixpkgs — use GNOME quick-settings sound picker); migrated `programs.ssh.matchBlocks` → `settings` and `texlive.combined.scheme-medium` → `texliveMedium` |
 | 2026-03-23 | 134 → 136 | Added `sound-output-device-chooser` GNOME extension and enabled it declaratively via dconf |
 | 2026-03-16 | 132 → 133 | Replaced `htop` with `btop`; added iPad Termius SSH key to `authorized_keys` |
 
