@@ -151,6 +151,11 @@
     enable = true;
     enableOnBoot = true;
     autoPrune.enable = true;
+    # Pin the daemon's DNS to reachable IPv4 resolvers. Without this, BuildKit
+    # `RUN` steps fail with "Temporary failure in name resolution" (uv/pip can't
+    # reach pypi.org) because the build network's default resolv.conf doesn't
+    # resolve, even though the host and `docker run` networking are fine.
+    daemon.settings.dns = [ "1.1.1.1" "8.8.8.8" ];
   };
 
   # QEMU/KVM virtualization for Windows 11 with enhanced stability
