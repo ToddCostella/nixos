@@ -180,12 +180,31 @@
   # IDE into slow recursive directory scans.
   boot.kernel.sysctl."fs.inotify.max_user_watches" = 1048576;
 
-  # CPU governor for better VM performance.
+  # CPU power management (intel_pstate).
   # power-profiles-daemon (enabled by GNOME by default) overrides intel_pstate EPP
-  # and was silently pinning all cores to 900 MHz. Disabling it lets cpuFreqGovernor
-  # actually take effect.
-  powerManagement.cpuFreqGovernor = "performance";
+  # and was silently pinning all cores to 900 MHz, so it stays disabled.
+  #
+  # On intel_pstate, "powersave" is the normal *dynamic* governor — it scales
+  # frequency to load, not a fixed low clock. The old "performance" governor held
+  # every core near its max (~4.5 GHz) even at idle, running the package at ~83°C
+  # and keeping the fans on constantly. "powersave" + balance_performance EPP lets
+  # idle cores drop to 800 MHz (idle package ~38°C) while still boosting on demand.
   services.power-profiles-daemon.enable = false;
+  powerManagement.cpuFreqGovernor = "powersave";
+  # intel_pstate energy/performance bias — balanced, favouring performance.
+  systemd.services.set-cpu-epp = {
+    description = "Set intel_pstate energy_performance_preference";
+    wantedBy = [ "multi-user.target" ];
+    after = [ "multi-user.target" ];
+    serviceConfig = {
+      Type = "oneshot";
+      RemainAfterExit = true;
+      ExecStart = "${pkgs.bash}/bin/bash -c 'for e in /sys/devices/system/cpu/cpu*/cpufreq/energy_performance_preference; do echo balance_performance > \"$e\"; done'";
+    };
+  };
+
+  # Intel thermal daemon — proactive thermal management on this laptop.
+  services.thermald.enable = true;
 
   # Fix Dell XPS touchscreen not working after suspend/resume
   systemd.services.fix-touchscreen-resume = {
