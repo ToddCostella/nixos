@@ -8,9 +8,16 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
     claude-desktop.url = "github:aaddrick/claude-desktop-debian";
+    # herdr — terminal workspace manager for AI coding agents.
+    # Ships only a package + overlay (no NixOS/home module). follows nixpkgs so it
+    # builds against our pinned nixpkgs instead of pulling in a second one.
+    herdr = {
+      url = "github:ogulcancelik/herdr";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
-  outputs = { self, nixpkgs, home-manager, claude-desktop, ... }@inputs:
+  outputs = { self, nixpkgs, home-manager, claude-desktop, herdr, ... }@inputs:
   let
     hmBase = {
       home-manager.useGlobalPkgs = false;
@@ -30,7 +37,7 @@
         (hmBase // {
           home-manager.users.todd = {
             imports = [ ./home/todd-base.nix ./home/todd-desktop.nix ];
-            nixpkgs.overlays = [ claude-desktop.overlays.default ];
+            nixpkgs.overlays = [ claude-desktop.overlays.default herdr.overlays.default ];
           };
         })
       ];

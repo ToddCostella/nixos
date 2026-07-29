@@ -322,5 +322,9 @@
     atuin
     tree
     gh
-  ];
+  ]
+  # herdr — terminal workspace manager for AI coding agents. Provided via the
+  # herdr flake overlay, which is only applied on nixos-dev, so guard the
+  # reference to keep this module valid on hosts without the overlay.
+  ++ lib.optional (pkgs ? herdr) pkgs.herdr;
 }
