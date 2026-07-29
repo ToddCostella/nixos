@@ -354,6 +354,10 @@
       focus_pane_up = "alt+up"
       focus_pane_down = "alt+down"
 
+      [theme]
+      # Follow the host terminal's (WezTerm) ANSI palette.
+      name = "terminal"
+
       [ui]
       # tmux `set -g mouse on` + vi copy: auto-copy on selection.
       mouse_capture = true
