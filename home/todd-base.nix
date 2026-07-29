@@ -43,7 +43,18 @@
       theme = "robbyrussell";
     };
 
-    initContent = ''
+    initContent = lib.mkMerge [
+      # herdr zsh completions — only when the herdr overlay is present (nixos-dev).
+      # Placed with mkBefore so the completion dir is on fpath BEFORE oh-my-zsh runs
+      # its own compinit; otherwise the late-added _herdr is missed by the cached
+      # compdump and the completion never loads.
+      (lib.mkIf (pkgs ? herdr) (lib.mkBefore ''
+        fpath=(${pkgs.runCommand "herdr-zsh-completion" { } ''
+          mkdir -p $out
+          ${pkgs.herdr}/bin/herdr completion zsh > $out/_herdr
+        ''} $fpath)
+      ''))
+      ''
       # WezTerm Shell Integration - OSC 7 (new tab/pane inherits current directory)
       precmd() {
         print -Pn "\e]7;file://$\{HOSTNAME}$\{PWD}\e\\"
@@ -70,7 +81,8 @@
       # SSH_AUTH_SOCK after session vars are set, pointing to its own agent which
       # has no keys and causes passphrase prompts / ssh-askpass dialogs.
       export SSH_AUTH_SOCK="$HOME/.1password/agent.sock"
-    '';
+      ''
+    ];
 
     shellAliases = {
       # Git
