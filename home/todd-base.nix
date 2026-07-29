@@ -387,6 +387,7 @@
     httpie
     fzf
     yazi
+    superfile
     zoxide
     atuin
     tree

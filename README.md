@@ -92,9 +92,12 @@ sudo nixos-rebuild switch --flake ~/nixos-config#nixos-dev
   - Plugins: tokyo-night-tmux, sensible, yank, resurrect, continuum, tmux-sessionx
   - Window switch: `Alt+1`–`Alt+9` | Splits: `|`/`-` | Pane nav: `Alt+Arrow`
   - Session switcher: bound to `o` (tmux-sessionx with zoxide)
+- **herdr** — terminal workspace manager for AI coding agents (nixos-dev; via flake overlay, config in `home/todd-base.nix`)
+  - Keybindings mirror tmux: prefix `Alt-a`, `Alt+1`–`Alt+9` tabs, `Alt+Arrow` pane focus, `|`/`-` splits
+  - Theme follows the host terminal's ANSI palette; notifications shown as in-app toasts, sound disabled
 - **Mosh** — resilient remote connections (survives network interruptions)
 - **Zsh** + Oh-My-Zsh (robbyrussell theme, plugins: git, docker, docker-compose, aws, vi-mode, fzf)
-- **Atuin** — improved shell history | **Zoxide** — smart cd | **Yazi** — file manager
+- **Atuin** — improved shell history | **Zoxide** — smart cd | **Yazi** / **superfile** — file managers
 
 ### Shell Aliases
 | Alias | Command |
@@ -326,6 +329,7 @@ Generation history (use `nix run nixpkgs#nvd -- diff /nix/var/nix/profiles/syste
 
 | Date | Generation | What changed |
 |------|-----------|--------------|
+| 2026-07-29 | — | Added `herdr` terminal agent multiplexer (nixos-dev, via flake overlay) with tmux-style keybindings, terminal theme, in-app toast notifications (sound off), and zsh completions; added `superfile` TUI file manager alongside Yazi |
 | 2026-07-25 | — | Updated flake inputs (~2mo); removed `sound-output-device-chooser` (dropped from nixpkgs — use GNOME quick-settings sound picker); migrated `programs.ssh.matchBlocks` → `settings` and `texlive.combined.scheme-medium` → `texliveMedium` |
 | 2026-03-23 | 134 → 136 | Added `sound-output-device-chooser` GNOME extension and enabled it declaratively via dconf |
 | 2026-03-16 | 132 → 133 | Replaced `htop` with `btop`; added iPad Termius SSH key to `authorized_keys` |
