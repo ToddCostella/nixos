@@ -383,6 +383,36 @@
       [ui.sound]
       # No audible notification chimes.
       enabled = false
+
+      # vim-herdr-navigation plugin: Ctrl+h/j/k/l crosses seamlessly between
+      # Neovim splits and herdr panes (a vim-tmux-navigator port). The plugin is
+      # auto-installed via home.activation below; the Neovim half lives at
+      # ~/.config/nvim/after/plugin/herdr_nav.lua (unmanaged, see CLAUDE.md).
+      # TRADEOFF: shadows readline Ctrl+L (clear) / Ctrl+K (kill-line) in non-vim
+      # panes — the accepted vim-tmux-navigator cost for seamless nav.
+      [[keys.command]]
+      key = "ctrl+h"
+      type = "plugin_action"
+      command = "vim-herdr-navigation.left"
+      description = "navigate left (vim/herdr)"
+
+      [[keys.command]]
+      key = "ctrl+j"
+      type = "plugin_action"
+      command = "vim-herdr-navigation.down"
+      description = "navigate down (vim/herdr)"
+
+      [[keys.command]]
+      key = "ctrl+k"
+      type = "plugin_action"
+      command = "vim-herdr-navigation.up"
+      description = "navigate up (vim/herdr)"
+
+      [[keys.command]]
+      key = "ctrl+l"
+      type = "plugin_action"
+      command = "vim-herdr-navigation.right"
+      description = "navigate right (vim/herdr)"
     '';
   };
 
@@ -410,4 +440,24 @@
   # herdr flake overlay, which is only applied on nixos-dev, so guard the
   # reference to keep this module valid on hosts without the overlay.
   ++ lib.optional (pkgs ? herdr) pkgs.herdr;
+
+  # herdr plugins are fetched+built by herdr itself into a mutable dir it owns,
+  # so they can't be a pure home.file symlink. Install them idempotently on
+  # activation instead, pinned to a commit for reproducibility. Guarded on the
+  # herdr overlay (nixos-dev only) and skipped entirely if already installed.
+  #
+  # vim-herdr-navigation: Ctrl+h/j/k/l crosses seamlessly between Neovim splits
+  # and herdr panes (see the [[keys.command]] bindings in the herdr config
+  # above). The Neovim half lives at ~/.config/nvim/after/plugin/herdr_nav.lua
+  # — kept outside home-manager because nvim config is intentionally unmanaged.
+  home.activation = lib.optionalAttrs (pkgs ? herdr) {
+    herdrPlugins = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+      if ! ${pkgs.herdr}/bin/herdr plugin list 2>/dev/null | grep -q vim-herdr-navigation; then
+        $DRY_RUN_CMD ${pkgs.herdr}/bin/herdr plugin install \
+          paulbkim-dev/vim-herdr-navigation \
+          --ref 53e318c772c4d3b7fbd904ac43bcf3e5b5d8b244 --yes \
+          || echo "herdr: vim-herdr-navigation install skipped (server not running?)" >&2
+      fi
+    '';
+  };
 }
