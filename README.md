@@ -276,17 +276,22 @@ Add your public key to `~/.ssh/authorized_keys`. Password auth is disabled.
 
 ## Development Session Launcher
 
-`start-dev.sh` creates a tmux session with 3 windows for working on this repo:
+`start-dev.sh` creates a **Herdr** workspace (`🛠️ nixos`) with 3 tabs for working
+on this repo:
 
 ```bash
 bash ~/nixos-config/start-dev.sh
 ```
 
-| Window | Contents |
-|--------|----------|
-| 1 | Claude AI (`claude`) |
-| 2 | Terminal |
-| 3 | Yazi file manager |
+| Tab | Contents |
+|-----|----------|
+| Claude AI | `nixos-claude` — a first-class Herdr-managed agent (lifecycle tracked) |
+| Terminal | Bare shell at the repo root |
+| Yazi | File manager (`y`) |
+
+It is idempotent: re-running reuses the workspace and only creates missing tabs
+(no kill-and-rebuild). The original tmux version is preserved as
+`tmux-start-dev.sh` for use outside Herdr.
 
 ## System Information
 
