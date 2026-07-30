@@ -276,7 +276,7 @@ Add your public key to `~/.ssh/authorized_keys`. Password auth is disabled.
 
 ## Development Session Launcher
 
-`start-dev.sh` creates a **Herdr** workspace (`🛠️ nixos`) with 3 tabs for working
+`start-dev.sh` creates a **Herdr** workspace (`🛠 nixos`) with 3 tabs for working
 on this repo:
 
 ```bash

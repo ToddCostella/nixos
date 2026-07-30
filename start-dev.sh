@@ -16,7 +16,7 @@
 set -euo pipefail
 
 BASE_DIR="/home/todd/nixos-config"
-WORKSPACE_LABEL="🛠️ nixos"
+WORKSPACE_LABEL="🛠 nixos"
 
 command -v herdr >/dev/null || { echo "herdr not found in PATH" >&2; exit 1; }
 command -v jq    >/dev/null || { echo "jq not found in PATH" >&2; exit 1; }
