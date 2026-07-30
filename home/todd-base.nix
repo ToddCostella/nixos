@@ -330,6 +330,12 @@
     # array literals' '' pairs don't collide with Nix's '' string delimiter.
     # See that file's header for the version-pinning caveat (issue #325).
     ".config/superfile/hotkeys.toml".source = ./superfile-vim-hotkeys.toml;
+
+    # superfile main config — vendored so the [open_with] extension→app map
+    # (markdown→apostrophe, text/code→nvim, pdf/images→GUI viewers detached
+    # with `setsid -f`) is declarative. GUI apps must detach or they block
+    # superfile's TUI until the window closes.
+    ".config/superfile/config.toml".source = ./superfile-config.toml;
   }
   # herdr config — only where the herdr overlay is applied (nixos-dev).
   # Mirrors the tmux keybindings above: Alt-a prefix, prefix-free Alt+number to
