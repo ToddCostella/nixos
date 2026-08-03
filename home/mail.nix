@@ -263,7 +263,9 @@ in
           exit 0
         fi
         export PROTON_BRIDGE_PASS
-        exec ${pkgs.util-linux}/bin/flock -n "''${XDG_RUNTIME_DIR:-/run/user/$(id -u)}/mbsync.lock" \
+        # -w 300: wait up to 5 min for the mbsync lock instead of failing (-n)
+        # immediately. mbsync runs frequently; an overlap should queue, not error.
+        exec ${pkgs.util-linux}/bin/flock -w 300 "''${XDG_RUNTIME_DIR:-/run/user/$(id -u)}/mbsync.lock" \
           ${pkgs.python3}/bin/python3 ${archiveScript} --apply
       '';
     };
@@ -272,7 +274,7 @@ in
   systemd.user.timers.mail-archive = {
     Unit.Description = "Weekly Inbox archive";
     Timer = {
-      OnCalendar = "Mon *-*-* 03:00:00"; # weekly, Monday 3am
+      OnCalendar = "Mon *-*-* 03:30:00"; # weekly, Monday 3:30am (off the mbsync 03:00 slot)
       Persistent = true; # catch up if the machine was off at the scheduled time
     };
     Install.WantedBy = [ "timers.target" ];

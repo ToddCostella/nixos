@@ -419,6 +419,7 @@
   # --- User packages (CLI tools — headless-safe) ---
   home.packages = with pkgs; [
     neovim
+    marksman # markdown LSP — from nixpkgs (Mason's prebuilt binary crashes on NixOS: bad ld interp + missing libicu)
     btop
     lazygit
     lazydocker
