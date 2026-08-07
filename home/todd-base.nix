@@ -419,7 +419,19 @@
   # --- User packages (CLI tools — headless-safe) ---
   home.packages = with pkgs; [
     neovim
-    marksman # markdown LSP — from nixpkgs (Mason's prebuilt binary crashes on NixOS: bad ld interp + missing libicu)
+    # --- Neovim LSP servers, formatters, and build deps ---
+    # Provided by Nix, NOT Mason: on NixOS Mason's prebuilt binaries crash (bad
+    # ELF interp / missing libs — see marksman below). ~/.config/nvim's lsp.lua
+    # finds these on $PATH and enables a server only if its binary is present.
+    marksman # markdown LSP (Mason's prebuilt binary crashes on NixOS: bad ld interp + missing libicu)
+    lua-language-server # lua_ls — for editing this nvim config
+    nixd # nixd — Nix LSP (this repo)
+    pyright # python LSP
+    stylua # lua formatter (conform.nvim)
+    nixfmt # nix formatter (conform.nvim) — RFC-style; nixfmt-rfc-style is now aliased to this
+    black # python formatter (conform.nvim)
+    isort # python import sorter (conform.nvim)
+    tree-sitter # treesitter parser compiler CLI (gcc/cc already system-wide)
     btop
     lazygit
     lazydocker
