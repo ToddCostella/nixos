@@ -2,9 +2,9 @@
 
 # NixOS Configuration Development Environment Setup Script (Herdr edition)
 # Creates a Herdr workspace with 3 tabs for working on this config.
-# This is the Herdr port of the original tmux script (kept as tmux-start-dev.sh).
+# This is the Herdr port of the original tmux launcher (since removed).
 #
-# Mapping from the tmux version:
+# Mapping from the original tmux version:
 #   tmux session  -> Herdr workspace
 #   tmux window   -> Herdr tab
 #   send-keys ... Enter -> `herdr pane run <pane> "<cmd>"`

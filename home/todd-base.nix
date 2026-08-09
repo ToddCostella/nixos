@@ -90,6 +90,23 @@
       # SSH_AUTH_SOCK after session vars are set, pointing to its own agent which
       # has no keys and causes passphrase prompts / ssh-askpass dialogs.
       export SSH_AUTH_SOCK="$HOME/.1password/agent.sock"
+
+      # Redirect AWS CDK's synth output out of the buoyancy-platform tree.
+      # cdk.out holds ~1.5M throwaway asset dirs that blow past PyCharm's inotify
+      # watch budget and stall indexing. Can't set this in cdk.json (that file is
+      # committed and runs in CI, where the absolute path won't exist), so scope it
+      # to the local shell: export CDK_OUTDIR only while inside the project tree.
+      _cdk_outdir_hook() {
+        case "$PWD" in
+          /home/todd/dev/buoyancy-platform*)
+            export CDK_OUTDIR="$HOME/.cache/cdk/buoyancy-platform/cdk.out" ;;
+          *)
+            unset CDK_OUTDIR ;;
+        esac
+      }
+      autoload -Uz add-zsh-hook
+      add-zsh-hook chpwd _cdk_outdir_hook
+      _cdk_outdir_hook
       ''
     ];
 
@@ -109,17 +126,10 @@
       dc = "docker compose watch backend";
       nb = "npm run dev";
 
-      # Session manager
-      sx = "tmux-sessionx";
-
-      # Kill all unnamed (numeric-named) tmux sessions — leftovers from
-      # continuum restores / no-name `tmux` invocations. Named sessions are kept.
-      tmux-clean = "tmux list-sessions -F '#{session_name}' | grep -E '^[0-9]+$' | while read s; do tmux kill-session -t \"$s\"; done";
-
-      # Connect to home-server with distinct tmux session
+      # Connect to home-server (herdr workspace: Shell + Logs + AdGuard).
       hs = "~/nixos-config/scripts/start-server.sh";
 
-      # Launch the mail tmux session (aerc + shell + yazi + Claude)
+      # Launch the mail workspace (herdr: aerc + shell + yazi + Claude).
       mail = "~/nixos-config/scripts/start-mail.sh";
 
       # Inject secrets from 1Password into ~/.secrets.env
@@ -135,98 +145,8 @@
     };
   };
 
-  # --- Tmux ---
-  programs.tmux = {
-    enable = true;
-    keyMode = "vi";
-    baseIndex = 1;
-    escapeTime = 0;
-    historyLimit = 50000;
-    clock24 = true;
-    newSession = true;
-    terminal = "tmux-256color";
-    customPaneNavigationAndResize = true;
-
-    plugins = with pkgs.tmuxPlugins; [
-      {
-        plugin = tokyo-night-tmux;
-        extraConfig = ''
-          set -g @tokyo-night-tmux_night_style 'night'
-        '';
-      }
-      sensible
-      yank
-      {
-        plugin = resurrect;
-        extraConfig = "";
-      }
-      {
-        plugin = continuum;
-        extraConfig = ''
-          set -g @continuum-restore 'on'
-          set -g @continuum-save-interval '15'
-        '';
-      }
-      {
-        plugin = tmux-sessionx;
-        extraConfig = ''
-          set -g @sessionx-bind 'o'
-          set -g @sessionx-zoxide-mode 'on'
-          set -g @sessionx-preview-enabled 'true'
-          set -g @sessionx-tree-mode 'on'
-          set -g @sessionx-custom-paths '~/dev/buoyancy-platform,~/dev/gloom-table,~/nixos-config,~/dev'
-        '';
-      }
-    ];
-
-    extraConfig = ''
-      # Prefix: Alt-a (M-a)
-      set -g prefix M-a
-      unbind C-b
-      bind M-a send-prefix
-
-      # True color support
-      set -ag terminal-overrides ",xterm-256color:RGB"
-
-      # Status bar at top (hook ensures it runs after theme loads)
-      set-hook -g after-new-session 'set -g status-position top'
-      set-hook -g after-new-window 'set -g status-position top'
-      set -g status-position top
-
-      # Mouse support
-      set -g mouse on
-
-      # Window switching with Alt+number (no prefix)
-      bind -n M-1 select-window -t 1
-      bind -n M-2 select-window -t 2
-      bind -n M-3 select-window -t 3
-      bind -n M-4 select-window -t 4
-      bind -n M-5 select-window -t 5
-      bind -n M-6 select-window -t 6
-      bind -n M-7 select-window -t 7
-      bind -n M-8 select-window -t 8
-      bind -n M-9 select-window -t 9
-
-      # New window keeps current path
-      bind c new-window -c "#{pane_current_path}"
-
-      # Pane splitting with intuitive keys
-      bind | split-window -h -c "#{pane_current_path}"
-      bind - split-window -v -c "#{pane_current_path}"
-      unbind '"'
-      unbind %
-
-      # Alt-arrow pane navigation (no prefix)
-      bind -n M-Left select-pane -L
-      bind -n M-Right select-pane -R
-      bind -n M-Up select-pane -U
-      bind -n M-Down select-pane -D
-
-      # Vi copy-mode with Wayland clipboard
-      bind -T copy-mode-vi v send-keys -X begin-selection
-      bind -T copy-mode-vi y send-keys -X copy-pipe-and-cancel "wl-copy"
-    '';
-  };
+  # Terminal multiplexing is handled by herdr (see herdr config.toml below),
+  # which replaced tmux. The former programs.tmux block lived here.
 
   # --- SSH client ---
   programs.ssh = {
