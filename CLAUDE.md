@@ -35,14 +35,14 @@ nixos-config/
 │   ├── desktop-cinnamon.nix             # Cinnamon desktop
 │   └── desktop-multi-de-compat.nix      # Multi-DE compatibility layer
 └── home/
-    ├── todd-base.nix                    # Headless-safe: git, zsh, tmux, SSH, AWS, CLI tools
+    ├── todd-base.nix                    # Headless-safe: git, zsh, herdr, SSH, AWS, CLI tools
     └── todd-desktop.nix                 # GUI apps only (nixos-dev)
 ```
 
 ### Flake & Home Manager
 - `flake.nix` - Defines both `nixos-dev` and `home-server` nixosConfigurations
 - `flake.lock` - Pinned dependency versions (committed, update with `nix flake update`)
-- `home/todd-base.nix` - Home Manager config for all hosts: git, zsh, tmux, SSH, AWS CLI, CLI packages
+- `home/todd-base.nix` - Home Manager config for all hosts: git, zsh, herdr, SSH, AWS CLI, CLI packages
 - `home/todd-desktop.nix` - GUI packages imported only for `nixos-dev`
 
 ### Module layers
@@ -53,7 +53,7 @@ nixos-config/
 
 - **Hosts**: `nixos-dev` (Dell XPS laptop, `nixos-dev.local`), `home-server` (headless, hardware TBD)
 - **Desktop**: GNOME with GDM display manager (Wayland) — nixos-dev only
-- **Terminal**: WezTerm (default), tmux for session management
+- **Terminal**: WezTerm (default), herdr for session/multiplexing (replaced tmux)
 - **Shell**: zsh with oh-my-zsh (robbyrussell theme) — configured in `home/todd-base.nix`
 - **Virtualization**: Docker (auto-start) + QEMU/KVM/libvirtd with nested virtualization — nixos-dev only
 - **Audio**: PipeWire (ALSA, PulseAudio compat, JACK) — nixos-dev only
@@ -68,7 +68,7 @@ All user-level dotfiles are managed declaratively. Changes apply atomically with
 |------|------|
 | `~/.config/git/config` | `programs.git` |
 | `~/.zshrc` | `programs.zsh` |
-| `~/.config/tmux/tmux.conf` | `programs.tmux` |
+| `~/.config/herdr/config.toml` | `home.file` (herdr multiplexer) |
 | `~/.ssh/config` | `programs.ssh` |
 | `~/.aws/config` + `~/.aws/credentials` | `programs.awscli` |
 | `~/.aws/1pw/*.json` | `home.file` (1Password inject templates) |
@@ -81,7 +81,6 @@ All user-level dotfiles are managed declaratively. Changes apply atomically with
 - `db/dbf/dbb` — navigate to buoyancy-platform dirs
 - `dc` — docker compose watch backend
 - `nb` — npm run dev
-- `sx` — tmux-sessionx session manager
 - `refresh-secrets` — regenerate `~/.secrets.env` from 1Password templates
 
 ## Secrets Management (1Password)
@@ -109,15 +108,26 @@ All profiles use `credential_process` — keys stored in 1Password `Private` vau
 2. Add `op://vault/item/field` reference to `~/.secrets.env.tpl` in `home/todd-base.nix` (or a new `home.file` template)
 3. Rebuild and run `refresh-secrets`
 
-## tmux Configuration (home/todd-base.nix)
+## herdr Multiplexer (home/todd-base.nix)
 
-- **Prefix**: `Alt-a` (M-a)
-- **Theme**: Tokyo Night (night style)
-- **Plugins**: catppuccin, sensible, yank, resurrect, continuum, tmux-sessionx
-- **Session restore**: continuum auto-save every 15 min, auto-restore on start
-- **Session switcher**: tmux-sessionx bound to `o`, zoxide mode, custom paths
-- **Key bindings**: Alt+number (window switch), Alt+arrows (pane nav), `|`/`-` (split)
-- **Clipboard**: wl-copy (Wayland)
+herdr replaced tmux as the terminal multiplexer. Config is written to
+`~/.config/herdr/config.toml` via `home.file` (only where the herdr overlay is
+applied — nixos-dev). Reload a running server with `herdr server reload-config`.
+
+- **Prefix**: `alt+a`
+- **Theme**: `terminal` (follows WezTerm's ANSI palette)
+- **Tabs** (≈ tmux windows): `alt+1..9` switches directly (no prefix), `prefix+c` new tab
+- **Splits**: `prefix+\` vertical divider (side-by-side), `prefix+-` horizontal (stacked)
+- **Pane focus**: `alt+arrows` (no prefix)
+- **Mouse / copy**: `mouse_capture` + `copy_on_select` on
+- **vim-herdr-navigation**: `Ctrl+h/j/k/l` crosses seamlessly between Neovim splits
+  and herdr panes (vim-tmux-navigator port); Neovim half at
+  `~/.config/nvim/after/plugin/herdr_nav.lua` (unmanaged)
+- **Notifications**: in-app herdr toasts, sound disabled
+
+Neovim clipboard uses a **detached `wl-copy`** provider (spawned with no tty) —
+herdr 0.7.5 does not forward inner-program OSC 52 to the outer terminal, and the
+naive `wl-copy` invocation caused a resize flash on every yank.
 
 ## 1Password SSH Agent
 
@@ -139,7 +149,7 @@ Custom shell scripts installed as system packages (nixos-dev only):
 
 - `wezterm-clip2path` - Converts clipboard image to file path for Claude Code image pasting
 - `mitm-localhost` - mitmproxy helper for capturing localhost HTTP traffic during development
-- `start-dev.sh` - Launch tmux session for nixos-config work (Claude AI + Terminal + Yazi)
+- `start-dev.sh` - Launch herdr workspace for nixos-config work (Claude AI + Terminal + Yazi)
 
 ## Network & Firewall
 

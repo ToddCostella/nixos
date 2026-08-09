@@ -44,14 +44,14 @@ nixos-config/
 │   └── desktop-cosmic.nix           # COSMIC desktop (unused, in specialisation)
 │   #  (hyprland + KDE specialisations are defined inline in nixos-dev/configuration.nix)
 ├── home/
-│   ├── todd-base.nix                # Headless-safe: git, zsh, tmux, SSH, AWS, CLI tools
+│   ├── todd-base.nix                # Headless-safe: git, zsh, herdr, SSH, AWS, CLI tools
 │   ├── todd-desktop.nix             # GUI apps + Maestral/Proton Bridge (nixos-dev)
 │   ├── mail.nix                     # Email stack: mbsync/msmtp/notmuch/aerc/Thunderbird
 │   └── *.py                         # Mail helpers (archive_old_inbox, analyze_senders, …)
 ├── scripts/
-│   ├── start-server.sh              # SSH into home-server via tmux
+│   ├── start-server.sh              # SSH into home-server (herdr workspace)
 │   └── home-server-install.sh       # Home server bootstrap script
-├── start-dev.sh                     # Launch tmux dev session for this repo
+├── start-dev.sh                     # Launch herdr dev workspace for this repo
 └── DROPBOX-MAESTRAL.md              # Dropbox-via-Maestral setup + rationale
 ```
 
@@ -86,15 +86,10 @@ sudo nixos-rebuild switch --flake ~/nixos-config#nixos-dev
 
 ### Terminal & Shell
 - **WezTerm** — GPU-accelerated terminal emulator
-- **tmux** — persistent multiplexer (config in `home/todd-base.nix`)
-  - Prefix: `Alt-a`
-  - Theme: Tokyo Night (night style)
-  - Plugins: tokyo-night-tmux, sensible, yank, resurrect, continuum, tmux-sessionx
-  - Window switch: `Alt+1`–`Alt+9` | Splits: `|`/`-` | Pane nav: `Alt+Arrow`
-  - Session switcher: bound to `o` (tmux-sessionx with zoxide)
-- **herdr** — terminal workspace manager for AI coding agents (nixos-dev; via flake overlay, config in `home/todd-base.nix`)
-  - Keybindings mirror tmux: prefix `Alt-a`, `Alt+1`–`Alt+9` tabs, `Alt+Arrow` pane focus, `|`/`-` splits
-  - Theme follows the host terminal's ANSI palette; notifications shown as in-app toasts, sound disabled
+- **herdr** — terminal workspace manager for AI coding agents; replaced tmux as the multiplexer (nixos-dev; via flake overlay, config in `home/todd-base.nix`)
+  - Prefix: `alt+a` | Tabs: `Alt+1`–`Alt+9` (new: `prefix+c`) | Pane focus: `Alt+Arrow` | Splits: `prefix+\` / `prefix+-`
+  - Theme follows the host terminal's ANSI palette; mouse capture + copy-on-select on; notifications shown as in-app toasts, sound disabled
+  - `Ctrl+h/j/k/l` navigates seamlessly across Neovim splits and herdr panes (vim-herdr-navigation)
 - **Mosh** — resilient remote connections (survives network interruptions)
 - **Zsh** + Oh-My-Zsh (robbyrussell theme, plugins: git, docker, docker-compose, aws, vi-mode, fzf)
 - **Atuin** — improved shell history | **Zoxide** — smart cd | **Yazi** / **superfile** — file managers
@@ -107,10 +102,8 @@ sudo nixos-rebuild switch --flake ~/nixos-config#nixos-dev
 | `db/dbf/dbb` | cd to buoyancy-platform dirs |
 | `dc` | docker compose watch backend |
 | `nb` | npm run dev |
-| `sx` | tmux-sessionx |
 | `hs` | SSH into home-server (start-server.sh) |
-| `mail` | launch mail tmux session (aerc + shell + yazi + Claude) |
-| `tmux-clean` | kill all numbered (unnamed) tmux sessions |
+| `mail` | launch mail session (aerc + shell + yazi + Claude) |
 | `refresh-secrets` | regenerate `~/.secrets.env` from 1Password |
 
 ### Secrets Management
@@ -265,8 +258,8 @@ ssh todd@nixos-dev.local
 # Mosh (resilient — survives WiFi drops and sleep/wake)
 mosh todd@nixos-dev.local
 
-# Attach to persistent tmux session
-tmux new-session -As main
+# Attach to the persistent herdr session
+herdr
 
 # Connect to home-server
 hs
@@ -290,8 +283,7 @@ bash ~/nixos-config/start-dev.sh
 | Yazi | File manager (`y`) |
 
 It is idempotent: re-running reuses the workspace and only creates missing tabs
-(no kill-and-rebuild). The original tmux version is preserved as
-`tmux-start-dev.sh` for use outside Herdr.
+(no kill-and-rebuild).
 
 ## System Information
 
@@ -305,22 +297,6 @@ It is idempotent: re-running reuses the workspace and only creates missing tabs
 | Home Manager | master (via flake) |
 
 ## Troubleshooting
-
-### Numbered tmux sessions accumulating (11, 13, 14, 16…)
-
-These are created by **tmux-resurrect** during restore when it can't match a saved session to a running named session. They get saved by continuum and recreated on every restore, perpetuating the cycle.
-
-**Fix:** kill them all, then let continuum save a clean snapshot:
-
-```bash
-# Kill all purely numeric sessions
-tmux list-sessions -F '#{session_name}' | grep -E '^[0-9]+$' | xargs -I{} tmux kill-session -t {}
-
-# Force continuum to save the clean state immediately
-~/.config/tmux/plugins/tmux-resurrect/scripts/save.sh
-```
-
-Make sure your named sessions (nixos, dev-buoyancy, gloom) are running before the save fires, otherwise they'll be missing from the snapshot and the cycle may repeat.
 
 ### Dropbox not syncing
 
