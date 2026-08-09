@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>neovim shortcuts</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Syne:wght@400;700;800&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0d0f14;
+    --surface: #161920;
+    --border: #252830;
+    --accent: #7fdbca;
+    --accent2: #f0c674;
+    --accent3: #cc99cd;
+    --text: #cdd6f4;
+    --muted: #6c7086;
+    --leader: #7fdbca;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Syne', sans-serif;
+    min-height: 100vh;
+    padding: 48px 32px;
+  }
+
+  .container {
+    max-width: 900px;
+    margin: 0 auto;
+  }
+
+  header {
+    margin-bottom: 48px;
+    display: flex;
+    align-items: baseline;
+    gap: 16px;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 24px;
+  }
+
+  h1 {
+    font-size: 2.8rem;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    color: #fff;
+  }
+
+  .prefix-badge {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.85rem;
+    background: #1e1f2e;
+    border: 1px solid var(--leader);
+    color: var(--leader);
+    padding: 4px 10px;
+    border-radius: 4px;
+    white-space: nowrap;
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+    gap: 24px;
+  }
+
+  .section {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+
+  .section-header {
+    padding: 14px 20px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .section-header.files    { background: #1a1f2e; color: var(--accent); border-bottom: 1px solid #1e2640; }
+  .section-header.buffers  { background: #1a1e1a; color: #a3e635; border-bottom: 1px solid #1e281e; }
+  .section-header.windows  { background: #1f1a1e; color: var(--accent3); border-bottom: 1px solid #2a1f28; }
+  .section-header.lsp      { background: #1f1d1a; color: var(--accent2); border-bottom: 1px solid #2a2518; }
+  .section-header.git      { background: #1a1f1f; color: #94e2d5; border-bottom: 1px solid #1e2a2a; }
+  .section-header.edit     { background: #1e1a20; color: #f5a3d0; border-bottom: 1px solid #2a1e2c; }
+
+  .dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: currentColor;
+    opacity: 0.7;
+  }
+
+  .shortcuts {
+    padding: 8px 0;
+  }
+
+  .row {
+    display: flex;
+    align-items: center;
+    padding: 9px 20px;
+    gap: 16px;
+    transition: background 0.1s;
+  }
+
+  .row:hover { background: rgba(255,255,255,0.03); }
+
+  .keys {
+    display: flex;
+    gap: 4px;
+    align-items: center;
+    min-width: 160px;
+    flex-shrink: 0;
+  }
+
+  kbd {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.78rem;
+    background: #0d0f14;
+    border: 1px solid #2e3045;
+    border-bottom: 2px solid #1a1c2e;
+    color: var(--text);
+    padding: 3px 7px;
+    border-radius: 4px;
+    display: inline-block;
+    line-height: 1.4;
+  }
+
+  kbd.leader { color: var(--leader); border-color: #1f3a35; border-bottom-color: #142a26; }
+
+  .plus, .then {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--muted);
+  }
+
+  .desc {
+    font-size: 0.85rem;
+    color: #9399b2;
+    line-height: 1.4;
+  }
+
+  .divider {
+    height: 1px;
+    background: var(--border);
+    margin: 4px 20px;
+    opacity: 0.5;
+  }
+
+  footer {
+    margin-top: 40px;
+    text-align: center;
+    font-size: 0.75rem;
+    color: var(--muted);
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  @media (max-width: 600px) {
+    .grid { grid-template-columns: 1fr; }
+    h1 { font-size: 2rem; }
+    .keys { min-width: 130px; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1>neovim</h1>
+    <span class="prefix-badge">leader = Space</span>
+  </header>
+
+  <div class="grid">
+
+    <!-- Files -->
+    <div class="section">
+      <div class="section-header files"><span class="dot"></span>Files</div>
+      <div class="shortcuts">
+        <div class="row"><div class="keys"><kbd class="leader">Space</kbd><span class="then">then</span><kbd>f</kbd> <kbd>f</kbd></div><div class="desc">Find files (Telescope, fd)</div></div>
+        <div class="row"><div class="keys"><kbd class="leader">Space</kbd><span class="then">then</span><kbd>f</kbd> <kbd>g</kbd></div><div class="desc">Live grep across project (ripgrep)</div></div>
+        <div class="row"><div class="keys"><kbd class="leader">Space</kbd><span class="then">then</span><kbd>f</kbd> <kbd>r</kbd></div><div class="desc">Recent files (oldfiles)</div></div>
+        <div class="row"><div class="keys"><kbd class="leader">Space</kbd><span class="then">then</span><kbd>f</kbd> <kbd>h</kbd></div><div class="desc">Help tags</div></div>
+        <div class="divider"></div>
+        <div class="row"><div class="keys"><kbd class="leader">Space</kbd><span class="then">then</span><kbd>w</kbd></div><div class="desc">Write (save) file</div></div>
+        <div class="row"><div class="keys"><kbd class="leader">Space</kbd><span class="then">then</span><kbd>c</kbd> <kbd>f</kbd></div><div class="desc">Format buffer (conform)</div></div>
+        <div class="divider"></div>
+        <div class="row"><div class="keys"><kbd>:e</kbd> <kbd>path</kbd></div><div class="desc">Edit / open a file</div></div>
+        <div class="row"><div class="keys"><kbd>:w</kbd> <kbd>:wq</kbd> <kbd>:q</kbd></div><div class="desc">Write / write-quit / quit</div></div>
+      </div>
+    </div>
+
+    <!-- Buffers -->
+    <div class="section">
+      <div class="section-header buffers"><span class="dot"></span>Buffers</div>
+      <div class="shortcuts">
+        <div class="row"><div class="keys"><kbd class="leader">Space</kbd><span class="then">then</span><kbd>f</kbd> <kbd>b</kbd></div><div class="desc">Switch buffer (Telescope)</div></div>
+        <div class="row"><div class="keys"><kbd>Shift+l</kbd></div><div class="desc">Next buffer</div></div>
+        <div class="row"><div class="keys"><kbd>Shift+h</kbd></div><div class="desc">Previous buffer</div></div>
+        <div class="row"><div class="keys"><kbd class="leader">Space</kbd><span class="then">then</span><kbd>b</kbd> <kbd>d</kbd></div><div class="desc">Delete (close) buffer</div></div>
+        <div class="divider"></div>
+        <div class="row"><div class="keys"><kbd>:ls</kbd></div><div class="desc">List open buffers</div></div>
+        <div class="row"><div class="keys"><kbd>:b</kbd> <kbd>name</kbd></div><div class="desc">Jump to buffer by name</div></div>
+        <div class="row"><div class="keys"><kbd>Ctrl+6</kbd></div><div class="desc">Toggle to last (alternate) buffer</div></div>
+        <div class="row"><div class="keys"><kbd>:bd</kbd> <kbd>:bufdo</kbd></div><div class="desc">Delete buffer / run cmd on all</div></div>
+      </div>
+    </div>
+
+    <!-- Windows / Splits -->
+    <div class="section">
+      <div class="section-header windows"><span class="dot"></span>Windows / Splits</div>
+      <div class="shortcuts">
+        <div class="row"><div class="keys"><kbd class="leader">Space</kbd><span class="then">then</span><kbd>|</kbd></div><div class="desc">Split vertical (side by side)</div></div>
+        <div class="row"><div class="keys"><kbd class="leader">Space</kbd><span class="then">then</span><kbd>-</kbd></div><div class="desc">Split horizontal (stacked)</div></div>
+        <div class="row"><div class="keys"><kbd class="leader">Space</kbd><span class="then">then</span><kbd>q</kbd></div><div class="desc">Quit / close window</div></div>
+        <div class="divider"></div>
+        <div class="row"><div class="keys"><kbd>Ctrl+h</kbd> <kbd>j</kbd> <kbd>k</kbd> <kbd>l</kbd></div><div class="desc">Focus split ↔ herdr pane (seamless)</div></div>
+        <div class="divider"></div>
+        <div class="row"><div class="keys"><kbd>Ctrl+w</kbd> <kbd>=</kbd></div><div class="desc">Equalize split sizes</div></div>
+        <div class="row"><div class="keys"><kbd>Ctrl+w</kbd> <kbd>o</kbd></div><div class="desc">Close all other splits (only)</div></div>
+        <div class="row"><div class="keys"><kbd>Ctrl+w</kbd> <kbd>r</kbd></div><div class="desc">Rotate splits</div></div>
+        <div class="row"><div class="keys"><kbd>Ctrl+w</kbd> <kbd>H J K L</kbd></div><div class="desc">Move split to far left/down/up/right</div></div>
+      </div>
+    </div>
+
+    <!-- LSP / Code -->
+    <div class="section">
+      <div class="section-header lsp"><span class="dot"></span>LSP / Code</div>
+      <div class="shortcuts">
+        <div class="row"><div class="keys"><kbd>g</kbd> <kbd>d</kbd></div><div class="desc">Go to definition</div></div>
+        <div class="row"><div class="keys"><kbd>g</kbd> <kbd>r</kbd></div><div class="desc">Find references</div></div>
+        <div class="row"><div class="keys"><kbd>g</kbd> <kbd>I</kbd></div><div class="desc">Go to implementation</div></div>
+        <div class="row"><div class="keys"><kbd>K</kbd></div><div class="desc">Hover documentation</div></div>
+        <div class="row"><div class="keys"><kbd class="leader">Space</kbd><span class="then">then</span><kbd>r</kbd> <kbd>n</kbd></div><div class="desc">Rename symbol</div></div>
+        <div class="row"><div class="keys"><kbd class="leader">Space</kbd><span class="then">then</span><kbd>c</kbd> <kbd>a</kbd></div><div class="desc">Code action</div></div>
+        <div class="divider"></div>
+        <div class="row"><div class="keys"><kbd>[</kbd> <kbd>d</kbd> &nbsp; <kbd>]</kbd> <kbd>d</kbd></div><div class="desc">Prev / next diagnostic</div></div>
+        <div class="row"><div class="keys"><kbd class="leader">Space</kbd><span class="then">then</span><kbd>f</kbd> <kbd>d</kbd></div><div class="desc">List diagnostics (Telescope)</div></div>
+      </div>
+    </div>
+
+    <!-- Git -->
+    <div class="section">
+      <div class="section-header git"><span class="dot"></span>Git (gitsigns)</div>
+      <div class="shortcuts">
+        <div class="row"><div class="keys"><kbd>]</kbd> <kbd>h</kbd> &nbsp; <kbd>[</kbd> <kbd>h</kbd></div><div class="desc">Next / prev changed hunk</div></div>
+        <div class="row"><div class="keys"><kbd class="leader">Space</kbd><span class="then">then</span><kbd>h</kbd> <kbd>s</kbd></div><div class="desc">Stage hunk</div></div>
+        <div class="row"><div class="keys"><kbd class="leader">Space</kbd><span class="then">then</span><kbd>h</kbd> <kbd>r</kbd></div><div class="desc">Reset hunk</div></div>
+        <div class="row"><div class="keys"><kbd class="leader">Space</kbd><span class="then">then</span><kbd>h</kbd> <kbd>p</kbd></div><div class="desc">Preview hunk</div></div>
+        <div class="row"><div class="keys"><kbd class="leader">Space</kbd><span class="then">then</span><kbd>h</kbd> <kbd>b</kbd></div><div class="desc">Blame current line</div></div>
+        <div class="divider"></div>
+        <div class="row"><div class="keys"><kbd>lg</kbd></div><div class="desc">Full lazygit UI (shell alias)</div></div>
+      </div>
+    </div>
+
+    <!-- Editing -->
+    <div class="section">
+      <div class="section-header edit"><span class="dot"></span>Editing</div>
+      <div class="shortcuts">
+        <div class="row"><div class="keys"><kbd>g</kbd> <kbd>c</kbd> <kbd>c</kbd></div><div class="desc">Toggle comment line</div></div>
+        <div class="row"><div class="keys"><kbd>g</kbd> <kbd>c</kbd><span class="then">+motion</span></div><div class="desc">Toggle comment over motion / selection</div></div>
+        <div class="divider"></div>
+        <div class="row"><div class="keys"><kbd>s</kbd> <kbd>a</kbd><span class="then">+text obj</span></div><div class="desc">Add surround (mini.surround)</div></div>
+        <div class="row"><div class="keys"><kbd>s</kbd> <kbd>d</kbd> &nbsp; <kbd>s</kbd> <kbd>r</kbd></div><div class="desc">Delete / replace surround</div></div>
+        <div class="divider"></div>
+        <div class="row"><div class="keys"><kbd>J</kbd> <kbd>K</kbd><span class="then">visual</span></div><div class="desc">Move selected lines down / up</div></div>
+        <div class="row"><div class="keys"><kbd>Esc</kbd></div><div class="desc">Clear search highlight</div></div>
+        <div class="divider"></div>
+        <div class="row"><div class="keys"><kbd class="leader">Space</kbd><span class="then">then</span><kbd>l</kbd></div><div class="desc">Open Lazy plugin manager</div></div>
+      </div>
+    </div>
+
+  </div>
+
+  <footer>leader = Space &nbsp;·&nbsp; press Space and pause for which-key &nbsp;·&nbsp; Ctrl+h/j/k/l crosses into herdr panes &nbsp;·&nbsp; clipboard → wl-copy</footer>
+</div>
+</body>
+</html>
