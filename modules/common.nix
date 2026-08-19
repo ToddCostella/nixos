@@ -53,6 +53,12 @@
     description = "Todd Costella";
     extraGroups = [ "networkmanager" "wheel" ];
     shell = pkgs.zsh;
+    # SSH login key (same key 1Password holds + signs commits with). Present on
+    # every host so `ssh todd@<host>` works on first boot — required because
+    # remote-terminal.nix disables password auth. Public key only; safe to commit.
+    openssh.authorizedKeys.keys = [
+      "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAILR93ztnY9HKCSLlFtwsdrEcwx8ovgpGhJTBB7XS2l5o"
+    ];
   };
 
   # Enable zsh system-wide (oh-my-zsh managed in home manager)

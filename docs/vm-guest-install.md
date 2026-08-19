@@ -16,7 +16,12 @@ touchscreen/bluetooth).
 
 ## 0. Prerequisites (on the host, already done by setup)
 
-- ISO staged at `~/Downloads/nixos-minimal-vm-guest.iso`
+- ISO staged at `/var/lib/libvirt/images/nixos-minimal-vm-guest.iso` (NOT under
+  `$HOME` — that's mode 700 on NixOS, so the libvirt qemu user can't read it):
+  ```bash
+  sudo mv ~/Downloads/nixos-minimal-vm-guest.iso /var/lib/libvirt/images/
+  sudo chown qemu-libvirtd:qemu-libvirtd /var/lib/libvirt/images/nixos-minimal-vm-guest.iso 2>/dev/null || true
+  ```
 - libvirt running; `default` storage pool active
 - The VM is created by `scripts/vm-guest-provision.sh` (UEFI/OVMF firmware,
   4 vCPU, 8 GB RAM, 60 GB qcow2, virtio disk/net, SPICE display)
@@ -29,6 +34,28 @@ bash ~/nixos-config/scripts/vm-guest-provision.sh
 
 This defines and starts `vm-guest` and opens virt-viewer on the ISO boot. You
 land at the NixOS installer root shell (`nixos@nixos`).
+
+## Fast path: `scripts/vm-guest-install.sh`
+
+Steps 2–6 below are automated by `scripts/vm-guest-install.sh`, which partitions
+`/dev/vda`, generates the hardware config, and runs the offline install. Get an
+SSH session into the installer first (SPICE clipboard doesn't work in the live
+ISO, so drive it from your laptop), pre-seed the store, then run the script:
+
+```bash
+# In the VM installer console (type by hand):
+sudo -i; passwd; systemctl start sshd; ip -4 addr show   # note 192.168.122.x
+
+# On the HOST — seed packages + repo + script into the VM (see step 4b for the
+# nix copy details), then:
+scp ~/nixos-config/scripts/vm-guest-install.sh root@<vm-ip>:/root/
+
+# Back in the VM (over SSH now, so paste works):
+bash /root/vm-guest-install.sh
+```
+
+The manual steps below remain the reference for what the script does, or for a
+one-off where you'd rather run each step yourself.
 
 ## 2. Partition the disk (in the VM console)
 
@@ -80,11 +107,54 @@ cd /mnt/etc/nixos-config
 git add hosts/vm-guest/hardware-configuration.nix
 ```
 
+## 4b. (Recommended) Pre-seed the VM store from the host — avoids download failures
+
+The earlier install attempt failed during the package **download** phase of
+`nixos-install` (the flaky NAT link dropped mid-download; it surfaces as "failed
+installing packages"). Nothing in the `vm-guest` closure actually builds from
+source — it's ~all binary-cache substitutions — so the robust fix is to copy the
+already-realised closure from the HOST instead of re-downloading it in the VM.
+
+**On the HOST (this laptop), once:** realise the full closure locally so there's
+something to copy (this is the only "download from the internet" step, and it
+runs on the reliable host link, not in the VM):
+
+```bash
+nix build --no-link ~/nixos-config#nixosConfigurations.vm-guest.config.system.build.toplevel
+```
+
+**In the VM installer**, enable sshd and note the host bridge IP is
+`192.168.122.1` (libvirt `default` NAT). Then from the HOST, copy the closure
+into the VM's mounted target store over SSH:
+
+```bash
+# In the VM: set a temporary root password so the host can ssh in
+passwd            # (installer root shell; pick anything, it's throwaway)
+systemctl start sshd
+
+# On the HOST: push the whole system closure into /mnt on the VM.
+# Replace <vm-ip> with the guest's 192.168.122.x (run `ip -4 addr` in the VM).
+HOST_STORE_PATH=$(nix path-info ~/nixos-config#nixosConfigurations.vm-guest.config.system.build.toplevel)
+nix copy --to "ssh-ng://root@<vm-ip>?remote-store=local?root=/mnt" "$HOST_STORE_PATH"
+```
+
+After this, every store path `nixos-install` needs is already under `/mnt/nix`,
+so the install does **zero downloads** and cannot fail the way it did before.
+
 ## 5. Install
 
 ```bash
-nixos-install --flake /mnt/etc/nixos-config#vm-guest
+# --option substituters "" forces install to use only what's already in the
+# store (the paths copied in 4b). Drop that flag if you skipped 4b.
+nixos-install --flake /mnt/etc/nixos-config#vm-guest --option substituters ""
 # Set the root password when prompted.
+```
+
+If you skipped step 4b and want to just retry the online install, run it with
+verbose logging so a failure shows the real cause instead of a generic message:
+
+```bash
+nixos-install --flake /mnt/etc/nixos-config#vm-guest --show-trace -v
 ```
 
 `todd` has no password in the config (same as the laptop). After first boot,
