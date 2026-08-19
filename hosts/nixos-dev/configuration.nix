@@ -199,7 +199,10 @@
     serviceConfig = {
       Type = "oneshot";
       RemainAfterExit = true;
-      ExecStart = "${pkgs.bash}/bin/bash -c 'for e in /sys/devices/system/cpu/cpu*/cpufreq/energy_performance_preference; do echo balance_performance > \"$e\"; done'";
+      # Guard for hardware without intel_pstate EPP (VMs, non-Intel CPUs): if no
+      # EPP sysfs paths exist, skip cleanly instead of failing the unit. `nullglob`
+      # makes the glob expand to nothing when there are no matches.
+      ExecStart = "${pkgs.bash}/bin/bash -c 'shopt -s nullglob; for e in /sys/devices/system/cpu/cpu*/cpufreq/energy_performance_preference; do echo balance_performance > \"$e\"; done'";
     };
   };
 

@@ -2,6 +2,9 @@ result
 test-results/
 nixos-minimal-*.iso
 
+# Throwaway build-vm disk images (from `nixos-rebuild build-vm --flake .#vm-test`)
+*.qcow2
+
 # Python bytecode from home/ helper scripts
 home/__pycache__/
 __pycache__/

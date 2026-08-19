@@ -43,6 +43,27 @@
       ];
     };
 
+    # Throwaway VM build of nixos-dev for `nixos-rebuild build-vm --flake .#vm-test`.
+    # Identical to nixos-dev plus ./vm-test.nix (test password + GNOME autologin).
+    # Not a real host; safe to remove along with vm-test.nix.
+    nixosConfigurations.vm-test = nixpkgs.lib.nixosSystem {
+      system = "x86_64-linux";
+      specialArgs = { inherit inputs; };
+      modules = [
+        { nixpkgs.overlays = [ claude-desktop.overlays.default ]; }
+        ./modules/common.nix
+        ./hosts/nixos-dev/configuration.nix
+        ./vm-test.nix
+        home-manager.nixosModules.home-manager
+        (hmBase // {
+          home-manager.users.todd = {
+            imports = [ ./home/todd-base.nix ./home/todd-desktop.nix ];
+            nixpkgs.overlays = [ claude-desktop.overlays.default herdr.overlays.default ];
+          };
+        })
+      ];
+    };
+
     nixosConfigurations.home-server = nixpkgs.lib.nixosSystem {
       system = "x86_64-linux";
       specialArgs = { inherit inputs; };
