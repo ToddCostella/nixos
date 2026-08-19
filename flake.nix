@@ -43,6 +43,26 @@
       ];
     };
 
+    # Persistent libvirt/QEMU VM: same desktop + tools as nixos-dev, VM-adapted
+    # hardware. Installed via ISO (see docs/vm-guest-install.md), managed in
+    # virt-manager. Distinct from the throwaway `vm-test` build-vm below.
+    nixosConfigurations.vm-guest = nixpkgs.lib.nixosSystem {
+      system = "x86_64-linux";
+      specialArgs = { inherit inputs; };
+      modules = [
+        { nixpkgs.overlays = [ claude-desktop.overlays.default ]; }
+        ./modules/common.nix
+        ./hosts/vm-guest/configuration.nix
+        home-manager.nixosModules.home-manager
+        (hmBase // {
+          home-manager.users.todd = {
+            imports = [ ./home/todd-base.nix ./home/todd-desktop.nix ];
+            nixpkgs.overlays = [ claude-desktop.overlays.default herdr.overlays.default ];
+          };
+        })
+      ];
+    };
+
     # Throwaway VM build of nixos-dev for `nixos-rebuild build-vm --flake .#vm-test`.
     # Identical to nixos-dev plus ./vm-test.nix (test password + GNOME autologin).
     # Not a real host; safe to remove along with vm-test.nix.
