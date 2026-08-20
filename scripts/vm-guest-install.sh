@@ -19,9 +19,10 @@ DISK="/dev/vda"
 # Where the flake lives inside the installer. Point this at the repo you either
 # git-cloned or scp'd in. Override with:  REPO_DIR=/path bash vm-guest-install.sh
 REPO_DIR="${REPO_DIR:-/mnt/etc/nixos-config}"
-# If the closure was pre-seeded from the host (nix copy --to ...root=/mnt),
-# install offline. Set SEEDED=0 to allow downloads from cache.nixos.org instead.
-SEEDED="${SEEDED:-1}"
+# Default: install ONLINE from cache.nixos.org (proven to work with adequate
+# disk + swap). Set SEEDED=1 only if you pre-copied the closure from the host
+# (nix copy --to ...root=/mnt) and want a fully offline install.
+SEEDED="${SEEDED:-0}"
 
 # --- Guards -----------------------------------------------------------------
 [ "$(id -u)" -eq 0 ] || { echo "Run as root (sudo -i)." >&2; exit 1; }
@@ -56,6 +57,10 @@ mkfs.fat -F 32 -n ESP "${DISK}1"
 mkfs.ext4 -L nixos -F "${DISK}2"
 
 echo "==> Mounting"
+# Wait for udev to create the /dev/disk/by-label/* symlinks — mkfs writes the
+# label but the symlink appears asynchronously, so an immediate mount races and
+# fails with "Can't lookup blockdev".
+udevadm settle
 mount /dev/disk/by-label/nixos /mnt
 mkdir -p /mnt/boot
 mount -o umask=077 /dev/disk/by-label/ESP /mnt/boot
@@ -72,10 +77,32 @@ fi
 # --- Hardware config (generated live, real vda UUIDs) -----------------------
 echo "==> Generating hardware configuration"
 nixos-generate-config --root /mnt
+# nixos-generate-config sometimes emits a SECOND, bogus fileSystems."/boot"
+# bind-mount ({ device = "/boot"; fsType = "none"; ... }) after the real vfat
+# entry. Two attrs with the same key make the bind-mount silently win, producing
+# an unbootable system. Strip that block if present.
+python3 - <<'PY' 2>/dev/null || true
+import re, sys
+p = "/mnt/etc/nixos/hardware-configuration.nix"
+s = open(p).read()
+s = re.sub(r'\n\s*fileSystems\."/boot" =\s*\{\s*device = "/boot";.*?\};', '', s, flags=re.S)
+open(p, "w").write(s)
+PY
 cp /mnt/etc/nixos/hardware-configuration.nix \
    "$REPO_DIR/hosts/vm-guest/hardware-configuration.nix"
 # The flake only sees files git tracks; stage the generated file.
 git -C "$REPO_DIR" add hosts/vm-guest/hardware-configuration.nix 2>/dev/null || true
+
+# --- Swap (prevents the OOM kill on an 8 GB VM) -----------------------------
+# Building the full GNOME + herdr/zoom closure exhausts 8 GB RAM and the kernel
+# kills `nix build` mid-install. An 8 GB swapfile on the target disk avoids it.
+if ! swapon --show | grep -q /mnt/swapfile; then
+  echo "==> Creating 8 GB swapfile on target (avoids OOM during build)"
+  fallocate -l 8G /mnt/swapfile || dd if=/dev/zero of=/mnt/swapfile bs=1M count=8192
+  chmod 600 /mnt/swapfile
+  mkswap /mnt/swapfile
+  swapon /mnt/swapfile
+fi
 
 # --- Install ----------------------------------------------------------------
 INSTALL_OPTS=()

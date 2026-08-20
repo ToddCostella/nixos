@@ -48,7 +48,7 @@ sudo -i; passwd; systemctl start sshd; ip -4 addr show   # note 192.168.122.x
 
 # On the HOST — seed packages + repo + script into the VM (see step 4b for the
 # nix copy details), then:
-scp $SSH_INSTALLER_OPTS ~/nixos-config/scripts/vm-guest-install.sh root@<vm-ip>:/root/
+scp "${SSH_INSTALLER_OPTS[@]}" ~/nixos-config/scripts/vm-guest-install.sh root@<vm-ip>:/root/
 
 # Back in the VM (over SSH now, so paste works):
 bash /root/vm-guest-install.sh
@@ -62,7 +62,9 @@ bash /root/vm-guest-install.sh
 > copy` below:
 >
 > ```bash
-> SSH_INSTALLER_OPTS="-o PubkeyAuthentication=no -o PreferredAuthentications=password -o IdentityAgent=none"
+> # A bash ARRAY — not a plain string. A string word-splits wrong and scp
+> # fails with "keyword pubkeyauthentication extra arguments at end of line".
+> SSH_INSTALLER_OPTS=(-o PubkeyAuthentication=no -o PreferredAuthentications=password -o IdentityAgent=none)
 > ```
 >
 > This friction is installer-only. The *installed* `vm-guest` authorizes your
@@ -121,13 +123,16 @@ cd /mnt/etc/nixos-config
 git add hosts/vm-guest/hardware-configuration.nix
 ```
 
-## 4b. (Recommended) Pre-seed the VM store from the host — avoids download failures
+## 4b. (Optional) Pre-seed the VM store from the host — fully offline install
 
-The earlier install attempt failed during the package **download** phase of
-`nixos-install` (the flaky NAT link dropped mid-download; it surfaces as "failed
-installing packages"). Nothing in the `vm-guest` closure actually builds from
-source — it's ~all binary-cache substitutions — so the robust fix is to copy the
-already-realised closure from the HOST instead of re-downloading it in the VM.
+A normal ONLINE install works fine given enough disk + swap (see Troubleshooting
+below). Pre-seeding is only worth it if the VM's network is unreliable or you
+want a zero-download install: copy the already-realised closure from the HOST
+into the VM's target store.
+
+Note: `herdr` and `zoom` are NOT in cache.nixos.org — they build from source in
+the VM (herdr compiles libghostty-vt via Zig). Seeding from a host that already
+has them built skips those builds entirely, which is the main reason to bother.
 
 **On the HOST (this laptop), once:** realise the full closure locally so there's
 something to copy (this is the only "download from the internet" step, and it
@@ -202,3 +207,33 @@ GNOME VM with your full toolset.
   sharing and display auto-resize work once you're in GNOME.
 - **Updating the VM later**: `sudo nixos-rebuild switch --flake
   /etc/nixos-config#vm-guest` from inside the VM (pull the repo first).
+
+## Troubleshooting — failures seen during a real install
+
+These were all hit on a first install (8 GB RAM / originally 60 GB disk). The
+scripts now handle them, but if you install by hand or on a smaller VM:
+
+- **`Too many authentication failures`** connecting to the installer over SSH:
+  the 1Password agent offers many keys before password auth. Force password-only:
+  `ssh -o PubkeyAuthentication=no -o PreferredAuthentications=password -o IdentityAgent=none`.
+  For `scp`, pass those as an ARRAY (`opts=(-o ...); scp "${opts[@]}" ...`) — a
+  plain string word-splits wrong ("keyword pubkeyauthentication extra arguments").
+
+- **`Can't lookup blockdev` on mount** right after `mkfs`: udev hasn't created
+  `/dev/disk/by-label/*` yet. Run `udevadm settle` before mounting (or mount the
+  device node, e.g. `/dev/vda2`, directly).
+
+- **Duplicate `fileSystems."/boot"` in the generated hardware config**:
+  `nixos-generate-config` sometimes appends a bogus `{ device = "/boot"; fsType
+  = "none"; options = ["bind"]; }` after the real vfat entry. The duplicate key
+  silently wins → unbootable. Delete the bind-mount block, keep the vfat one.
+
+- **`Killed` mid-install** (no error, just "Killed"): OOM. 8 GB RAM isn't enough
+  to build the closure. Add swap on the target: `fallocate -l 8G /mnt/swapfile;
+  chmod 600 /mnt/swapfile; mkswap /mnt/swapfile; swapon /mnt/swapfile`.
+
+- **`No space left on device`**: 60 GB is too small for the closure (~35 GB) +
+  source builds (herdr/zoom Zig caches) + swap. Grow the disk live from the host
+  (`virsh blockresize vm-guest --path <qcow2> --size 100G`), then in the VM
+  `sgdisk -e /dev/vda; partprobe /dev/vda; parted /dev/vda -- resizepart 2 100%;
+  resize2fs /dev/vda2`. The provision script now defaults to 100 GB.

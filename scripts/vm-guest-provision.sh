@@ -12,9 +12,15 @@ set -euo pipefail
 VM_NAME="vm-guest"
 RAM_MB=8192
 VCPUS=4
-DISK_GB=60
+# 100 GB: the full GNOME + herdr/zoom closure plus an 8 GB install-time swapfile
+# overflows 60 GB during install ("No space left on device"). qcow2 is sparse,
+# so this only consumes what's actually written.
+DISK_GB=100
 DISK_PATH="/var/lib/libvirt/images/${VM_NAME}.qcow2"
-ISO_PATH="${HOME}/Downloads/nixos-minimal-vm-guest.iso"
+# ISO must live somewhere the libvirt qemu user can read. $HOME is mode 700 on
+# NixOS, so the qemu-system user can't traverse it — stage the ISO in the
+# libvirt images pool instead. See docs/vm-guest-install.md step 0.
+ISO_PATH="/var/lib/libvirt/images/nixos-minimal-vm-guest.iso"
 URI="qemu:///system"
 
 command -v virt-install >/dev/null || { echo "virt-install not found" >&2; exit 1; }
