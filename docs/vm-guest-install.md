@@ -48,11 +48,25 @@ sudo -i; passwd; systemctl start sshd; ip -4 addr show   # note 192.168.122.x
 
 # On the HOST — seed packages + repo + script into the VM (see step 4b for the
 # nix copy details), then:
-scp ~/nixos-config/scripts/vm-guest-install.sh root@<vm-ip>:/root/
+scp $SSH_INSTALLER_OPTS ~/nixos-config/scripts/vm-guest-install.sh root@<vm-ip>:/root/
 
 # Back in the VM (over SSH now, so paste works):
 bash /root/vm-guest-install.sh
 ```
+
+> **`Too many authentication failures` when connecting to the installer?**
+> The installer's root accepts a *password*, but your ssh client offers every
+> key the 1Password agent holds first, and sshd cuts you off (`MaxAuthTries`)
+> before it reaches password auth. Force password-only auth and ignore the
+> agent. Define this once in the host shell and reuse it for `scp`/`ssh`/`nix
+> copy` below:
+>
+> ```bash
+> SSH_INSTALLER_OPTS="-o PubkeyAuthentication=no -o PreferredAuthentications=password -o IdentityAgent=none"
+> ```
+>
+> This friction is installer-only. The *installed* `vm-guest` authorizes your
+> key (baked into `modules/common.nix`), so `ssh todd@<vm-ip>` later just works.
 
 The manual steps below remain the reference for what the script does, or for a
 one-off where you'd rather run each step yourself.
@@ -134,6 +148,10 @@ systemctl start sshd
 
 # On the HOST: push the whole system closure into /mnt on the VM.
 # Replace <vm-ip> with the guest's 192.168.122.x (run `ip -4 addr` in the VM).
+# NIX_SSHOPTS forces password auth so the 1Password agent's keys don't trip
+# sshd's MaxAuthTries ("Too many authentication failures") — same options as
+# SSH_INSTALLER_OPTS in the fast-path note above.
+export NIX_SSHOPTS="-o PubkeyAuthentication=no -o PreferredAuthentications=password -o IdentityAgent=none"
 HOST_STORE_PATH=$(nix path-info ~/nixos-config#nixosConfigurations.vm-guest.config.system.build.toplevel)
 nix copy --to "ssh-ng://root@<vm-ip>?remote-store=local?root=/mnt" "$HOST_STORE_PATH"
 ```
