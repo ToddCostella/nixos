@@ -10,7 +10,11 @@ Usage:
     python3 sort_inbox.py            # DRY RUN — report only
     python3 sort_inbox.py --apply    # actually move
 """
-import imaplib, os, re, sys, collections
+import collections
+import imaplib
+import os
+import re
+import sys
 
 BATCH = 50  # Bridge chokes on large bulk ops
 
