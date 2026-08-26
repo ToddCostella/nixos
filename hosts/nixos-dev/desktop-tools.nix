@@ -382,6 +382,34 @@
       fi
     '')
 
+    # Detect and kill all running Zoom processes
+    (pkgs.writeShellScriptBin "kill-zoom" ''
+      set -euo pipefail
+
+      procs=$(${pkgs.procps}/bin/pgrep -i zoom || true)
+
+      if [ -z "$procs" ]; then
+        echo "No Zoom processes found."
+        exit 0
+      fi
+
+      echo "Found Zoom processes:"
+      ${pkgs.procps}/bin/pgrep -a -i zoom
+
+      # TERM first, then KILL any stragglers.
+      ${pkgs.procps}/bin/pkill -TERM -i zoom || true
+      sleep 2
+      ${pkgs.procps}/bin/pkill -KILL -i zoom || true
+
+      if ${pkgs.procps}/bin/pgrep -i zoom >/dev/null; then
+        echo "Warning: some Zoom processes survived." >&2
+        ${pkgs.procps}/bin/pgrep -a -i zoom >&2
+        exit 1
+      fi
+
+      echo "All Zoom processes killed."
+    '')
+
     # mitmproxy for network traffic interception
     mitmproxy
 

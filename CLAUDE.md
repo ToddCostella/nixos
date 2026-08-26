@@ -149,6 +149,7 @@ Custom shell scripts installed as system packages (nixos-dev only):
 
 - `wezterm-clip2path` - Converts clipboard image to file path for Claude Code image pasting
 - `mitm-localhost` - mitmproxy helper for capturing localhost HTTP traffic during development
+- `kill-zoom` - Detect and kill all running Zoom processes (SIGTERM, then SIGKILL stragglers)
 - `start-dev.sh` - Launch herdr workspace for nixos-config work (Claude AI + Terminal + Yazi)
 
 ## Network & Firewall

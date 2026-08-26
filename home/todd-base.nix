@@ -78,6 +78,13 @@
         rm -f -- "$tmp"
       }
 
+      # Clear-screen rebind: herdr binds Ctrl+L to vim-herdr-navigation.right
+      # (see the herdr config below), which shadows readline's default Ctrl+L
+      # clear-screen. Rebind clear to Ctrl+O, in both vi keymaps since vi-mode
+      # is enabled. `clear` still works as a command.
+      bindkey -M viins '^O' clear-screen
+      bindkey -M vicmd '^O' clear-screen
+
       # Shell tool integrations
       eval "$(atuin init zsh)"
       eval "$(zoxide init zsh)"
@@ -368,6 +375,7 @@
     atuin
     tree
     gh
+    doctl
   ]
   # herdr — terminal workspace manager for AI coding agents. Provided via the
   # herdr flake overlay, which is only applied on nixos-dev, so guard the
