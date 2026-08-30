@@ -28,9 +28,15 @@
 
   # Networking
   networking.hostName = "nixos-dev";
-  networking.nameservers = [ "10.0.0.8" "1.1.1.1" ];  # AdGuard Home, Cloudflare fallback
+  # Cloudflare primary, AdGuard Home (10.0.0.8) fallback. Swap the order to
+  # restore AdGuard ad-blocking as primary once the home-server is back up.
+  networking.nameservers = [ "1.1.1.1" "10.0.0.8" ];
   networking.networkmanager = {
     enable = true;
+    # Ignore DHCP-provided DNS (ISP resolvers): glibc only consults the first
+    # three resolv.conf entries, so appended ISP servers can crowd out the
+    # static fallback and serve stale answers.
+    dns = "none";
     plugins = with pkgs; [
       networkmanager-openvpn  # For NordVPN OpenVPN connections
     ];
