@@ -192,6 +192,16 @@
         role_arn = "arn:aws:iam::126697143246:role/OrganizationAccountAccessRole";
         role_session_name = "todd-prod";
       };
+      # Delegated access to the tai-chi club account (887762371439): assume
+      # OrganizationAccountAccessRole using toddcostella (mgmt) as the source.
+      # Short-lived STS creds only — no static keys of its own.
+      "profile taichi" = {
+        region = "ca-central-1";
+        output = "json";
+        source_profile = "toddcostella";
+        role_arn = "arn:aws:iam::887762371439:role/OrganizationAccountAccessRole";
+        role_session_name = "todd-taichi";
+      };
     };
     credentials = {
       "default" = {
@@ -206,9 +216,9 @@
       "buoyancy-dev" = {
         credential_process = "op --cache inject --in-file /home/todd/.aws/1pw/buoyancy-dev.json";
       };
-      # buoyancy-prod intentionally omitted — it assumes a role via
-      # source_profile = buoyancy-root (see profile block above), so it has
-      # no static credentials of its own.
+      # buoyancy-prod and taichi intentionally omitted — they assume roles via
+      # source_profile (buoyancy-root / toddcostella respectively; see profile
+      # blocks above), so they have no static credentials of their own.
     };
   };
 
