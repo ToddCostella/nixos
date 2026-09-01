@@ -12,6 +12,10 @@
   services.gnome.gnome-keyring.enable = true;
   services.gnome.gnome-online-accounts.enable = true;
 
+  # GPaste clipboard-history daemon (pairs with the GPaste GNOME Shell extension
+  # and the org/gnome/GPaste dconf settings below). Bound to Super+V.
+  programs.gpaste.enable = true;
+
   # Set wezterm as default terminal for GNOME
   # This sets the default x-terminal-emulator alternative
   environment.variables = {
@@ -31,6 +35,7 @@
           "just-perfection-desktop@just-perfection"
           "tactile@lundal.io"
           "switcher@landau.fi"
+          "GPaste@gnome-shell-extensions.gnome.org"
         ];
       };
 
@@ -115,7 +120,8 @@
         resize-up = [ "<Super><Control>k" ];
         resize-right = [ "<Super><Control>l" ];
         split-layout-horizontal = [ "<Super>b" ];
-        split-layout-toggle = [ "<Super>v" ];
+        # Moved off Super+V (now GPaste clipboard history) — see org/gnome/GPaste.
+        split-layout-toggle = [ "<Super><Shift>v" ];
         stacking-toggle = [ "<Super>w" ];
         window-layout-toggle = [ "<Super>s" ];
         window-toggle-float = [ "<Super><Shift>space" ];
@@ -123,7 +129,8 @@
       "org/gnome/shell/extensions/forge/keybindings" = {
         con-split-horizontal = [ "<Super>z" ];
         con-split-layout-toggle = [ "<Super>g" ];
-        con-split-vertical = [ "<Super>v" ];
+        # Moved off Super+V (now GPaste clipboard history) — see org/gnome/GPaste.
+        con-split-vertical = [ "<Super><Shift>v" ];
         con-stacked-layout-toggle = [ "<Shift><Super>s" ];
         con-tabbed-layout-toggle = [ "<Shift><Super>t" ];
         con-tabbed-showtab-decoration-toggle = [ "<Control><Alt>y" ];
@@ -153,6 +160,19 @@
         window-snap-two-third-left = [ "<Control><Alt>e" ];
         window-snap-two-third-right = [ "<Control><Alt>t" ];
       };
+
+      # GPaste clipboard-history manager. Super+V opens the history UI (took over
+      # from Forge's split toggle, now on Super+Shift+V). Tracks the system
+      # clipboard, including Neovim yanks via the wl-copy provider.
+      "org/gnome/GPaste" = {
+        history-name = "history";
+        max-history-size = mkUint32 100;
+        max-displayed-history-size = mkUint32 40;
+        images-support = true;
+        track-changes = true;
+        # Show the history menu at the pointer.
+        show-history = "<Super>v";
+      };
     };
   }];
 
@@ -164,6 +184,8 @@
     gnomeExtensions.just-perfection
     gnomeExtensions.tactile
     gnomeExtensions.switcher
+    # NB: no gnomeExtensions.gpaste — the GPaste shell extension ships inside the
+    # `gpaste` package, pulled in by programs.gpaste.enable above.
 
     # GNOME Utilities
     gnome-tweaks
