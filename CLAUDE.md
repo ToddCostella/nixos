@@ -117,6 +117,9 @@ applied — nixos-dev). Reload a running server with `herdr server reload-config
 - **Prefix**: `alt+a`
 - **Theme**: `terminal` (follows WezTerm's ANSI palette)
 - **Tabs** (≈ tmux windows): `alt+1..9` switches directly (no prefix), `prefix+c` new tab
+- **Workspaces**: `prefix+w` then a number switches by index (order can shift);
+  `prefix+g` opens the **navigator** — a name-searchable picker over spaces,
+  stable regardless of reordering (the built-in `goto` action)
 - **Splits**: `prefix+\` vertical divider (side-by-side), `prefix+-` horizontal (stacked)
 - **Pane focus**: `alt+arrows` (no prefix)
 - **Mouse / copy**: `mouse_capture` + `copy_on_select` on
