@@ -199,14 +199,30 @@ python3 ~/nixos-config/home/archive_old_inbox.py --months 6 --apply
 Or trigger the service: `systemctl --user start mail-archive.service`.
 
 ### Manual: empty Spam / Trash
-`empty_spam_trash.py` (in this repo).
+`empty_spam_trash.py` (in this repo). It reads BOTH `PROTON_BRIDGE_USER` and
+`PROTON_BRIDGE_PASS` from the environment but sources nothing itself — the
+systemd service sources `~/.secrets.env`, but a manual shell run must too, or
+login fails with `no such user`:
 ```sh
 export PROTON_BRIDGE_USER=toddcostella@protonmail.com
+. ~/.secrets.env   # loads PROTON_BRIDGE_PASS (run refresh-secrets first if empty)
 python3 ~/nixos-config/home/empty_spam_trash.py --report   # counts only
 python3 ~/nixos-config/home/empty_spam_trash.py            # mark \Deleted + EXPUNGE both
 ```
 Large Trash may stall (see bulk-op gotcha) — the delete usually still lands;
 restart Bridge and re-check counts.
+
+**⚠️ After deleting a label, empty Trash from the Proton WEB UI, not IMAP.**
+Trash messages that still reference a just-deleted label make Bridge loop
+`WARN Unknown label found during expunge from Trash, attempting to locate it
+labelID=N` on EVERY expunge — it never completes and wedges the Bridge session
+for all subsequent IMAP ops (logins then hang / return `no such user`). This is
+NOT a bulk-size stall: even a 10-message expunge hangs, so chunking does not
+help. Seen 2026-09-07 right after the Gmail-label cleanup. The fix is the web
+UI's **Trash → Empty trash** button — one server-side op, bypasses Bridge
+entirely (same reason the label itself was deleted server-side). Bridge catches
+up within a sync cycle afterward; verify `Trash=0` over IMAP once the
+`Unknown label` warnings stop.
 
 ## Health checks / troubleshooting
 
