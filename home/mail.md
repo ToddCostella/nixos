@@ -93,6 +93,25 @@ cache or notmuch index — the two clients coexist safely.
    makes mbsync issue one `UID FETCH 1:<82k> (FLAGS)`, which Bridge chokes on.
    Excluding it removed the stall and ~7.5 GB of local disk.
 
+## Post-Gmail-import cleanup (2026-09-07)
+
+The Gmail import stamped two redundant labels on the archive. Both were verified
+100% redundant (every message already in Archive/Sent; `notmuch count` showed 0
+messages existed only under the label) and removed:
+
+- **`toddcostella@gmail.com`** — the Gmail account-name label, on all ~81k msgs.
+  Deleted server-side in the Proton web UI (Settings → Labels), NOT over Bridge —
+  an 81k-msg label op would hit the bulk-op stall. One server-side delete is safe.
+- **`Important`** — Gmail's auto-"Important" marker (807 msgs, distinct from the
+  148 real stars in Starred). It did not appear in the Proton web Labels UI but
+  still existed over IMAP; the mbsync exclude below stops it syncing locally. Its
+  807 messages remain in Archive. (Still present server-side; not synced.)
+
+Both are `!`-excluded in `mail.nix` Patterns so a re-sync never recreates the
+local `Labels/` maildirs. Removing the label files reclaimed ~81k duplicate
+*filenames* on disk (164k → 84k files); unique-message count was unchanged
+(83,441) because notmuch already deduped them by Message-ID.
+
 ## Inbox categorization (receipts / newsletters)
 
 Hey-style sorting: receipts -> `Paper Trail`, newsletters/promotions ->

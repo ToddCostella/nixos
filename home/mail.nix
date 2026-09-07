@@ -67,6 +67,14 @@ let
     # (fills the socket, "broken pipe"/"connection reset", sync wedges forever).
     # Dropping it removes the choke and shrinks the local Maildir substantially.
     "!All Mail"
+    # Redundant Gmail-import labels: deleted on Proton (web UI) during the
+    # post-import cleanup. Every message under each already lives in Archive /
+    # Sent, so removing the label loses nothing. Excluded here so a re-sync
+    # never recreates the local Labels/ maildirs. (toddcostella@gmail.com was the
+    # Gmail account-name label stamped on all ~81k msgs; Important was Gmail's
+    # auto-"Important" marker, not the user's stars — those live in Starred.)
+    "!Labels/toddcostella@gmail.com"
+    "!Labels/Important"
     "!Labels/[Gmail]"
     "!Labels/[Gmail]All Mail"
     "!Labels/[Gmail]Trash"

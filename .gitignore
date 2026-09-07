@@ -8,3 +8,6 @@ nixos-minimal-*.iso
 # Python bytecode from home/ helper scripts
 home/__pycache__/
 __pycache__/
+
+# Local working artifacts (snapshots, scratch)
+/tmp/
