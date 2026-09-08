@@ -386,6 +386,10 @@
     tree
     gh
     doctl
+    # --- Markdown terminal viewers (trialing to pick a favorite) ---
+    glow # styled markdown pager/browser
+    mdcat # cat for markdown (inline images in WezTerm)
+    frogmouth # TUI markdown doc browser w/ navigation
   ]
   # herdr — terminal workspace manager for AI coding agents. Provided via the
   # herdr flake overlay, which is only applied on nixos-dev, so guard the
