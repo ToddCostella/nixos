@@ -300,49 +300,20 @@
     bluez
     bluez-tools
 
-    # Screenshot utilities
-    satty
+    # Clipboard utilities
     wl-clipboard
 
-    # Area screenshot with Satty annotation
-    (pkgs.writeShellScriptBin "screenshot-area" ''
-      mkdir -p ~/dev/buoyancy-platform/tmp
-      TMPFILE=$(mktemp /tmp/screenshot-XXXXXX.png)
-      gnome-screenshot -a -f "$TMPFILE" && \
-        ${pkgs.satty}/bin/satty -f "$TMPFILE" \
-        --output-filename ~/dev/buoyancy-platform/tmp/current-screenshot.png \
-        --copy-command "${pkgs.wl-clipboard}/bin/wl-copy"
-      rm -f "$TMPFILE"
-    '')
-
-    # Full screen screenshot with Satty annotation
-    (pkgs.writeShellScriptBin "screenshot-full" ''
-      mkdir -p ~/dev/buoyancy-platform/tmp
-      TMPFILE=$(mktemp /tmp/screenshot-XXXXXX.png)
-      gnome-screenshot -f "$TMPFILE" && \
-        ${pkgs.satty}/bin/satty -f "$TMPFILE" \
-        --output-filename ~/dev/buoyancy-platform/tmp/current-screenshot.png \
-        --copy-command "${pkgs.wl-clipboard}/bin/wl-copy"
-      rm -f "$TMPFILE"
-    '')
-
-    # Window screenshot with Satty annotation
-    (pkgs.writeShellScriptBin "screenshot-window" ''
-      mkdir -p ~/dev/buoyancy-platform/tmp
-      TMPFILE=$(mktemp /tmp/screenshot-XXXXXX.png)
-      gnome-screenshot -w -f "$TMPFILE" && \
-        ${pkgs.satty}/bin/satty -f "$TMPFILE" \
-        --output-filename ~/dev/buoyancy-platform/tmp/current-screenshot.png \
-        --copy-command "${pkgs.wl-clipboard}/bin/wl-copy"
-      rm -f "$TMPFILE"
-    '')
-
-    # Quick area screenshot (no annotation)
-    (pkgs.writeShellScriptBin "screenshot-quick" ''
-      mkdir -p ~/dev/buoyancy-platform/tmp
-      gnome-screenshot -a -f ~/dev/buoyancy-platform/tmp/current-screenshot.png && \
-      ${pkgs.wl-clipboard}/bin/wl-copy --type image/png < ~/dev/buoyancy-platform/tmp/current-screenshot.png
-    '')
+    # NOTE: The custom screenshot-area/full/window/quick scripts (and the `satty`
+    # annotation tool) were REMOVED. They all wrapped `gnome-screenshot`, which
+    # is broken on GNOME Wayland: it can't use GNOME Shell's screenshot interface
+    # and falls back to an empty X11 capture (exits 0 but produces no image), so
+    # nothing ever reached the file or clipboard. grim/slurp don't work either —
+    # Mutter doesn't implement the wlr-screencopy / ext-image-copy-capture
+    # protocol grim needs — and org.gnome.Shell.Screenshot DBus is AccessDenied
+    # on GNOME 50. The only working capture path is GNOME's built-in screenshot
+    # UI (Print), which captures via Mutter and copies to the clipboard. Use it
+    # directly; the clipboard image then pastes fine (nvim no longer shadows the
+    # clipboard — see home/todd-base.nix clipboard notes).
 
     # mitmproxy helper for capturing localhost HTTP traffic
     (pkgs.writeShellScriptBin "mitm-localhost" ''

@@ -141,12 +141,17 @@ naive `wl-copy` invocation caused a resize flash on every yank.
 
 ## Screenshot Tools
 
-Custom shell scripts installed as system packages (nixos-dev only):
-- `screenshot-area` - Area selection with Satty annotation
-- `screenshot-full` - Full screen with Satty annotation
-- `screenshot-window` - Window capture with Satty annotation
-- `screenshot-quick` - Quick area capture, no annotation
-- Output saved to: `~/dev/buoyancy-platform/tmp/current-screenshot.png`
+Use **GNOME's built-in screenshot UI** (`Print` key → Screen/Window/Selection
+overlay). It captures via Mutter and copies to the clipboard; the image then
+pastes normally (Neovim no longer shadows the clipboard — see the clipboard
+notes in `home/todd-base.nix` / nvim `NOTES.md`).
+
+The old custom `screenshot-area/full/window/quick` scripts (Satty annotation →
+`current-screenshot.png` → clipboard) were **removed**: they wrapped
+`gnome-screenshot`, which is broken on GNOME Wayland (empty X11 fallback, exits
+0 but captures nothing). grim/slurp don't work on Mutter either (no
+wlr-screencopy), and `org.gnome.Shell.Screenshot` DBus is AccessDenied on
+GNOME 50 — so the built-in UI is the only working path.
 
 ## Custom Shell Scripts
 

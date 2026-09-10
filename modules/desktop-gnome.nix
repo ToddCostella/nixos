@@ -74,13 +74,25 @@
       # Super+d opens the app grid.
       "org/gnome/shell/keybindings".toggle-application-view = [ "<Super>d" ];
 
-      # Custom launcher / screenshot keybindings.
+      # Bind GNOME's built-in screenshot UI to Print. It was unset (@as []), so
+      # Print did nothing / the old broken custom script ran instead. The
+      # built-in UI (Screen/Window/Selection overlay) captures via Mutter and
+      # copies to the clipboard — the only working screenshot path on GNOME
+      # Wayland (see desktop-tools.nix for why gnome-screenshot/grim don't work).
+      "org/gnome/shell/keybindings".show-screenshot-ui = [ "Print" ];
+
+      # Custom launcher keybindings.
+      # NOTE: the old Print / <Shift>Print screenshot bindings (custom4/custom5 →
+      # screenshot-area / screenshot-quick) were REMOVED. Those scripts wrap
+      # `gnome-screenshot`, which is broken on GNOME Wayland (it can't use the
+      # Shell screenshot interface and falls back to an empty X11 capture — exit
+      # 0 but no image, so the clipboard never updates). Leaving Print/<Shift>Print
+      # unbound here restores GNOME's built-in screenshot UI on those keys, which
+      # captures via Mutter and copies to the clipboard correctly.
       "org/gnome/settings-daemon/plugins/media-keys".custom-keybindings = [
         "/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom0/"
         "/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom1/"
         "/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom2/"
-        "/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom4/"
-        "/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom5/"
       ];
       "org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom0" = {
         name = "Terminal"; command = "wezterm"; binding = "<Super>Return";
@@ -90,12 +102,6 @@
       };
       "org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom2" = {
         name = "File Manager"; command = "nautilus"; binding = "<Super>e";
-      };
-      "org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom4" = {
-        name = "Screenshot Area with Satty"; command = "screenshot-area"; binding = "<Shift>Print";
-      };
-      "org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom5" = {
-        name = "Screenshot Area to Clipboard"; command = "screenshot-quick"; binding = "Print";
       };
 
       # Forge tiling extension: focus/move/resize (Super+hjkl), splits, floating,

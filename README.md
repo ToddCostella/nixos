@@ -187,14 +187,11 @@ refresh-secrets
 - **Open ports**: 3000 (Vite dev server), 8080 (WebSocket / mitmproxy)
 
 ### Screenshot Tools
-Custom scripts save to `~/dev/buoyancy-platform/tmp/current-screenshot.png` for Claude Code integration:
-
-| Command | Description |
-|---------|-------------|
-| `screenshot-area` | Area selection with Satty annotation |
-| `screenshot-full` | Full screen with Satty annotation |
-| `screenshot-window` | Active window with Satty annotation |
-| `screenshot-quick` | Quick area capture, no annotation |
+Use GNOME's built-in screenshot UI (`Print`). It captures via Mutter and copies
+to the clipboard for pasting into Claude Code. The old custom `screenshot-*`
+scripts were removed — they wrapped `gnome-screenshot`, which is broken on GNOME
+Wayland (empty X11 fallback). See CLAUDE.md → Screenshot Tools for the full
+rationale.
 
 ### Microcontroller Development
 - **ESP32**: esptool, espflash, PlatformIO, screen, picocom, minicom (see `esp32-dev.nix`)
