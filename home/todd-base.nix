@@ -379,7 +379,6 @@
     yq-go
     httpie
     fzf
-    yazi
     superfile
     zoxide
     atuin
@@ -405,6 +404,51 @@
   # and herdr panes (see the [[keys.command]] bindings in the herdr config
   # above). The Neovim half lives at ~/.config/nvim/after/plugin/herdr_nav.lua
   # — kept outside home-manager because nvim config is intentionally unmanaged.
+  # Yazi file manager. Managed declaratively so its previewer config is
+  # version-controlled.
+  #
+  # Image/PDF/video previews are DISABLED. yazi runs inside herdr (a terminal
+  # multiplexer), which does not forward the terminal graphics protocol
+  # (Kitty/iTerm2) out to the underlying terminal (ghostty). yazi still detects
+  # the terminal as graphics-capable and tries to transmit the image over that
+  # protocol; herdr swallows the escapes, so the image never draws and yazi
+  # hangs ~30s then paints garbage cell-blocks. chafa/ueberzug fallbacks did not
+  # take, so rather than fight it we route these mimes to the built-in `noop`
+  # previewer (draws nothing) and skip their preloaders (no background decode,
+  # no hang). Non-media files (text/code/archives/etc.) still preview normally.
+  programs.yazi = {
+    enable = true;
+    # Do NOT let HM install its own shell wrapper: its default name is now `y`,
+    # which would collide with the custom `y()` function in programs.zsh above
+    # (that wrapper already does the cd-on-exit via --cwd-file). Keep ours.
+    enableZshIntegration = false;
+
+    # Fold in the previously hand-written init.lua (zoxide integration) so it is
+    # managed here instead of as an orphaned ~/.config/yazi/init.lua.
+    initLua = ''
+      require("zoxide"):setup { update_db = true }
+    '';
+
+    settings = {
+      plugin = {
+        # prepend_* rules are matched BEFORE yazi's built-in defaults, so these
+        # win over the stock image/pdf/video previewers. `noop` is yazi's
+        # built-in do-nothing previewer/preloader — no decode, no graphics
+        # protocol attempt, no hang.
+        prepend_preloaders = [
+          { mime = "application/pdf"; run = "noop"; }
+          { mime = "image/*"; run = "noop"; }
+          { mime = "video/*"; run = "noop"; }
+        ];
+        prepend_previewers = [
+          { mime = "application/pdf"; run = "noop"; }
+          { mime = "image/*"; run = "noop"; }
+          { mime = "video/*"; run = "noop"; }
+        ];
+      };
+    };
+  };
+
   home.activation = lib.optionalAttrs (pkgs ? herdr) {
     herdrPlugins = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
       if ! ${pkgs.herdr}/bin/herdr plugin list 2>/dev/null | grep -q vim-herdr-navigation; then
