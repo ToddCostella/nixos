@@ -304,6 +304,11 @@
       focus_pane_up = "alt+up"
       focus_pane_down = "alt+down"
 
+      # Workspace-navigation mode (prefix+w): vim j/k alongside the default
+      # arrows (a list binds multiple keys; defaults are "up"/"down").
+      navigate_workspace_up = ["up", "k"]
+      navigate_workspace_down = ["down", "j"]
+
       [theme]
       # Follow the host terminal's (WezTerm) ANSI palette.
       name = "terminal"

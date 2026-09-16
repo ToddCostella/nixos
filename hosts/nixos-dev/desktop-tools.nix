@@ -357,7 +357,11 @@
     (pkgs.writeShellScriptBin "kill-zoom" ''
       set -euo pipefail
 
-      procs=$(${pkgs.procps}/bin/pgrep -i zoom || true)
+      # Anchored pattern: matches zoom/ZoomLauncher/ZoomWebviewHost but not
+      # this script's own process name ("kill-zoom" would match bare "zoom").
+      pattern='^zoom'
+
+      procs=$(${pkgs.procps}/bin/pgrep -i "$pattern" || true)
 
       if [ -z "$procs" ]; then
         echo "No Zoom processes found."
@@ -365,16 +369,16 @@
       fi
 
       echo "Found Zoom processes:"
-      ${pkgs.procps}/bin/pgrep -a -i zoom
+      ${pkgs.procps}/bin/pgrep -a -i "$pattern"
 
       # TERM first, then KILL any stragglers.
-      ${pkgs.procps}/bin/pkill -TERM -i zoom || true
+      ${pkgs.procps}/bin/pkill -TERM -i "$pattern" || true
       sleep 2
-      ${pkgs.procps}/bin/pkill -KILL -i zoom || true
+      ${pkgs.procps}/bin/pkill -KILL -i "$pattern" || true
 
-      if ${pkgs.procps}/bin/pgrep -i zoom >/dev/null; then
+      if ${pkgs.procps}/bin/pgrep -i "$pattern" >/dev/null; then
         echo "Warning: some Zoom processes survived." >&2
-        ${pkgs.procps}/bin/pgrep -a -i zoom >&2
+        ${pkgs.procps}/bin/pgrep -a -i "$pattern" >&2
         exit 1
       fi
 
