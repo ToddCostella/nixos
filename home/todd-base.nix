@@ -382,6 +382,7 @@
     fd
     jq
     yq-go
+    duckdb
     httpie
     fzf
     superfile
