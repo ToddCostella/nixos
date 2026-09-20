@@ -395,6 +395,14 @@
     glow # styled markdown pager/browser
     mdcat # cat for markdown (inline images in WezTerm)
     frogmouth # TUI markdown doc browser w/ navigation
+    # --- Rust toolchain ---
+    # Needed by `herdr plugin install`: plugins declare a build command (e.g.
+    # `cargo build --release`) that herdr runs in a plain subprocess inheriting
+    # $PATH. Without cargo on PATH the install dies at spawn with
+    # "failed to start: No such file or directory (os error 2)" — which reads
+    # like a missing source file but is really the missing cargo binary.
+    cargo
+    rustc # cargo shells out to rustc; installing cargo alone is not enough
   ]
   # herdr — terminal workspace manager for AI coding agents. Provided via the
   # herdr flake overlay, which is only applied on nixos-dev, so guard the
