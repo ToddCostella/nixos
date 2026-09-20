@@ -332,6 +332,15 @@
       # ~/.config/nvim/after/plugin/herdr_nav.lua (unmanaged, see CLAUDE.md).
       # TRADEOFF: shadows readline Ctrl+L (clear) / Ctrl+K (kill-line) in non-vim
       # panes — the accepted vim-tmux-navigator cost for seamless nav.
+      # herdr-navigator plugin on prefix+g, replacing herdr's built-in `goto`
+      # navigator (which is the default for this key and is not set anywhere
+      # else in this file — this [[keys.command]] entry overrides it).
+      [[keys.command]]
+      key = "prefix+g"
+      type = "plugin_action"
+      command = "herdr-navigator.open"
+      description = "workspace navigator (herdr-navigator)"
+
       [[keys.command]]
       key = "ctrl+h"
       type = "plugin_action"
