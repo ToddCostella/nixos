@@ -18,6 +18,7 @@
     dbeaver-bin
     bcompare
     wezterm
+    ghostty
     aerc
     hugo
     pinta
@@ -40,6 +41,69 @@
   # Point it at the existing ~/Dropbox when prompted so it matches local files
   # instead of re-downloading. See the systemd service below for supervision.
   # (maestral is in home.packages above.)
+
+  # --- Ghostty terminal ---
+  # Added alongside WezTerm, not replacing it: WezTerm stays the daily driver and
+  # herdr host. Ghostty exists for terminal-browser, which needs the *full* kitty
+  # graphics protocol — WezTerm implements iTerm2 inline images plus only partial
+  # kitty graphics, which is why terminal-browser's supported list names ghostty,
+  # kitty, cmux and vscode but not WezTerm.
+  #
+  # NOTE: run terminal-browser in ghostty *directly*, not inside herdr. Multiplexers
+  # rewrite program output and break terminal graphics commands (the same reason
+  # yazi's image previews are disabled — see todd-base.nix).
+  #
+  # Settings mirror ~/.config/wezterm/wezterm.lua as closely as ghostty allows.
+  # home-manager (pinned rev) has no programs.ghostty module, so this is home.file.
+  home.file.".config/ghostty/config".text = ''
+    # Managed by home-manager (home/todd-desktop.nix). Edit there, not here.
+    # Ported from ~/.config/wezterm/wezterm.lua — keep the two in sync.
+
+    font-size = 11
+    theme = Dracula
+
+    # wezterm line_height = 1.1. Ghostty has no line-height multiplier; it takes a
+    # percentage adjustment to the computed cell height, so +10% is the equivalent.
+    adjust-cell-height = 10%
+
+    # wezterm window_padding: left/right 8, top 8, bottom 25. Ghostty's padding is
+    # symmetric per axis (x = both sides, y = top AND bottom), so the asymmetric
+    # bottom=25 cannot be reproduced exactly. That padding was a workaround for a
+    # WezTerm/GNOME line-cutoff bug that ghostty does not have, so x=8/y=8 matches
+    # the intent rather than the number.
+    window-padding-x = 8
+    window-padding-y = 8
+
+    # wezterm window_close_confirmation = 'NeverPrompt'
+    confirm-close-surface = false
+
+    # wezterm scrollback_lines = 3500
+    scrollback-limit = 3500
+
+    # Not set, because ghostty's defaults already match the wezterm config:
+    #   window-decoration = auto  (≈ wezterm "TITLE | RESIZE")
+    #   background-opacity = 1    (wezterm window_background_opacity = 1.0)
+    # Several other wezterm settings have no ghostty analogue and need none —
+    # they were workarounds for WezTerm-specific GNOME/Wayland rendering bugs
+    # (front_end = "OpenGL", freetype_*_target, allow_square_glyphs_to_overflow_width,
+    # custom_block_glyphs, adjust_window_size_when_changing_font_size).
+
+    # Always open a new window rather than reusing an existing instance
+    # (wezterm prefer_to_spawn_tabs = false).
+    gtk-single-instance = false
+
+    # Ctrl+Shift+C / Ctrl+Shift+V are already ghostty defaults, so they need no
+    # entry here. Ctrl+V is deliberately left unbound so Claude Code receives it
+    # directly for image pasting — same rationale as the wezterm config.
+    #
+    # NOT PORTED: wezterm's Ctrl+Alt+V clipboard-image-to-path binding. It calls
+    # `wezterm-clip2path <pane_id>`, which needs a WezTerm pane id and the wezterm
+    # CLI, so it has no ghostty equivalent.
+    #
+    # NOT PORTED: the Alt+1..9 SendKey passthroughs. Those exist because WezTerm
+    # would otherwise swallow the chords before herdr's switch_tab saw them;
+    # ghostty does not bind Alt+number, so the keys already reach the shell.
+  '';
 
   systemd.user.services.maestral = {
     Unit = {
