@@ -287,6 +287,20 @@
       # Managed by home-manager (home/todd-base.nix). Edit there, not here.
       # Reload in a running server with: herdr server reload-config
 
+      # Suppress the first-run onboarding overlay. This MUST stay above [keys]:
+      # it is a top-level key, so anything after a table header would be parsed
+      # into that table instead.
+      #
+      # herdr records "onboarding done" by writing back into config.toml, but
+      # home-manager makes that file a /nix/store symlink (read-only), so the
+      # write fails with "failed to save onboarding setting: Read-only file
+      # system (os error 30)" and the overlay returns on every fresh start.
+      # A *missing* key is what triggers onboarding, so setting it explicitly
+      # is the fix. Same root cause as the theme/toast/sound write warnings in
+      # herdr-server.log — those are in-app settings changes that cannot persist
+      # by design; change them here instead.
+      onboarding = false
+
       [keys]
       prefix = "alt+a"
 
