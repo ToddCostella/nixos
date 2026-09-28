@@ -35,7 +35,19 @@
           "just-perfection-desktop@just-perfection"
           "tactile@lundal.io"
           "switcher@landau.fi"
-          "GPaste@gnome-shell-extensions.gnome.org"
+          # GPaste's SHELL EXTENSION is deliberately NOT enabled. Its UI redraws
+          # on clipboard change, which produced a resize/flash in every terminal
+          # on the first copy of a session (seen in herdr AND plain ghostty).
+          # Disabling it stopped the flash; verified 2026-09-28.
+          #
+          # This does NOT disable GPaste. programs.gpaste.enable below still runs
+          # the daemon, so clipboard history keeps working — including images —
+          # via the standalone "GPaste" app (org.gnome.GPaste.Ui) and
+          # `gpaste-client`. What is lost is the Super+V shell popup.
+          #
+          # NB: nvim's NOTES.md blames this flash on herdr redrawing when nvim
+          # spawns wl-copy. That was wrong: `g:clipboard = v:null` removed the
+          # flash because it stopped clipboard *changes*, not the spawn.
         ];
       };
 
