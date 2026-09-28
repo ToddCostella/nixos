@@ -3,8 +3,22 @@
 
 { config, pkgs, ... }:
 
+let
+  # Icon set for the Herdr terminal entry below. Generated from ghostty's own
+  # icon with a hue rotation (green instead of blue) so the two terminals are
+  # instantly distinguishable at alt-tab / dash size while staying visibly the
+  # same family of app. Sources live in modules/icons/herdr/.
+  herdr-terminal-icon = pkgs.runCommand "herdr-terminal-icon" { } ''
+    for sz in 16 32 48 64 128 256 512; do
+      install -Dm644 ${./icons/herdr}/herdr-$sz.png \
+        "$out/share/icons/hicolor/''${sz}x''${sz}/apps/com.mitchellh.ghostty.Herdr.png"
+    done
+  '';
+in
 {
   environment.systemPackages = with pkgs; [
+    herdr-terminal-icon
+
     # Create desktop entries with proper icons for development tools
     
     # Lazygit - Git UI
@@ -175,6 +189,32 @@
       mimeTypes = [ "application/vnd.oasis.opendocument.spreadsheet" "application/vnd.ms-excel" ];
     })
     
+    # --- Terminals: separate GNOME app-switcher identities ---
+    # GNOME groups windows by app-id, matching a window's Wayland app-id against
+    # a .desktop file's StartupWMClass. Every ghostty window reports the same
+    # default app-id (com.mitchellh.ghostty), so bare-ghostty and herdr sessions
+    # collapse into one icon. Passing --class gives herdr windows their own
+    # app-id, and the matching StartupWMClass below makes GNOME treat them as a
+    # separate application with its own icon and alt-tab entry.
+    #
+    # NOTE: ghostty's own stock entry (com.mitchellh.ghostty.desktop, shipped in
+    # the package) still covers plain ghostty, so it is not redefined here.
+    (makeDesktopItem {
+      name = "ghostty-herdr";
+      desktopName = "Herdr";
+      comment = "Terminal workspace manager for AI coding agents (ghostty)";
+      # NOTE: deliberately NOT ${herdr}. The herdr overlay is applied only inside
+      # home-manager.users.todd (see flake.nix), so a system module like this one
+      # resolves pkgs.herdr against plain nixpkgs — a different, older herdr
+      # (0.7.5) than the 0.9.1 actually on your PATH. Launch via the login shell
+      # so it picks up the home-manager profile's herdr, whatever version that is.
+      exec = "${ghostty}/bin/ghostty --class=com.mitchellh.ghostty.Herdr -e ${pkgs.zsh}/bin/zsh -l -c herdr";
+      icon = "com.mitchellh.ghostty.Herdr";
+      terminal = false;
+      categories = [ "System" "TerminalEmulator" "Development" ];
+      startupWMClass = "com.mitchellh.ghostty.Herdr";
+    })
+
     # Additional icon theme packages for better icon support
     papirus-icon-theme
     numix-icon-theme-circle
