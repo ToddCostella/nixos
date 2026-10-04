@@ -113,8 +113,43 @@
     # extraPortals are added by desktop environment modules
   };
 
-  # Enable CUPS to print documents
-  services.printing.enable = true;
+  # --- Printing ---
+  # EPSON ET-3700 (wireless, 10.0.0.241 / EPSON367147.local) declared here so the
+  # queue survives rebuilds instead of living only in CUPS' mutable state.
+  #
+  # cups-browsed is DISABLED deliberately. It kept rewriting this queue's device
+  # URI to `implicitclass://EPSON_ET_3700_Series/`, then failed to resolve that
+  # back to a real device — jobs died with "No suitable destination host found by
+  # cups-browsed" / NO_DEST_FOUND and sat in the queue retrying forever
+  # (2026-10-04, a 21-page PDF). Restarting browsed did not help; it re-hijacked
+  # the queue within minutes of a manual `lpadmin` fix. The printer was healthy
+  # throughout — direct IPP returned successful-ok / state=idle.
+  #
+  # browsed only exists to auto-discover shared/legacy CUPS queues. This printer
+  # is driverless IPP (mopria-certified, rp=ipp/print), so it needs neither
+  # browsed nor a driver — ensurePrinters points straight at it.
+  #
+  # NB: uses the mDNS name, not 10.0.0.241, so a DHCP lease change doesn't break
+  # printing. Avahi is enabled in modules/common.nix.
+  services.printing = {
+    enable = true;
+    browsed.enable = false;
+  };
+
+  # The queue itself lives under hardware.printers (NOT services.printing).
+  hardware.printers = {
+    ensurePrinters = [{
+      name = "EPSON_ET_3700_Series";
+      description = "EPSON ET-3700 Series";
+      deviceUri = "ipp://EPSON367147.local/ipp/print";
+      # "everywhere" = IPP Everywhere driverless; no vendor PPD needed.
+      model = "everywhere";
+      ppdOptions = {
+        PageSize = "Letter";
+      };
+    }];
+    ensureDefaultPrinter = "EPSON_ET_3700_Series";
+  };
 
   # Docker
   virtualisation.docker = {
