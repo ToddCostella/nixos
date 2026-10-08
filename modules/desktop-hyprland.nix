@@ -1,7 +1,15 @@
-# Hyprland Wayland Compositor Configuration
-# Minimal Hyprland setup — just enough to boot and use
-# Use GDM from main config as the display manager
-
+# Hyprland Wayland compositor — system side of the Omarchy-flavoured session.
+#
+# Installed ALONGSIDE GNOME (not as a specialisation): GDM lists both "GNOME"
+# and "Hyprland" in its session picker, so switching is a log out / log in, no
+# reboot. Pick plain "Hyprland", not "Hyprland (uwsm-managed)" (shipped by the
+# package): Home Manager already manages the session's systemd target.
+#
+# gnome-keyring stays on (GDM's PAM unlocks it for either session), so
+# 1Password, git signing and the SSH agent behave the same under Hyprland.
+#
+# All look-and-feel (keybindings, Waybar, Walker, Mako, Hyprlock, theme) is user
+# config in home/hyprland/.
 { config, pkgs, lib, ... }:
 
 {
@@ -10,22 +18,17 @@
     xwayland.enable = true;
   };
 
+  # PAM service so hyprlock can verify the password.
+  programs.hyprlock.enable = true;
+
+  # Omarchy's UI font (Waybar, Mako, Walker, Hyprlock).
+  fonts.packages = [ pkgs.nerd-fonts.caskaydia-mono ];
+
   environment.systemPackages = with pkgs; [
-    waybar          # Status bar
-    wofi            # App launcher
-    hyprpaper       # Wallpaper daemon
-    hypridle        # Idle management
-    hyprlock        # Lock screen
-    hyprshot        # Screenshot utility
-    wl-clipboard    # Wayland clipboard utilities
-    dunst           # Notification daemon
-    kitty           # Fallback terminal (WezTerm works too)
+    wl-clipboard
+    networkmanagerapplet  # nm-connection-editor, opened from the Waybar network icon
   ];
 
-  xdg.portal.extraPortals = [ pkgs.xdg-desktop-portal-hyprland ];
-
-  environment.variables = {
-    NIXOS_OZONE_WL = "1";    # Electron/Chromium Wayland
-    MOZ_ENABLE_WAYLAND = "1"; # Firefox Wayland
-  };
+  # Electron/Chromium apps run natively on Wayland (both sessions are Wayland).
+  environment.sessionVariables.NIXOS_OZONE_WL = "1";
 }

@@ -30,13 +30,17 @@ nixos-config/
 │   ├── esp32-dev.nix                    # ESP32 microcontroller development tools
 │   ├── photo-restoration.nix            # Photo editing and restoration applications
 │   ├── desktop-cosmic.nix               # COSMIC desktop (commented out — not in current nixpkgs)
-│   ├── desktop-hyprland.nix             # Hyprland compositor
+│   ├── desktop-hyprland.nix             # Hyprland session alongside GNOME (system side)
 │   ├── desktop-kde.nix                  # KDE Plasma desktop
 │   ├── desktop-cinnamon.nix             # Cinnamon desktop
 │   └── desktop-multi-de-compat.nix      # Multi-DE compatibility layer
 └── home/
     ├── todd-base.nix                    # Headless-safe: git, zsh, herdr, SSH, AWS, CLI tools
-    └── todd-desktop.nix                 # GUI apps only (nixos-dev)
+    ├── todd-desktop.nix                 # GUI apps only (nixos-dev)
+    └── hyprland/                        # Omarchy-style Hyprland session (user side)
+        ├── default.nix                  # Keybinds, Waybar, Walker, Mako, Hyprlock, Hypridle
+        ├── themes.nix                   # Colour palettes for `desktop.theme`
+        └── walker-style.css             # Vendored Walker CSS (colours prepended)
 ```
 
 ### Flake & Home Manager
@@ -52,7 +56,7 @@ nixos-config/
 ## Key System Components
 
 - **Hosts**: `nixos-dev` (Dell XPS laptop, `nixos-dev.local`), `home-server` (headless, hardware TBD)
-- **Desktop**: GNOME with GDM display manager (Wayland) — nixos-dev only
+- **Desktop**: GNOME with GDM display manager (Wayland), plus an Omarchy-style Hyprland session selectable at GDM — nixos-dev only
 - **Terminal**: WezTerm (default), herdr for session/multiplexing (replaced tmux)
 - **Shell**: zsh with oh-my-zsh (robbyrussell theme) — configured in `home/todd-base.nix`
 - **Virtualization**: Docker (auto-start) + QEMU/KVM/libvirtd with nested virtualization — nixos-dev only
@@ -132,6 +136,24 @@ applied — nixos-dev). Reload a running server with `herdr server reload-config
 Neovim clipboard uses a **detached `wl-copy`** provider (spawned with no tty) —
 herdr 0.7.5 does not forward inner-program OSC 52 to the outer terminal, and the
 naive `wl-copy` invocation caused a resize flash on every yank.
+
+## Hyprland Session (Omarchy-style)
+
+A second GDM session next to GNOME (log out → gear icon → "Hyprland"; not the
+"uwsm-managed" entry). Look and feel is borrowed from Omarchy / omarchy-nix but
+written as plain Home Manager config in `home/hyprland/` — omarchy-nix itself is
+not a flake input.
+
+- **Theme**: `desktop.theme` (tokyo-night, catppuccin, gruvbox, nord, everforest,
+  kanagawa) colours Hyprland borders, Waybar, Walker, Mako and Hyprlock;
+  `desktop.wallpaper` (path or null for a solid colour)
+- **Launcher**: Walker + Elephant (`Super+Space`); clipboard history `Super+Ctrl+V`
+- **Keys**: `Super+/` shows every bound key (from `bindd` descriptions). Forge
+  muscle memory kept: `Super+h/j/k/l` focus, `Super+F` fullscreen, `Super+E` files
+- **Services** (waybar, walker, elephant, hypridle, swayosd, hyprpolkitagent) are
+  bound to `hyprland-session.target`, so none start under GNOME
+- **Config format**: hyprlang (`configType` pinned); Hyprland 0.56 also reads Lua
+- Validate after edits: `Hyprland --verify-config -c <generated hyprland.conf>`
 
 ## 1Password SSH Agent
 
