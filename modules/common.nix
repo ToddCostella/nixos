@@ -73,20 +73,13 @@
   };
 
   # Limit journal size to save disk space.
-  #
-  # NOTE: newer nixpkgs (seen 2026-10-08) REMOVE services.journald.extraConfig
-  # and turn it into a hard eval error — "no longer has any effect; please
-  # remove it. Use services.journald.settings.Journal instead." That option does
-  # not exist in the currently pinned nixpkgs (2026-07-19), so this cannot be
-  # migrated until the flake is updated. Swap to:
-  #   services.journald.settings.Journal = {
-  #     SystemMaxUse = "500M"; MaxRetentionSec = "1month";
-  #   };
-  # as part of the next `nix flake update`.
-  services.journald.extraConfig = ''
-    SystemMaxUse=500M
-    MaxRetentionSec=1month
-  '';
+  # services.journald.extraConfig (a raw journald.conf string) was removed from
+  # nixpkgs in favour of this structured form; leaving it set is a hard
+  # evaluation error, not a warning. Migrated 2026-10-09 with the flake update.
+  services.journald.settings.Journal = {
+    SystemMaxUse = "500M";
+    MaxRetentionSec = "1month";
+  };
 
   # Core programs available on every host
   programs.mtr.enable = true;
