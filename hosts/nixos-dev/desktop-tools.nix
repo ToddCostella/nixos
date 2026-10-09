@@ -462,9 +462,23 @@
     cosmic.configuration = {
       system.nixos.tags = [ "COSMIC" ];
       services.desktopManager.gnome.enable = lib.mkForce false;
-      services.gnome.gnome-keyring.enable = lib.mkForce false;
       services.gnome.gnome-online-accounts.enable = lib.mkForce false;
-      security.pam.services.gdm.enableGnomeKeyring = lib.mkForce false;
+
+      # gnome-keyring is deliberately LEFT ON here (it used to be mkForce
+      # false alongside the rest of GNOME). Despite the name it is not a
+      # desktop component — it is the de-facto org.freedesktop.secrets
+      # provider, and COSMIC ships no replacement. With it off there is no
+      # Secret Service on the session bus at all, so 1Password cannot store
+      # its two-factor token ("1Password is unable to save your two factor
+      # token", offline-only), and GitHub credentials are lost on every
+      # switch into COSMIC. Seen 2026-10-09.
+      #
+      # security.pam.services.gdm.enableGnomeKeyring must stay on too: it is
+      # what unlocks the keyring at login. Without it the daemon runs but
+      # stays locked, which trades the error for a password prompt.
+      #
+      # NB: the KDE specialisation below still disables both, correctly —
+      # plasma6 brings kwallet + kwallet-pam, its own Secret Service.
       xdg.portal.extraPortals = lib.mkForce [ pkgs.xdg-desktop-portal-cosmic ];
       services.desktopManager.cosmic.enable = true;
       environment.systemPackages = with pkgs; [
