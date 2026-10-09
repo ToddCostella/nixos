@@ -388,6 +388,59 @@
       fi
     '')
 
+    # Launch the standard working set and place it across workspaces.
+    #
+    # COSMIC (1.9.0) has no way to declare "this app opens on workspace N":
+    # window rules only cover tiling exceptions, there is no session restore,
+    # and no CLI drives the compositor. The ext_workspace_manager_v1 protocol
+    # IS live, so a proper Wayland client could place windows deterministically
+    # — but that is real software to write and own. This script takes the cheap
+    # route instead: switch workspace with a synthetic Super+N, launch, wait.
+    #
+    # TRADEOFF: it is timing-dependent. A slow-starting app can land on whatever
+    # workspace is focused when its window finally maps. The sleeps below are
+    # deliberately generous; raise them if windows land in the wrong place.
+    #
+    # Workspaces are PER-DISPLAY in COSMIC, so this only places windows on the
+    # monitor that has focus when it runs. Start it from the 32" to match the
+    # layout below.
+    (pkgs.writeShellScriptBin "start-workspace" ''
+      set -euo pipefail
+
+      WTYPE="${pkgs.wtype}/bin/wtype"
+
+      # Switch to workspace N on the focused display.
+      ws() {
+        "$WTYPE" -M logo -k "$1" -m logo
+        sleep 1
+      }
+
+      launch() {
+        echo "  launching: $*"
+        setsid "$@" >/dev/null 2>&1 &
+        sleep "''${LAUNCH_WAIT:-4}"
+      }
+
+      echo "Workspace 1: terminal"
+      ws 1
+      launch ${pkgs.ghostty}/bin/ghostty -e ${pkgs.zsh}/bin/zsh -l -c herdr
+
+      echo "Workspace 2: comms"
+      ws 2
+      launch ${pkgs._1password-gui}/bin/1password
+      launch ${pkgs.slack}/bin/slack -s
+      launch ${pkgs.signal-desktop}/bin/signal-desktop
+
+      echo "Workspace 3: chrome"
+      ws 3
+      launch ${pkgs.google-chrome}/bin/google-chrome-stable
+
+      ws 1
+      echo
+      echo "Done. Firefox is not launched here — it belongs on the 27\", and"
+      echo "workspaces are per-display, so start it there yourself."
+    '')
+
     # Detect and kill all running Zoom processes
     (pkgs.writeShellScriptBin "kill-zoom" ''
       set -euo pipefail
