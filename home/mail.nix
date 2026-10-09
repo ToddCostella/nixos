@@ -193,7 +193,10 @@ in
   # notmuch: tag new mail so aerc's default queries (tag:inbox / tag:unread) work.
   programs.notmuch = {
     enable = true;
-    new = {
+    # Renamed upstream from programs.notmuch.new.* (2026-10). The old names
+    # still work but warn, and home-manager eventually turns such renames into
+    # hard errors — services.journald.extraConfig did exactly that.
+    settings.new = {
       tags = [ "new" ];
       ignore = [ ".mbsyncstate" ".uidvalidity" ];
     };

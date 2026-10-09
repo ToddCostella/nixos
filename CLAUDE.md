@@ -53,7 +53,7 @@ nixos-config/
 
 - **Hosts**: `nixos-dev` (Dell XPS laptop, `nixos-dev.local`), `home-server` (headless, hardware TBD)
 - **Desktop**: GNOME with GDM display manager (Wayland) — nixos-dev only
-- **Terminal**: WezTerm (default), herdr for session/multiplexing (replaced tmux)
+- **Terminal**: Ghostty (default, replaced WezTerm 2026-10-08 — terminal-browser needs the full kitty graphics protocol, which WezTerm only partially implements). WezTerm is still installed. herdr for session/multiplexing (replaced tmux)
 - **Shell**: zsh with oh-my-zsh (robbyrussell theme) — configured in `home/todd-base.nix`
 - **Virtualization**: Docker (auto-start) + QEMU/KVM/libvirtd with nested virtualization — nixos-dev only
 - **Audio**: PipeWire (ALSA, PulseAudio compat, JACK) — nixos-dev only
@@ -115,7 +115,7 @@ herdr replaced tmux as the terminal multiplexer. Config is written to
 applied — nixos-dev). Reload a running server with `herdr server reload-config`.
 
 - **Prefix**: `alt+a`
-- **Theme**: `terminal` (follows WezTerm's ANSI palette)
+- **Theme**: `terminal` (follows the host terminal's ANSI palette — now Ghostty's)
 - **Tabs** (≈ tmux windows): `alt+1..9` switches directly (no prefix), `prefix+c` new tab
 - **Workspaces**: `prefix+w` then a number switches by index (order can shift);
   `prefix+g` opens the **navigator** — a name-searchable picker over spaces,
@@ -156,7 +156,7 @@ GNOME 50 — so the built-in UI is the only working path.
 
 ## Custom Shell Scripts
 
-- `wezterm-clip2path` - Converts clipboard image to file path for Claude Code image pasting
+- `wezterm-clip2path` - Converts clipboard image to file path for Claude Code image pasting. WEZTERM ONLY: it needs a WezTerm pane id and the wezterm CLI, so it does nothing under Ghostty; no equivalent yet
 - `mitm-localhost` - mitmproxy helper for capturing localhost HTTP traffic during development
 - `kill-zoom` - Detect and kill all running Zoom processes (SIGTERM, then SIGKILL stragglers)
 - `start-dev.sh` - Launch herdr workspace for nixos-config work (Claude AI + Terminal + Yazi)
