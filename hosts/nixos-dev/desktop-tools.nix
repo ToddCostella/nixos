@@ -16,6 +16,7 @@
     ../../modules/photo-restoration.nix
     ../../modules/desktop-icons.nix
     ../../modules/desktop-gnome.nix
+    ../../modules/desktop-hyprland.nix    # Hyprland session alongside GNOME (pick at GDM)
     # ../../modules/desktop-cosmic.nix  # COSMIC Desktop — not available in current nixpkgs
     ../../modules/playwright-dev.nix
     ../../modules/nordvpn.nix
@@ -428,36 +429,12 @@
   ];
 
   # Specialisations — alternative desktop environments selectable at boot or runtime.
-  # Boot: systemd-boot shows entries like "NixOS - specialisation: Hyprland"
+  # (Hyprland is no longer one: it's a regular GDM session, see
+  # modules/desktop-hyprland.nix.)
+  # Boot: systemd-boot shows entries like "NixOS - specialisation: KDE-Plasma-6"
   # Runtime switch: sudo /run/current-system/specialisation/<name>/bin/switch-to-configuration switch
   # Back to default (GNOME): sudo nixos-rebuild switch --flake ~/nixos-config#<host>
   specialisation = {
-
-    hyprland.configuration = {
-      system.nixos.tags = [ "Hyprland" ];
-      services.desktopManager.gnome.enable = lib.mkForce false;
-      services.gnome.gnome-keyring.enable = lib.mkForce false;
-      services.gnome.gnome-online-accounts.enable = lib.mkForce false;
-      security.pam.services.gdm.enableGnomeKeyring = lib.mkForce false;
-      xdg.portal.extraPortals = lib.mkForce [ pkgs.xdg-desktop-portal-hyprland ];
-      programs.hyprland.enable = true;
-      programs.hyprland.xwayland.enable = true;
-      environment.systemPackages = with pkgs; [
-        waybar
-        wofi
-        hyprpaper
-        hypridle
-        hyprlock
-        hyprshot
-        wl-clipboard
-        dunst
-        kitty
-      ];
-      environment.variables = {
-        NIXOS_OZONE_WL = "1";
-        MOZ_ENABLE_WAYLAND = "1";
-      };
-    };
 
     cosmic.configuration = {
       system.nixos.tags = [ "COSMIC" ];

@@ -4,7 +4,7 @@
 
 { pkgs, ... }:
 {
-  imports = [ ./mail.nix ];
+  imports = [ ./mail.nix ./hyprland ];
 
   nixpkgs.config.allowUnfree = true;
 
