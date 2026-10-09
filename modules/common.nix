@@ -72,7 +72,17 @@
     openFirewall = true;
   };
 
-  # Limit journal size to save disk space
+  # Limit journal size to save disk space.
+  #
+  # NOTE: newer nixpkgs (seen 2026-10-08) REMOVE services.journald.extraConfig
+  # and turn it into a hard eval error — "no longer has any effect; please
+  # remove it. Use services.journald.settings.Journal instead." That option does
+  # not exist in the currently pinned nixpkgs (2026-07-19), so this cannot be
+  # migrated until the flake is updated. Swap to:
+  #   services.journald.settings.Journal = {
+  #     SystemMaxUse = "500M"; MaxRetentionSec = "1month";
+  #   };
+  # as part of the next `nix flake update`.
   services.journald.extraConfig = ''
     SystemMaxUse=500M
     MaxRetentionSec=1month

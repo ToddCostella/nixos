@@ -22,7 +22,12 @@
     aerc
     hugo
     pinta
-    apostrophe
+    # apostrophe (GTK markdown editor) REMOVED 2026-10-09: on newer nixpkgs it
+    # drags in python3.12-anyio via levenshtein -> scikit-build-core ->
+    # pytest-subprocess, and that anyio build fails its own test suite (TLS and
+    # itertools tests) and is absent from the binary cache, so the whole system
+    # build fails. Nothing else in the config needs it. Looking for a
+    # replacement markdown editor.
     rainfrog
     maestral
   ];
