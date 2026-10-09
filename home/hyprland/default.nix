@@ -116,7 +116,35 @@ in
       };
 
       settings = {
-        monitor = [ ",preferred,auto,auto" ];
+        # --- Monitors: laptop left, U3219Q (32") middle, U2723QE (27") right ---
+        #
+        # Matched on `desc:` (make + model + serial), NOT connector names. DP-2
+        # and DP-3 swap between the two Dells depending on power/plug order —
+        # observed swapping within a single session on 2026-10-08 — so a
+        # connector-keyed rule silently lands windows on the wrong screen.
+        #
+        # x offsets are in SCALED (logical) pixels, so each equals the sum of the
+        # effective widths to its left:
+        #   eDP-1   3840/2   = 1920 wide -> starts at 0
+        #   U3219Q  3840/1.5 = 2560 wide -> starts at 1920
+        #   U2723QE 2560/1   = 2560 wide -> starts at 4480
+        # Get these wrong and the pointer hits a dead gap between displays.
+        #
+        # The U2723QE runs 2560x1440@60 rather than its only 4K mode (3840x2160
+        # @29.98Hz) — 30Hz makes pointer movement feel laggy. Swap the mode here
+        # if sharpness matters more than smoothness.
+        #
+        # NOTE: these panels often refuse a mode set live via `hyprctl keyword
+        # monitor` (atomic DRM commit fails, monitor reports 0x0) but accept the
+        # same mode on `hyprctl reload`. Apply changes with a reload, not live
+        # keyword commands.
+        monitor = [
+          "desc:Sharp Corporation 0x14D6,3840x2400@59.99,0x0,2"
+          "desc:Dell Inc. DELL U3219Q 3BXJ413,3840x2160@60.00,1920x0,1.5"
+          "desc:Dell Inc. DELL U2723QE JHFW0P3,2560x1440@59.95,4480x0,1"
+          # Fallback so an unknown display still lights up instead of staying dark.
+          ",preferred,auto,auto"
+        ];
 
         env = [
           "XCURSOR_SIZE,24"
