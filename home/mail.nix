@@ -219,6 +219,9 @@ in
     Unit = {
       After = [ "protonmail-bridge.service" ];
       Wants = [ "protonmail-bridge.service" ];
+      # Fire the notifier below when a sync fails, so a broken sync is visible
+      # instead of dying quietly behind the timer.
+      OnFailure = [ "mbsync-failure-notify.service" ];
     };
     Service = {
       Environment = [ "HOME=%h" ];
@@ -236,18 +239,55 @@ in
   };
 
   # Export the Bridge's self-signed cert to a file mbsync/msmtp can verify
-  # against. Requires the Bridge to be running at rebuild time; if it is not,
-  # the file stays empty and mbsync fails loudly — just rebuild once it is up.
+  # against (neither tool has aerc's imap+insecure escape).
+  #
+  # This used to run only `if [ ! -s "$cert" ]` — i.e. just once, when the file
+  # was empty. When the Bridge later rotated its certificate the stored copy went
+  # stale, every mbsync run died with "SSL error ...: self-signed certificate",
+  # and because mbsync runs behind a systemd timer nothing surfaced it: mail
+  # silently stopped syncing for three days (2026-10-09 .. 2026-10-12).
+  #
+  # Now it compares fingerprints and re-exports on mismatch. Note the Bridge can
+  # serve DIFFERENT certs depending on how it was started (the systemd service
+  # and an interactive `protonmail-bridge --cli` session had different ones), so
+  # always let this run against the systemd Bridge, not a CLI session.
+  #
+  # If the Bridge is not reachable at rebuild time the existing cert is left
+  # alone rather than truncated — a stale cert is recoverable, an empty one is
+  # just a second failure mode.
   home.activation.exportBridgeCert =
     lib.hm.dag.entryAfter [ "writeBoundary" ] ''
       cert="${bridgeCert}"
-      if [ ! -s "$cert" ]; then
-        run mkdir -p "$(dirname "$cert")"
-        ${pkgs.openssl}/bin/openssl s_client -showcerts -starttls imap \
-          -connect 127.0.0.1:1143 </dev/null 2>/dev/null \
-          | ${pkgs.gnused}/bin/sed -n '/BEGIN CERT/,/END CERT/p' > "$cert" || true
+      run mkdir -p "$(dirname "$cert")"
+
+      live=$(${pkgs.openssl}/bin/openssl s_client -showcerts -starttls imap \
+        -connect 127.0.0.1:1143 </dev/null 2>/dev/null \
+        | ${pkgs.gnused}/bin/sed -n '/BEGIN CERT/,/END CERT/p' || true)
+
+      if [ -z "$live" ]; then
+        echo "exportBridgeCert: Bridge not reachable on 127.0.0.1:1143; keeping existing cert" >&2
+      else
+        fp() { ${pkgs.openssl}/bin/openssl x509 -noout -fingerprint 2>/dev/null | cut -d= -f2; }
+        liveFp=$(printf '%s\n' "$live" | fp)
+        haveFp=$( [ -s "$cert" ] && fp < "$cert" || echo "" )
+
+        if [ "$liveFp" != "$haveFp" ]; then
+          echo "exportBridgeCert: Bridge cert changed ($haveFp -> $liveFp); updating" >&2
+          printf '%s\n' "$live" > "$cert"
+        fi
       fi
     '';
+
+  # Surface a broken sync instead of letting it fail silently behind the timer.
+  # mbsync.service failing is how three days of mail went missing; a desktop
+  # notification makes the next occurrence obvious within minutes.
+  systemd.user.services.mbsync-failure-notify = {
+    Unit.Description = "Notify on mbsync failure";
+    Service = {
+      Type = "oneshot";
+      ExecStart = "${pkgs.libnotify}/bin/notify-send -u critical 'Mail sync failed' 'mbsync.service failed — run: journalctl --user -u mbsync -n 30'";
+    };
+  };
 
   # Weekly Inbox archive. Runs archive_old_inbox.py against Bridge IMAP to move
   # INBOX mail older than 3 months into Archive. Credentials come from the same
