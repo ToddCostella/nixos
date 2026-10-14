@@ -1,5 +1,21 @@
 {
   "nodes": {
+    "catppuccin-cosmic": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1745319148,
+        "narHash": "sha256-NAQnHS+XrMJ/rPgSS5nEQOMBhQtF6mP1i/0QP5arQ64=",
+        "owner": "catppuccin",
+        "repo": "cosmic-desktop",
+        "rev": "95e81098042dd2102f0b258f6990f886c5759692",
+        "type": "github"
+      },
+      "original": {
+        "owner": "catppuccin",
+        "repo": "cosmic-desktop",
+        "type": "github"
+      }
+    },
     "claude-desktop": {
       "inputs": {
         "flake-parts": "flake-parts",
@@ -128,6 +144,7 @@
     },
     "root": {
       "inputs": {
+        "catppuccin-cosmic": "catppuccin-cosmic",
         "claude-desktop": "claude-desktop",
         "herdr": "herdr",
         "home-manager": "home-manager",

@@ -2,7 +2,7 @@
 # Imported only for hosts with a desktop environment (e.g. nixos-dev).
 # Headless-safe packages are in todd-base.nix.
 
-{ pkgs, ... }:
+{ pkgs, inputs, ... }:
 {
   imports = [ ./mail.nix ];
 
@@ -22,6 +22,7 @@
     aerc
     hugo
     pinta
+    catppuccin-whiskers  # renders Catppuccin .tera templates (see COSMIC theme notes below)
     # apostrophe (GTK markdown editor) REMOVED 2026-10-09: on newer nixpkgs it
     # drags in python3.12-anyio via levenshtein -> scikit-build-core ->
     # pytest-subprocess, and that anyio build fails its own test suite (TLS and
@@ -65,7 +66,14 @@
     # Ported from ~/.config/wezterm/wezterm.lua — keep the two in sync.
 
     font-size = 11
-    theme = Dracula
+
+    # Catppuccin Mocha, to match the COSMIC desktop theme
+    # (Catppuccin-Mocha-Blue — see the Catppuccin notes further down this file).
+    # Ghostty 1.3.1 ships all four Catppuccin flavors in share/ghostty/themes,
+    # so this is just a built-in name — nothing to vendor from the pinned repo.
+    # Mocha's palette=4 is #89b4fa, which is exactly the COSMIC accent, so the
+    # terminal's blue and the desktop's accent agree without further tweaking.
+    theme = Catppuccin Mocha
 
     # wezterm line_height = 1.1. Ghostty has no line-height multiplier; it takes a
     # percentage adjustment to the computed cell height, so +10% is the equivalent.
@@ -126,6 +134,33 @@
       Nice = 10;
     };
   };
+
+  # --- Catppuccin theme for COSMIC ---
+  # COSMIC has no declarative theme option, and its theme config is an exploded
+  # tree of ~70 per-key files under ~/.config/cosmic/com.system76.CosmicTheme.*.
+  # So the theme itself is still imported by hand, one time:
+  #
+  #   COSMIC Settings -> Desktop -> Appearance -> Import
+  #     -> ~/.local/share/catppuccin-cosmic/themes/cosmic-settings/
+  #   COSMIC Term -> View -> Color schemes -> Import
+  #     -> ~/.local/share/catppuccin-cosmic/themes/cosmic-term/
+  #
+  # What IS declarative here: the theme source is pinned in flake.lock, so the
+  # files behind those paths never drift until `nix flake update`.
+  #
+  # CAVEAT (cosmic-comp 1.9.0): the shipped themes target the v1 theme schema,
+  # but 1.9.0 writes v2. The colour keys map fine; the transparency keys do not —
+  # v1's single `is_frosted` bool was split into `frosted`, `frosted_panel`,
+  # `frosted_applets`, `frosted_windows`, `frosted_maximized_apps`,
+  # `frosted_system_interface` plus an `alpha_map`. Expect to set frosted/blur by
+  # hand in Appearance after importing.
+  #
+  # `whiskers` renders the .tera templates for accents/roundness/gaps that aren't
+  # in the 56 pre-built RONs, e.g.:
+  #   cd ~/.local/share/catppuccin-cosmic
+  #   whiskers templates/cosmic-settings.tera \
+  #     --overrides='{"accent":"mauve","roundness":"square","bg_alpha":0.9}'
+  home.file.".local/share/catppuccin-cosmic".source = inputs.catppuccin-cosmic;
 
   # --- Proton Mail Bridge ---
   # Runs headless as a systemd user service (protonmail-bridge --noninteractive),

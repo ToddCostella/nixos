@@ -15,14 +15,35 @@
       url = "github:ogulcancelik/herdr";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    # Catppuccin theme for COSMIC — plain asset repo (whiskers .tera templates +
+    # pre-rendered theme RONs), no flake.nix, hence flake = false. Pinned here so
+    # the template source is reproducible even though the final import into
+    # COSMIC Settings -> Appearance is still a manual one-time click.
+    catppuccin-cosmic = {
+      url = "github:catppuccin/cosmic-desktop";
+      flake = false;
+    };
   };
 
   outputs = { self, nixpkgs, home-manager, claude-desktop, herdr, ... }@inputs:
   let
-    hmBase = {
-      home-manager.useGlobalPkgs = false;
-      home-manager.useUserPackages = true;
-      home-manager.backupFileExtension = "hm-backup";
+    # Shared home-manager wiring. Takes the todd user config and returns a full
+    # NixOS module, so all the home-manager.* settings live in one place.
+    #
+    # This is a function rather than an attrset merged with `//` because `//` is
+    # shallow: as separate dotted keys, a host's own `home-manager.users.todd`
+    # would replace the whole `home-manager` attrset and silently drop
+    # useUserPackages / backupFileExtension / extraSpecialArgs.
+    hmFor = userCfg: {
+      home-manager = {
+        useGlobalPkgs = false;
+        useUserPackages = true;
+        backupFileExtension = "hm-backup";
+        # Home modules get `inputs` too, so they can reference pinned non-flake
+        # asset repos (e.g. catppuccin-cosmic) the same way system modules do.
+        extraSpecialArgs = { inherit inputs; };
+        users.todd = userCfg;
+      };
     };
   in
   {
@@ -34,11 +55,9 @@
         ./modules/common.nix
         ./hosts/nixos-dev/configuration.nix
         home-manager.nixosModules.home-manager
-        (hmBase // {
-          home-manager.users.todd = {
-            imports = [ ./home/todd-base.nix ./home/todd-desktop.nix ];
-            nixpkgs.overlays = [ claude-desktop.overlays.default herdr.overlays.default ];
-          };
+        (hmFor {
+          imports = [ ./home/todd-base.nix ./home/todd-desktop.nix ];
+          nixpkgs.overlays = [ claude-desktop.overlays.default herdr.overlays.default ];
         })
       ];
     };
@@ -54,11 +73,9 @@
         ./modules/common.nix
         ./hosts/vm-guest/configuration.nix
         home-manager.nixosModules.home-manager
-        (hmBase // {
-          home-manager.users.todd = {
-            imports = [ ./home/todd-base.nix ./home/todd-desktop.nix ];
-            nixpkgs.overlays = [ claude-desktop.overlays.default herdr.overlays.default ];
-          };
+        (hmFor {
+          imports = [ ./home/todd-base.nix ./home/todd-desktop.nix ];
+          nixpkgs.overlays = [ claude-desktop.overlays.default herdr.overlays.default ];
         })
       ];
     };
@@ -75,11 +92,9 @@
         ./hosts/nixos-dev/configuration.nix
         ./vm-test.nix
         home-manager.nixosModules.home-manager
-        (hmBase // {
-          home-manager.users.todd = {
-            imports = [ ./home/todd-base.nix ./home/todd-desktop.nix ];
-            nixpkgs.overlays = [ claude-desktop.overlays.default herdr.overlays.default ];
-          };
+        (hmFor {
+          imports = [ ./home/todd-base.nix ./home/todd-desktop.nix ];
+          nixpkgs.overlays = [ claude-desktop.overlays.default herdr.overlays.default ];
         })
       ];
     };
@@ -91,10 +106,8 @@
         ./modules/common.nix
         ./hosts/home-server/configuration.nix
         home-manager.nixosModules.home-manager
-        (hmBase // {
-          home-manager.users.todd = {
-            imports = [ ./home/todd-base.nix ];
-          };
+        (hmFor {
+          imports = [ ./home/todd-base.nix ];
         })
       ];
     };
