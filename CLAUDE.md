@@ -89,11 +89,21 @@ sudo nixos-rebuild switch --flake ~/nixos-config#nixos-dev
 Each specialisation sets `system.nixos.tags`, so the booted one shows up in the
 system name (e.g. `...-nixos-system-nixos-dev-COSMIC-26.11...`).
 
-**Gotcha when checking what is live:** if you are booted into a specialisation,
-`/run/current-system` points at the *specialisation's* store path, not the base
-system that `nixos-rebuild switch` just built — and `/run/current-system/specialisation/`
-is empty. That is not a failed switch. Compare against
-`/nix/var/nix/profiles/system/specialisation/<name>` to confirm.
+A `nixos-rebuild switch` builds the base system **and** all its specialisations,
+and the boot menu gains an entry per specialisation for that generation. So the
+normal workflow — rebuild, reboot, pick the COSMIC entry — gets you the new
+config; nothing extra is needed.
+
+**Reading the paths:** when booted into a specialisation, `/run/current-system`
+is the *specialisation's* store path while `/nix/var/nix/profiles/system` is the
+generation's *base* path, so the two legitimately differ and
+`/run/current-system/specialisation/` is empty. Both still come from the same
+generation — confirm with:
+
+```bash
+readlink -f /run/current-system
+readlink -f /nix/var/nix/profiles/system/specialisation/cosmic   # should match
+```
 
 COSMIC-specific note: its specialisation deliberately leaves `gnome-keyring` ON.
 Despite the name it is the de-facto org.freedesktop.secrets provider and COSMIC
@@ -345,7 +355,7 @@ aws sts get-caller-identity --profile toddcostella
 - `system.stateVersion` is set per-host, NOT in `modules/common.nix`
 - `modules/desktop-{cosmic,hyprland,kde,cinnamon}.nix` are NOT imported — the live alternate DEs are specialisations in `hosts/nixos-dev/desktop-tools.nix`. Editing those standalone modules changes nothing
 - home-manager settings must stay inside the single `home-manager` attrset returned by `hmFor` in `flake.nix` — see the note under Flake & Home Manager for why `//` makes dotted keys unsafe
-- When booted into a DE specialisation, `/run/current-system` is the specialisation's path and `/run/current-system/specialisation/` is empty; compare against `/nix/var/nix/profiles/system/specialisation/<name>` before concluding a switch failed
+- `nixos-rebuild switch` builds the specialisations too, and each gets its own boot-menu entry for that generation — rebuild, reboot, pick the COSMIC entry. When booted into a specialisation, `/run/current-system` is the specialisation's path while `/nix/var/nix/profiles/system` is the base; they differ by design and both come from the same generation
 
 ## Adding a New Host
 

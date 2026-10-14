@@ -92,12 +92,15 @@ sudo nixos-rebuild switch --flake ~/nixos-config#nixos-dev
 
 **Switch at boot:** Reboot and select from the systemd-boot menu.
 
+A `nixos-rebuild switch` builds the base system and all its specialisations, and
+the boot menu gains an entry per specialisation for that generation — so the
+usual rebuild → reboot → pick "NixOS - COSMIC" flow picks up config changes.
+
 Each specialisation tags the system name, so the booted one is visible in
-`/run/current-system` (e.g. `…-nixos-dev-COSMIC-26.11…`). Note that when you are
-booted into a specialisation, `/run/current-system/specialisation/` is empty and
-`/run/current-system` points at the specialisation rather than the base system a
-`nixos-rebuild switch` just built — that is expected, not a failed switch.
-Compare against `/nix/var/nix/profiles/system/specialisation/<name>`.
+`/run/current-system` (e.g. `…-nixos-dev-COSMIC-26.11…`). When booted into a
+specialisation that path is the *specialisation's*, while
+`/nix/var/nix/profiles/system` is the generation's *base* — they differ by design,
+and both come from the same generation.
 
 - **GNOME** with GDM display manager (Wayland) — the base DE
 - **Extensions**: Forge (tiling), Workspace Indicator, Just Perfection, Tactile, Switcher
