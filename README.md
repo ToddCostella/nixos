@@ -1,6 +1,6 @@
 # NixOS Development Environment Configuration
 
-A multi-host NixOS configuration for a development-focused desktop and headless home server. Uses **Nix flakes** for reproducible builds and **Home Manager** for declarative dotfile management with **1Password** as the secrets backend.
+A multi-host NixOS configuration for a development-focused desktop, a persistent development VM, and a headless home server. Uses **Nix flakes** for reproducible builds and **Home Manager** for declarative dotfile management with **1Password** as the secrets backend.
 
 ## Quick Start
 
@@ -14,43 +14,53 @@ sudo nixos-rebuild dry-build --flake ~/nixos-config#nixos-dev
 # Rollback to previous generation
 sudo nixos-rebuild rollback
 
-# Update all dependency versions (nixpkgs + home-manager)
+# Update all dependency versions (nixpkgs, home-manager, herdr, catppuccin-cosmic)
 nix flake update ~/nixos-config
+
+# Other flake targets
+sudo nixos-rebuild switch --flake ~/nixos-config#vm-guest   # persistent libvirt VM
+nixos-rebuild build-vm --flake ~/nixos-config#vm-test       # throwaway test VM
 ```
 
 ## Repository Structure
 
 ```
 nixos-config/
-├── flake.nix                        # Two hosts, split home modules
+├── flake.nix                        # 4 targets: nixos-dev, vm-guest, vm-test, home-server
 ├── flake.lock                       # Pinned dependency versions
 ├── hosts/
 │   ├── nixos-dev/
-│   │   ├── configuration.nix        # Laptop-specific config + specialisations
+│   │   ├── configuration.nix        # Physical-machine-only (boot, hugepages, EPP, virt)
+│   │   ├── desktop-tools.nix        # SHARED desktop + tools layer; also imported by
+│   │   │                            #   vm-guest. Holds the DE, dev tooling, 1Password,
+│   │   │                            #   fonts, package set, scripts, DE specialisations
 │   │   └── hardware-configuration.nix
-│   └── home-server/
-│       ├── configuration.nix        # Headless server config
-│       └── hardware-configuration.nix
+│   ├── vm-guest/                    # Persistent libvirt VM (see docs/vm-guest-install.md)
+│   └── home-server/                 # Headless server config
 ├── modules/
 │   ├── common.nix                   # Shared: nix settings, locale, avahi, core CLI
 │   ├── remote-terminal.nix          # Mosh + SSH hardening
-│   ├── desktop-gnome.nix            # GNOME desktop environment
+│   ├── desktop-gnome.nix            # GNOME desktop environment (the base DE)
 │   ├── desktop-icons.nix            # Custom desktop application icons
 │   ├── nordvpn.nix                  # NordVPN WireGuard (wgnord)
 │   ├── playwright-dev.nix           # Playwright E2E testing dependencies
 │   ├── esp32-dev.nix                # ESP32 microcontroller development tools
 │   ├── photo-restoration.nix        # Photo editing and restoration applications
-│   ├── desktop-cinnamon.nix         # Cinnamon desktop
-│   └── desktop-cosmic.nix           # COSMIC desktop (unused, in specialisation)
-│   #  (hyprland + KDE specialisations are defined inline in nixos-dev/configuration.nix)
+│   └── desktop-{cosmic,hyprland,kde,cinnamon}.nix
+│                                    # Standalone DE modules — NOT imported. The live
+│                                    #   alternate DEs are specialisations defined in
+│                                    #   hosts/nixos-dev/desktop-tools.nix
 ├── home/
 │   ├── todd-base.nix                # Headless-safe: git, zsh, herdr, SSH, AWS, CLI tools
-│   ├── todd-desktop.nix             # GUI apps + Maestral/Proton Bridge (nixos-dev)
+│   ├── todd-desktop.nix             # GUI apps + Maestral/Proton Bridge (nixos-dev, vm-guest)
 │   ├── mail.nix                     # Email stack: mbsync/msmtp/notmuch/aerc/Thunderbird
 │   └── *.py                         # Mail helpers (archive_old_inbox, analyze_senders, …)
 ├── scripts/
 │   ├── start-server.sh              # SSH into home-server (herdr workspace)
-│   └── home-server-install.sh       # Home server bootstrap script
+│   ├── start-mail.sh                # Launch the mail session
+│   ├── home-server-install.sh       # Home server bootstrap
+│   └── vm-guest-{install,provision}.sh
+├── docs/                            # vm-guest-install.md, new-drives-plan.md, rack-wishlist.md
 ├── start-dev.sh                     # Launch herdr dev workspace for this repo
 └── DROPBOX-MAESTRAL.md              # Dropbox-via-Maestral setup + rationale
 ```
@@ -59,7 +69,9 @@ nixos-config/
 
 ### Desktop Environment
 
-GNOME is the default. Three alternative DEs are baked into the build as [NixOS specialisations](https://nixos.wiki/wiki/NixOS_specialisations) — selectable at boot or switchable at runtime without a rebuild.
+GNOME is the default. Three alternative DEs are baked into the build as [NixOS specialisations](https://nixos.wiki/wiki/NixOS_specialisations) — selectable at boot or switchable at runtime without a rebuild. They are defined inline in `hosts/nixos-dev/desktop-tools.nix`; the standalone `modules/desktop-*.nix` files are not imported.
+
+**Currently running: COSMIC**, themed with Catppuccin Mocha.
 
 | Specialisation | DE | Boot menu label |
 |---|---|---|
@@ -80,14 +92,44 @@ sudo nixos-rebuild switch --flake ~/nixos-config#nixos-dev
 
 **Switch at boot:** Reboot and select from the systemd-boot menu.
 
-- **GNOME** with GDM display manager (Wayland)
-- **Extensions**: Forge (tiling), Workspace Indicator, Just Perfection, Tactile, Switcher, Sound Output Device Chooser
-- **GNOME Tweaks** + **WezTerm** as default terminal
+Each specialisation tags the system name, so the booted one is visible in
+`/run/current-system` (e.g. `…-nixos-dev-COSMIC-26.11…`). Note that when you are
+booted into a specialisation, `/run/current-system/specialisation/` is empty and
+`/run/current-system` points at the specialisation rather than the base system a
+`nixos-rebuild switch` just built — that is expected, not a failed switch.
+Compare against `/nix/var/nix/profiles/system/specialisation/<name>`.
+
+- **GNOME** with GDM display manager (Wayland) — the base DE
+- **Extensions**: Forge (tiling), Workspace Indicator, Just Perfection, Tactile, Switcher
+- **COSMIC** specialisation keeps `gnome-keyring` on deliberately — it is the de-facto
+  org.freedesktop.secrets provider and COSMIC ships no replacement, without which
+  1Password cannot store its 2FA token
+
+### Theming
+**Catppuccin Mocha** (accent Blue, `#89b4fa`) across COSMIC and Ghostty. Ghostty's
+Mocha `palette = 4` is the same blue as the COSMIC accent, and herdr inherits the
+palette via `theme = terminal`.
+
+- **Ghostty** — declarative: `theme = Catppuccin Mocha` in `home/todd-desktop.nix`
+  (Ghostty ships all four flavors itself)
+- **COSMIC** — not declarative; the `catppuccin-cosmic` flake input is pinned and
+  surfaced at `~/.local/share/catppuccin-cosmic`, then imported once via
+  Settings → Desktop → Appearance → Import (and COSMIC Term → View → Color schemes)
+- **catppuccin-whiskers** — renders the `.tera` templates for accent/roundness/gap
+  combinations outside the 56 prebuilt RONs
+
+Caveat on cosmic-comp 1.9.0: the themes target the v1 schema while 1.9.0 writes v2.
+Colors migrate; transparency does not (v1's `is_frosted` became six separate toggles
+plus an `alpha_map`), so set frosted/blur by hand after importing.
 
 ### Terminal & Shell
-- **WezTerm** — GPU-accelerated terminal emulator
-- **herdr** — terminal workspace manager for AI coding agents; replaced tmux as the multiplexer (nixos-dev; via flake overlay, config in `home/todd-base.nix`)
+- **Ghostty** — default terminal since 2026-10-08; replaced WezTerm because
+  terminal-browser needs the full kitty graphics protocol, which WezTerm only
+  partially implements. Config is declarative in `home/todd-desktop.nix`
+- **WezTerm** — still installed; the KDE specialisation still sets `TERMINAL = "wezterm"`
+- **herdr** 0.9.4 — terminal workspace manager for AI coding agents; replaced tmux as the multiplexer (nixos-dev; via flake overlay, config in `home/todd-base.nix`)
   - Prefix: `alt+a` | Tabs: `Alt+1`–`Alt+9` (new: `prefix+c`) | Pane focus: `Alt+Arrow` | Splits: `prefix+\` / `prefix+-`
+  - Workspaces: `prefix+w` + number by index; `prefix+g` opens the name-searchable navigator
   - Theme follows the host terminal's ANSI palette; mouse capture + copy-on-select on; notifications shown as in-app toasts, sound disabled
   - `Ctrl+h/j/k/l` navigates seamlessly across Neovim splits and herdr panes (vim-herdr-navigation)
 - **Mosh** — resilient remote connections (survives network interruptions)
@@ -184,7 +226,7 @@ refresh-secrets
 - **Diagnostics**: dig, traceroute, mtr, nmap, netcat, socat, tcpdump, wireshark, iperf3, iftop, nethogs
 - **Proxy/intercept**: mitmproxy (`mitm-localhost` helper script)
 - **VPN**: OpenVPN, wgnord (NordVPN WireGuard)
-- **Open ports**: 3000 (Vite dev server), 8080 (WebSocket / mitmproxy)
+- **Open ports**: nixos-dev 3000 (Vite dev server), 8080 (WebSocket / mitmproxy); home-server 53/80 (DNS/HTTP)
 
 ### Screenshot Tools
 Use GNOME's built-in screenshot UI (`Print`). It captures via Mutter and copies
@@ -192,6 +234,9 @@ to the clipboard for pasting into Claude Code. The old custom `screenshot-*`
 scripts were removed — they wrapped `gnome-screenshot`, which is broken on GNOME
 Wayland (empty X11 fallback). See CLAUDE.md → Screenshot Tools for the full
 rationale.
+
+Under the COSMIC specialisation this does not apply — COSMIC ships
+`cosmic-screenshot`, bound to `Print` via its `Screenshot` system action.
 
 ### Microcontroller Development
 - **ESP32**: esptool, espflash, PlatformIO, screen, picocom, minicom (see `esp32-dev.nix`)
@@ -204,7 +249,8 @@ rationale.
 - **Color management**: DisplayCAL, ArgyllCMS
 
 ### Productivity & Communication
-- **Obsidian**, **LibreOffice**, **Apostrophe** (markdown), **Figma**, **Hugo** (static site generator)
+- **Obsidian**, **LibreOffice**, **Figma**, **Hugo** (static site generator)
+  - *Apostrophe (markdown) was removed 2026-10-09 — it pulled in a `python3.12-anyio` build that fails its own test suite and is absent from the binary cache. Looking for a replacement.*
 - **1Password** (GUI + CLI integration enabled)
 - **Maestral** (Dropbox sync — see [DROPBOX-MAESTRAL.md](DROPBOX-MAESTRAL.md)), **Pika Backup**
 - **Slack**, **Signal Desktop**, **Zoom**
@@ -286,7 +332,7 @@ It is idempotent: re-running reuses the workspace and only creates missing tabs
 
 | Setting | Value |
 |---------|-------|
-| Hostname | nixos-dev |
+| Hostname | nixos-dev (also `vm-guest`, `home-server`) |
 | Timezone | America/Vancouver |
 | Locale | en_US.UTF-8 |
 | Bootloader | systemd-boot |
@@ -301,12 +347,23 @@ Dropbox runs via **Maestral**, not the official client (which couldn't complete
 syncing in the bwrap sandbox on GNOME/Wayland). Check `maestral status`; for
 setup, the why, and gotchas see [DROPBOX-MAESTRAL.md](DROPBOX-MAESTRAL.md).
 
+### Opening an app on a specific COSMIC workspace
+
+Not supported by COSMIC 1.9.0. Its shortcut actions include `Spawn("cmd")`,
+`Workspace(n)` (switch to) and `MoveToWorkspace(n)` (move focused window), but
+nothing that composes spawn-onto-a-workspace, and `WindowRules` has no
+assign-to-workspace rule yet. Worth re-checking after a `nix flake update` —
+upstream WindowRules is where such a rule would land.
+
 ## Recent Changes
 
 Generation history (use `nix run nixpkgs#nvd -- diff /nix/var/nix/profiles/system-{N}-link /nix/var/nix/profiles/system-{N+1}-link` to inspect any pair):
 
 | Date | Generation | What changed |
 |------|-----------|--------------|
+| 2026-10-14 | 226 | Pinned `catppuccin-cosmic`; applied Catppuccin Mocha to COSMIC + ghostty; added `catppuccin-whiskers`; bumped herdr 0.7.5 → 0.9.4. Also replaced `hmBase` with an `hmFor` function — as dotted keys merged with `//`, `useGlobalPkgs`/`useUserPackages`/`backupFileExtension` were being silently dropped on all four targets and had never taken effect |
+| 2026-10-09 | — | Removed Apostrophe (unbuildable `anyio` dependency); COSMIC specialisation keeps `gnome-keyring` on so 1Password can store its 2FA token |
+| 2026-10-08 | — | Ghostty replaced WezTerm as the default terminal (terminal-browser needs the full kitty graphics protocol) |
 | 2026-07-29 | — | Added `herdr` terminal agent multiplexer (nixos-dev, via flake overlay) with tmux-style keybindings, terminal theme, in-app toast notifications (sound off), and zsh completions; added `superfile` TUI file manager alongside Yazi |
 | 2026-07-25 | — | Updated flake inputs (~2mo); removed `sound-output-device-chooser` (dropped from nixpkgs — use GNOME quick-settings sound picker); migrated `programs.ssh.matchBlocks` → `settings` and `texlive.combined.scheme-medium` → `texliveMedium` |
 | 2026-03-23 | 134 → 136 | Added `sound-output-device-chooser` GNOME extension and enabled it declaratively via dconf |
