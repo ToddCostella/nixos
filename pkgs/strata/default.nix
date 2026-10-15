@@ -99,7 +99,13 @@ rustPlatform.buildRustPackage {
   env = {
     STRATA_RELEASE_TAG = "v${version}";
     STRATA_BUILD_KIND = "stable";
-    STRATA_BUILD_COMMIT = "cf961328e114"; # tag v1.0.0
+    # Derived from the locked input rather than hardcoded: `git ls-remote`
+    # for an annotated tag returns the TAG OBJECT's hash (cf961328e114 for
+    # v1.0.0), not the commit it points at. The flake locks the commit
+    # (refs/tags/v1.0.0^{} = 0a086aa3bdb2), which is what was actually built,
+    # so hardcoding the tag hash made the About dialog cite a dead ref.
+    # Reading src.rev also means a version bump cannot leave this stale.
+    STRATA_BUILD_COMMIT = builtins.substring 0 12 src.rev;
 
     # --- sandbox portability (see header) ---
     STRATA_SANDBOX_ROOT = "/nix/store";

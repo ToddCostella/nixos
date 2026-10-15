@@ -148,7 +148,8 @@
         "claude-desktop": "claude-desktop",
         "herdr": "herdr",
         "home-manager": "home-manager",
-        "nixpkgs": "nixpkgs_2"
+        "nixpkgs": "nixpkgs_2",
+        "strata": "strata"
       }
     },
     "rust-overlay": {
@@ -169,6 +170,23 @@
       "original": {
         "owner": "oxalica",
         "repo": "rust-overlay",
+        "type": "github"
+      }
+    },
+    "strata": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1791836096,
+        "narHash": "sha256-dFNsFCnkeZs0VwmYRyu+6Jh8XxJzv+agUlP70Fdxa5Q=",
+        "owner": "lgse",
+        "repo": "strata",
+        "rev": "0a086aa3bdb251842a1e8413e2a6b35970d0b409",
+        "type": "github"
+      },
+      "original": {
+        "owner": "lgse",
+        "ref": "v1.0.0",
+        "repo": "strata",
         "type": "github"
       }
     }
