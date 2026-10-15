@@ -263,6 +263,13 @@
     # VPN tools (NordVPN via wgnord is configured in modules/nordvpn.nix)
     openvpn
 
+    # File manager — Strata (keyboard-first GTK4, packaged from source in
+    # pkgs/strata; src is the pinned `strata` flake input). bubblewrap is
+    # required system-wide for its preview sandbox (strata locates bwrap via
+    # /run/current-system/sw/bin and trusts /nix/store).
+    (pkgs.callPackage ../../pkgs/strata { src = inputs.strata; })
+    bubblewrap
+
     # Browsers
     firefox
     google-chrome
