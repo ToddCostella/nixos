@@ -23,6 +23,14 @@
       url = "github:catppuccin/cosmic-desktop";
       flake = false;
     };
+    # strata — keyboard-first GTK4 file manager. No upstream flake, so flake =
+    # false (we read its source + Cargo.lock directly). Built from source by
+    # pkgs/strata/default.nix and added to the desktop package set. Pinned to the
+    # v1.0.0 stable tag; bump this ref to update.
+    strata = {
+      url = "github:lgse/strata/v1.0.0";
+      flake = false;
+    };
   };
 
   outputs = { self, nixpkgs, home-manager, claude-desktop, herdr, ... }@inputs:
