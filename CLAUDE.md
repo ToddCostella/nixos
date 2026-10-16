@@ -43,7 +43,7 @@ nixos-config/
 │   ├── desktop-cosmic.nix               # Standalone COSMIC module — NOT imported; the live
 │   │                                    #   COSMIC setup is inline in desktop-tools.nix
 │   ├── desktop-hyprland.nix             # Hyprland — REMOVED as a specialisation 2026-10-16;
-│   │                                    #   module kept on disk, imported by nothing (PR #6)
+│   │                                    #   module kept on disk, imported by nothing
 │   ├── desktop-kde.nix                  # KDE Plasma — REMOVED 2026-10-16; imported by nothing
 │   ├── desktop-cinnamon.nix             # Cinnamon desktop (standalone; not wired up)
 │   └── desktop-multi-de-compat.nix      # Multi-DE compatibility layer
@@ -84,8 +84,10 @@ cosmic/kde/hyprland as specialisations.
 
 KDE and Hyprland were removed. `modules/desktop-{kde,hyprland,cinnamon,multi-de-compat}.nix`
 still exist on disk but are **imported by nothing** — editing them changes
-nothing. (They are kept rather than deleted because PR #6 adds a Hyprland
-session; resolve that before deleting.)
+nothing. PR #6 (Omarchy-flavoured Hyprland) was closed as abandoned on
+2026-10-16; its `hyprland-omarchy` branch is still on the remote, and the bulk of
+that work (~860 lines under `home/hyprland/`) is independent of the
+base/specialisation split if Hyprland is ever revisited.
 
 ```bash
 # Boot menu: the default entry is COSMIC; "NixOS - GNOME" boots the fallback.
@@ -162,16 +164,18 @@ hands it an inherited fd (`PANEL_NOTIFICATIONS_FD`), so relaunching
   binds) keep working while the panel is dead, since the compositor survives —
   useful for saving work before restarting the session.
 
-COSMIC-specific note: its specialisation deliberately leaves `gnome-keyring` ON.
-Despite the name it is the de-facto org.freedesktop.secrets provider and COSMIC
-ships no replacement — without it 1Password cannot save its 2FA token. See the
-comment at the `cosmic.configuration` block for the full rationale.
+COSMIC-specific note: `gnome-keyring` is deliberately enabled in the **base**
+config even though GNOME is no longer the base desktop. Despite the name it is
+the de-facto org.freedesktop.secrets provider and COSMIC ships no replacement —
+without it 1Password cannot save its 2FA token. See the comment next to
+`services.gnome.gnome-keyring.enable` in `desktop-tools.nix` for the full
+rationale.
 
 ## Key System Components
 
 - **Hosts**: `nixos-dev` (Dell XPS laptop, `nixos-dev.local`), `vm-guest` (libvirt VM), `home-server` (headless, hardware TBD)
 - **Desktop**: COSMIC (Wayland) is the base desktop, with GDM as the display manager; GNOME is the one fallback specialisation (see above). KDE and Hyprland were removed 2026-10-16
-- **Terminal**: Ghostty (default, replaced WezTerm 2026-10-08 — terminal-browser needs the full kitty graphics protocol, which WezTerm only partially implements). WezTerm is still installed, and the KDE specialisation still sets `TERMINAL = "wezterm"`. herdr for session/multiplexing (replaced tmux)
+- **Terminal**: Ghostty (default, replaced WezTerm 2026-10-08 — terminal-browser needs the full kitty graphics protocol, which WezTerm only partially implements). WezTerm is still installed but is no longer the default anywhere; `TERMINAL = "ghostty"` is set by the base config and by `modules/desktop-gnome.nix`. herdr for session/multiplexing (replaced tmux)
 - **Theme**: Catppuccin Mocha across COSMIC and Ghostty (see Theming below)
 - **Shell**: zsh with oh-my-zsh (robbyrussell theme) — configured in `home/todd-base.nix`
 - **Virtualization**: Docker (auto-start) + QEMU/KVM/libvirtd with nested virtualization — nixos-dev only

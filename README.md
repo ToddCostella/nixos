@@ -86,8 +86,9 @@ COSMIC is configured inline in `hosts/nixos-dev/desktop-tools.nix`; the `gnome`
 specialisation in the same file imports `modules/desktop-gnome.nix` and forces
 COSMIC off. The other `modules/desktop-*.nix` files (cosmic, kde, hyprland,
 cinnamon, multi-de-compat) are **imported by nothing** — editing them has no
-effect. They are kept on disk rather than deleted because PR #6 adds a Hyprland
-session.
+effect. PR #6 (Omarchy-flavoured Hyprland) was closed as abandoned on
+2026-10-16; its `hyprland-omarchy` branch remains on the remote if Hyprland is
+revisited.
 
 **Switch at runtime (no reboot):**
 ```bash
