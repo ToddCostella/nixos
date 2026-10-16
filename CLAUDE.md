@@ -105,6 +105,55 @@ readlink -f /run/current-system
 readlink -f /nix/var/nix/profiles/system/specialisation/cosmic   # should match
 ```
 
+**Do NOT log out of a graphical session after a `nixos-rebuild switch`.**
+Reboot, or stay logged in. A switch prints:
+
+```
+NOT restarting the following changed units: display-manager.service
+```
+
+That is deliberate (restarting it would kill your session), but it means the
+running greeter/session keep referring to the OLD generation's store paths while
+`/run/current-system` has already moved to the new one. Log out and the session
+tries to exec a compositor path that no longer matches, panics, and drops you
+straight back to the login screen on every attempt:
+
+```
+cosmic-session: panicked at 'failed to launch compositor:
+  Os { code: 2, kind: NotFound, "No such file or directory" }': src/comp.rs:149
+```
+
+A reboot clears it, because everything then starts from the new generation.
+Seen 2026-10-16 (gen 226 -> 227 switched at 12:29, logout at 12:31 bounced
+twice). The same trap applies under GNOME; it is not COSMIC-specific.
+
+**Known COSMIC 1.9.0 bug — panel applets die on resume from suspend.** After a
+long suspend, every applet can be SIGKILLed a few seconds after cgroup thaw and
+never restart:
+
+```
+cosmic-panel[...]: com.system76.CosmicAppletBattery: exited with code 137   # 137 = SIGKILL
+```
+
+`cosmic-comp` survives, so the mouse and existing windows keep working, but
+`cosmic-panel` hosts the app-list and workspace buttons — so the app switcher
+and launcher UI are simply gone. This is not memory pressure (the
+`OOM killer disabled/enabled` pair in the log brackets every suspend and is
+routine). Nothing in this repo causes or can fix it; it is upstream.
+
+Recovery is awkward, because `cosmic-panel` is **not** a systemd service — there
+is no `cosmic-panel.service` or `.scope`. `cosmic-session` spawns it directly and
+hands it an inherited fd (`PANEL_NOTIFICATIONS_FD`), so relaunching
+`cosmic-panel` by hand does not reproduce a working panel. In practice:
+
+- If a `nixos-rebuild switch` has happened since boot, **reboot** (logging out
+  hits the trap above).
+- Otherwise log out and back in, which restarts `cosmic-session` and with it the
+  panel.
+- Keyboard shortcuts bound in `cosmic-comp` (workspace switching, `prefix`-style
+  binds) keep working while the panel is dead, since the compositor survives —
+  useful for saving work before restarting the session.
+
 COSMIC-specific note: its specialisation deliberately leaves `gnome-keyring` ON.
 Despite the name it is the de-facto org.freedesktop.secrets provider and COSMIC
 ships no replacement — without it 1Password cannot save its 2FA token. See the
