@@ -40,16 +40,14 @@ nixos-config/
 ├── modules/
 │   ├── common.nix                   # Shared: nix settings, locale, avahi, core CLI
 │   ├── remote-terminal.nix          # Mosh + SSH hardening
-│   ├── desktop-gnome.nix            # GNOME — the FALLBACK desktop; imported by the
-│   │                                #   gnome specialisation in desktop-tools.nix
+│   ├── desktop-gnome.nix            # GNOME — the FALLBACK desktop, and the only DE
+│   │                                #   module left; imported by the gnome
+│   │                                #   specialisation in desktop-tools.nix
 │   ├── desktop-icons.nix            # Custom desktop application icons
 │   ├── nordvpn.nix                  # NordVPN WireGuard (wgnord)
 │   ├── playwright-dev.nix           # Playwright E2E testing dependencies
 │   ├── esp32-dev.nix                # ESP32 microcontroller development tools
-│   ├── photo-restoration.nix        # Photo editing and restoration applications
-│   └── desktop-{cosmic,hyprland,kde,cinnamon}.nix
-│                                    # Standalone DE modules — NOT imported by anything.
-│                                    #   COSMIC is configured inline in desktop-tools.nix
+│   └── photo-restoration.nix        # Photo editing and restoration applications
 ├── home/
 │   ├── todd-base.nix                # Headless-safe: git, zsh, herdr, SSH, AWS, CLI tools
 │   ├── todd-desktop.nix             # GUI apps + Maestral/Proton Bridge (nixos-dev, vm-guest)
@@ -84,11 +82,12 @@ COSMIC became the base and GNOME the fallback.
 
 COSMIC is configured inline in `hosts/nixos-dev/desktop-tools.nix`; the `gnome`
 specialisation in the same file imports `modules/desktop-gnome.nix` and forces
-COSMIC off. The other `modules/desktop-*.nix` files (cosmic, kde, hyprland,
-cinnamon, multi-de-compat) are **imported by nothing** — editing them has no
-effect. PR #6 (Omarchy-flavoured Hyprland) was closed as abandoned on
-2026-10-16; its `hyprland-omarchy` branch remains on the remote if Hyprland is
-revisited.
+COSMIC off. The five unused standalone DE modules (cosmic, hyprland, kde,
+cinnamon, multi-de-compat) were **deleted** on 2026-10-16 — nothing imported
+them, so `desktop-gnome.nix` is the only DE module left.
+
+PR #6 (Omarchy-flavoured Hyprland) was closed as abandoned. Its
+`origin/hyprland-omarchy` branch still holds that work if Hyprland is revisited.
 
 **Switch at runtime (no reboot):**
 ```bash

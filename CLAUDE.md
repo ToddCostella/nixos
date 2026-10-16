@@ -40,13 +40,10 @@ nixos-config/
 │   ├── playwright-dev.nix               # Playwright E2E testing dependencies
 │   ├── esp32-dev.nix                    # ESP32 microcontroller development tools
 │   ├── photo-restoration.nix            # Photo editing and restoration applications
-│   ├── desktop-cosmic.nix               # Standalone COSMIC module — NOT imported; the live
-│   │                                    #   COSMIC setup is inline in desktop-tools.nix
-│   ├── desktop-hyprland.nix             # Hyprland — REMOVED as a specialisation 2026-10-16;
-│   │                                    #   module kept on disk, imported by nothing
-│   ├── desktop-kde.nix                  # KDE Plasma — REMOVED 2026-10-16; imported by nothing
-│   ├── desktop-cinnamon.nix             # Cinnamon desktop (standalone; not wired up)
-│   └── desktop-multi-de-compat.nix      # Multi-DE compatibility layer
+│   └── (desktop-{cosmic,hyprland,kde,cinnamon,multi-de-compat}.nix were DELETED
+│        2026-10-16 — all five were imported by nothing. COSMIC is configured
+│        inline in desktop-tools.nix; the Hyprland work lives on the
+│        origin/hyprland-omarchy branch.)
 ├── home/
 │   ├── todd-base.nix                    # Headless-safe: git, zsh, herdr, SSH, AWS, CLI tools
 │   ├── todd-desktop.nix                 # GUI apps (nixos-dev + vm-guest)
@@ -82,12 +79,16 @@ specialisation in the same file that imports `modules/desktop-gnome.nix` and
 forces COSMIC off. Reorganised 2026-10-16: previously GNOME was the base with
 cosmic/kde/hyprland as specialisations.
 
-KDE and Hyprland were removed. `modules/desktop-{kde,hyprland,cinnamon,multi-de-compat}.nix`
-still exist on disk but are **imported by nothing** — editing them changes
-nothing. PR #6 (Omarchy-flavoured Hyprland) was closed as abandoned on
-2026-10-16; its `hyprland-omarchy` branch is still on the remote, and the bulk of
-that work (~860 lines under `home/hyprland/`) is independent of the
-base/specialisation split if Hyprland is ever revisited.
+KDE and Hyprland were removed, and the five unused standalone DE modules
+(`desktop-{cosmic,hyprland,kde,cinnamon,multi-de-compat}.nix`) were **deleted**
+on 2026-10-16 — nothing imported any of them, and keeping a `desktop-cosmic.nix`
+around invited confusion about which COSMIC config was live. The only DE module
+left is `desktop-gnome.nix`, imported by the `gnome` specialisation.
+
+PR #6 (Omarchy-flavoured Hyprland) was closed as abandoned. Its
+`origin/hyprland-omarchy` branch still holds both `modules/desktop-hyprland.nix`
+and the ~860 lines under `home/hyprland/`, so recovering that work means
+branching from there rather than restoring a file.
 
 ```bash
 # Boot menu: the default entry is COSMIC; "NixOS - GNOME" boots the fallback.
@@ -414,7 +415,7 @@ aws sts get-caller-identity --profile toddcostella
 - `~/.secrets.env` is NOT committed — regenerate with `refresh-secrets`
 - `users.users.todd.extraGroups` is NOT merged by NixOS — each host must declare the full list
 - `system.stateVersion` is set per-host, NOT in `modules/common.nix`
-- `modules/desktop-{cosmic,hyprland,kde,cinnamon,multi-de-compat}.nix` are NOT imported — COSMIC is configured inline in `hosts/nixos-dev/desktop-tools.nix` and GNOME comes in via the `gnome` specialisation there. Editing those standalone modules changes nothing
+- `modules/` holds exactly one DE module now: `desktop-gnome.nix`, imported by the `gnome` specialisation. COSMIC is configured inline in `hosts/nixos-dev/desktop-tools.nix`. The old standalone cosmic/hyprland/kde/cinnamon/multi-de-compat modules were deleted 2026-10-16
 - home-manager settings must stay inside the single `home-manager` attrset returned by `hmFor` in `flake.nix` — see the note under Flake & Home Manager for why `//` makes dotted keys unsafe
 - `nixos-rebuild switch` builds the specialisations too, and each gets its own boot-menu entry for that generation — rebuild, reboot, pick the COSMIC entry. When booted into a specialisation, `/run/current-system` is the specialisation's path while `/nix/var/nix/profiles/system` is the base; they differ by design and both come from the same generation
 
