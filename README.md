@@ -40,16 +40,16 @@ nixos-config/
 ├── modules/
 │   ├── common.nix                   # Shared: nix settings, locale, avahi, core CLI
 │   ├── remote-terminal.nix          # Mosh + SSH hardening
-│   ├── desktop-gnome.nix            # GNOME desktop environment (the base DE)
+│   ├── desktop-gnome.nix            # GNOME — the FALLBACK desktop; imported by the
+│   │                                #   gnome specialisation in desktop-tools.nix
 │   ├── desktop-icons.nix            # Custom desktop application icons
 │   ├── nordvpn.nix                  # NordVPN WireGuard (wgnord)
 │   ├── playwright-dev.nix           # Playwright E2E testing dependencies
 │   ├── esp32-dev.nix                # ESP32 microcontroller development tools
 │   ├── photo-restoration.nix        # Photo editing and restoration applications
 │   └── desktop-{cosmic,hyprland,kde,cinnamon}.nix
-│                                    # Standalone DE modules — NOT imported. The live
-│                                    #   alternate DEs are specialisations defined in
-│                                    #   hosts/nixos-dev/desktop-tools.nix
+│                                    # Standalone DE modules — NOT imported by anything.
+│                                    #   COSMIC is configured inline in desktop-tools.nix
 ├── home/
 │   ├── todd-base.nix                # Headless-safe: git, zsh, herdr, SSH, AWS, CLI tools
 │   ├── todd-desktop.nix             # GUI apps + Maestral/Proton Bridge (nixos-dev, vm-guest)
@@ -69,44 +69,53 @@ nixos-config/
 
 ### Desktop Environment
 
-GNOME is the default. Three alternative DEs are baked into the build as [NixOS specialisations](https://nixos.wiki/wiki/NixOS_specialisations) — selectable at boot or switchable at runtime without a rebuild. They are defined inline in `hosts/nixos-dev/desktop-tools.nix`; the standalone `modules/desktop-*.nix` files are not imported.
+**COSMIC is the default desktop**, themed with Catppuccin Mocha. **GNOME is the
+one fallback**, available as a [NixOS specialisation](https://nixos.wiki/wiki/NixOS_specialisations)
+— selectable at boot or switchable at runtime without a rebuild.
 
-**Currently running: COSMIC**, themed with Catppuccin Mocha.
+Reorganised 2026-10-16: COSMIC was previously a specialisation on top of a GNOME
+base, and KDE Plasma 6 + Hyprland were also specialisations. Both were removed;
+COSMIC became the base and GNOME the fallback.
 
-| Specialisation | DE | Boot menu label |
+| System | DE | Boot menu label |
 |---|---|---|
-| *(default)* | GNOME | NixOS |
-| `hyprland` | Hyprland | NixOS - Hyprland |
-| `cosmic` | COSMIC | NixOS - COSMIC |
-| `kde` | KDE Plasma 6 | NixOS - KDE-Plasma-6 |
+| *(base)* | COSMIC | NixOS |
+| `gnome` specialisation | GNOME | NixOS - GNOME |
+
+COSMIC is configured inline in `hosts/nixos-dev/desktop-tools.nix`; the `gnome`
+specialisation in the same file imports `modules/desktop-gnome.nix` and forces
+COSMIC off. The other `modules/desktop-*.nix` files (cosmic, kde, hyprland,
+cinnamon, multi-de-compat) are **imported by nothing** — editing them has no
+effect. They are kept on disk rather than deleted because PR #6 adds a Hyprland
+session.
 
 **Switch at runtime (no reboot):**
 ```bash
-sudo /run/current-system/specialisation/hyprland/bin/switch-to-configuration switch
-sudo /run/current-system/specialisation/cosmic/bin/switch-to-configuration switch
-sudo /run/current-system/specialisation/kde/bin/switch-to-configuration switch
+# To the GNOME fallback
+sudo /run/current-system/specialisation/gnome/bin/switch-to-configuration switch
 
-# Back to default GNOME
+# Back to COSMIC (the base)
 sudo nixos-rebuild switch --flake ~/nixos-config#nixos-dev
 ```
 
 **Switch at boot:** Reboot and select from the systemd-boot menu.
 
-A `nixos-rebuild switch` builds the base system and all its specialisations, and
-the boot menu gains an entry per specialisation for that generation — so the
-usual rebuild → reboot → pick "NixOS - COSMIC" flow picks up config changes.
+A `nixos-rebuild switch` builds the base system and its specialisation, and the
+boot menu gains the `NixOS - GNOME` entry for that generation — so the usual
+rebuild → reboot flow picks up config changes.
 
-Each specialisation tags the system name, so the booted one is visible in
-`/run/current-system` (e.g. `…-nixos-dev-COSMIC-26.11…`). When booted into a
-specialisation that path is the *specialisation's*, while
-`/nix/var/nix/profiles/system` is the generation's *base* — they differ by design,
-and both come from the same generation.
+The GNOME specialisation tags the system name, so when booted it shows in
+`/run/current-system` (e.g. `…-nixos-dev-GNOME-26.11…`); the base COSMIC system
+carries no tag. When booted into a specialisation that path is the
+*specialisation's*, while `/nix/var/nix/profiles/system` is the generation's
+*base* — they differ by design, and both come from the same generation.
 
-- **GNOME** with GDM display manager (Wayland) — the base DE
-- **Extensions**: Forge (tiling), Workspace Indicator, Just Perfection, Tactile, Switcher
-- **COSMIC** specialisation keeps `gnome-keyring` on deliberately — it is the de-facto
-  org.freedesktop.secrets provider and COSMIC ships no replacement, without which
-  1Password cannot store its 2FA token
+- **COSMIC** (Wayland) with GDM as the display manager
+- **`gnome-keyring` is enabled even though GNOME is not the base** — despite the
+  name it is the de-facto org.freedesktop.secrets provider and COSMIC ships no
+  replacement, without which 1Password cannot store its 2FA token
+- **GNOME fallback extensions**: Forge (tiling), Workspace Indicator, Just
+  Perfection, Tactile, Switcher
 
 ### Theming
 **Catppuccin Mocha** (accent Blue, `#89b4fa`) across COSMIC and Ghostty. Ghostty's
@@ -129,7 +138,7 @@ plus an `alpha_map`), so set frosted/blur by hand after importing.
 - **Ghostty** — default terminal since 2026-10-08; replaced WezTerm because
   terminal-browser needs the full kitty graphics protocol, which WezTerm only
   partially implements. Config is declarative in `home/todd-desktop.nix`
-- **WezTerm** — still installed; the KDE specialisation still sets `TERMINAL = "wezterm"`
+- **WezTerm** — still installed, but no longer the default anywhere. `TERMINAL = "wezterm"` now only comes from `modules/desktop-gnome.nix`, i.e. the GNOME fallback (the KDE specialisation that also set it was removed 2026-10-16)
 - **herdr** 0.9.4 — terminal workspace manager for AI coding agents; replaced tmux as the multiplexer (nixos-dev; via flake overlay, config in `home/todd-base.nix`)
   - Prefix: `alt+a` | Tabs: `Alt+1`–`Alt+9` (new: `prefix+c`) | Pane focus: `Alt+Arrow` | Splits: `prefix+\` / `prefix+-`
   - Workspaces: `prefix+w` + number by index; `prefix+g` opens the name-searchable navigator

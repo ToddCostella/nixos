@@ -16,10 +16,11 @@
   # and the org/gnome/GPaste dconf settings below). Bound to Super+V.
   programs.gpaste.enable = true;
 
-  # Set wezterm as default terminal for GNOME
-  # This sets the default x-terminal-emulator alternative
+  # Default terminal hint for GNOME. ghostty since 2026-10-08 (was wezterm);
+  # the base COSMIC config in hosts/nixos-dev/desktop-tools.nix sets the same
+  # value, so this only matters when the gnome specialisation is booted.
   environment.variables = {
-    TERMINAL = "wezterm";
+    TERMINAL = "ghostty";
   };
 
   # Declaratively enable GNOME extensions + keybindings.

@@ -15,10 +15,11 @@
     ../../modules/esp32-dev.nix
     ../../modules/photo-restoration.nix
     ../../modules/desktop-icons.nix
-    ../../modules/desktop-gnome.nix
-    # ../../modules/desktop-cosmic.nix  # COSMIC Desktop — not available in current nixpkgs
     ../../modules/playwright-dev.nix
     ../../modules/nordvpn.nix
+    # NOTE: no desktop-* module is imported here. COSMIC is configured inline
+    # below as the BASE desktop; GNOME is the fallback specialisation and pulls
+    # in ../../modules/desktop-gnome.nix itself. See the DE section further down.
   ];
 
   # Overlay: mitmproxy 12.2.3 fails its pythonRuntimeDepsCheckHook in current
@@ -345,6 +346,13 @@
     # Clipboard utilities
     wl-clipboard
 
+    # COSMIC applications (COSMIC is the base desktop — see the DE section below)
+    cosmic-files
+    cosmic-edit
+    cosmic-term
+    cosmic-store
+    cosmic-screenshot
+
     # NOTE: The custom screenshot-area/full/window/quick scripts (and the `satty`
     # annotation tool) were REMOVED. They all wrapped `gnome-screenshot`, which
     # is broken on GNOME Wayland: it can't use GNOME Shell's screenshot interface
@@ -487,96 +495,52 @@
     wireshark
   ];
 
-  # Specialisations — alternative desktop environments selectable at boot or runtime.
-  # Boot: systemd-boot shows entries like "NixOS - specialisation: Hyprland"
-  # Runtime switch: sudo /run/current-system/specialisation/<name>/bin/switch-to-configuration switch
-  # Back to default (GNOME): sudo nixos-rebuild switch --flake ~/nixos-config#<host>
+  # --- Desktop environment: COSMIC is the BASE, GNOME is the fallback ---
+  #
+  # Reorganised 2026-10-16. Previously GNOME was the base with cosmic/kde/hyprland
+  # as specialisations; COSMIC had become the DE in daily use, so it is now the
+  # base and GNOME is the single fallback specialisation. KDE and Hyprland were
+  # removed (the standalone modules/desktop-{kde,hyprland}.nix remain on disk but
+  # are not imported by anything).
+  #
+  # Boot menu: the default entry is COSMIC; "NixOS - GNOME" boots the fallback.
+  # Runtime switch to GNOME (no reboot):
+  #   sudo /run/current-system/specialisation/gnome/bin/switch-to-configuration switch
+  # Back to COSMIC:
+  #   sudo nixos-rebuild switch --flake ~/nixos-config#nixos-dev
+  # NB: if a `nixos-rebuild switch` has happened since boot, REBOOT rather than
+  # logging out — see the switch-then-logout trap in CLAUDE.md.
+  services.desktopManager.cosmic.enable = true;
+  xdg.portal.extraPortals = [ pkgs.xdg-desktop-portal-cosmic ];
+
+  # gnome-keyring is deliberately enabled even though GNOME itself is not the
+  # base desktop any more. Despite the name it is not a desktop component — it
+  # is the de-facto org.freedesktop.secrets provider, and COSMIC ships no
+  # replacement. With it off there is no Secret Service on the session bus at
+  # all, so 1Password cannot store its two-factor token ("1Password is unable
+  # to save your two factor token", offline-only) and GitHub credentials are
+  # lost. Seen 2026-10-09.
+  #
+  # security.pam.services.gdm.enableGnomeKeyring (set further up) must stay on
+  # too: it is what unlocks the keyring at login. Without it the daemon runs but
+  # stays locked, which trades the error for a password prompt.
+  services.gnome.gnome-keyring.enable = true;
+
+  # Default terminal hint for apps that honour $TERMINAL. Previously this was
+  # only set by modules/desktop-gnome.nix (to wezterm), so moving GNOME into a
+  # specialisation left the base with no TERMINAL at all. Set to ghostty, which
+  # has been the actual default terminal since 2026-10-08.
+  environment.variables.TERMINAL = "ghostty";
+
   specialisation = {
 
-    hyprland.configuration = {
-      system.nixos.tags = [ "Hyprland" ];
-      services.desktopManager.gnome.enable = lib.mkForce false;
-      services.gnome.gnome-keyring.enable = lib.mkForce false;
-      services.gnome.gnome-online-accounts.enable = lib.mkForce false;
-      security.pam.services.gdm.enableGnomeKeyring = lib.mkForce false;
-      xdg.portal.extraPortals = lib.mkForce [ pkgs.xdg-desktop-portal-hyprland ];
-      programs.hyprland.enable = true;
-      programs.hyprland.xwayland.enable = true;
-      environment.systemPackages = with pkgs; [
-        waybar
-        wofi
-        hyprpaper
-        hypridle
-        hyprlock
-        hyprshot
-        wl-clipboard
-        dunst
-        kitty
-      ];
-      environment.variables = {
-        NIXOS_OZONE_WL = "1";
-        MOZ_ENABLE_WAYLAND = "1";
-      };
-    };
-
-    cosmic.configuration = {
-      system.nixos.tags = [ "COSMIC" ];
-      services.desktopManager.gnome.enable = lib.mkForce false;
-      services.gnome.gnome-online-accounts.enable = lib.mkForce false;
-
-      # gnome-keyring is deliberately LEFT ON here (it used to be mkForce
-      # false alongside the rest of GNOME). Despite the name it is not a
-      # desktop component — it is the de-facto org.freedesktop.secrets
-      # provider, and COSMIC ships no replacement. With it off there is no
-      # Secret Service on the session bus at all, so 1Password cannot store
-      # its two-factor token ("1Password is unable to save your two factor
-      # token", offline-only), and GitHub credentials are lost on every
-      # switch into COSMIC. Seen 2026-10-09.
-      #
-      # security.pam.services.gdm.enableGnomeKeyring must stay on too: it is
-      # what unlocks the keyring at login. Without it the daemon runs but
-      # stays locked, which trades the error for a password prompt.
-      #
-      # NB: the KDE specialisation below still disables both, correctly —
-      # plasma6 brings kwallet + kwallet-pam, its own Secret Service.
-      xdg.portal.extraPortals = lib.mkForce [ pkgs.xdg-desktop-portal-cosmic ];
-      services.desktopManager.cosmic.enable = true;
-      environment.systemPackages = with pkgs; [
-        cosmic-files
-        cosmic-edit
-        cosmic-term
-        cosmic-store
-        cosmic-screenshot
-        wl-clipboard
-      ];
-    };
-
-    kde.configuration = {
-      system.nixos.tags = [ "KDE-Plasma-6" ];
-      services.desktopManager.gnome.enable = lib.mkForce false;
-      services.gnome.gnome-keyring.enable = lib.mkForce false;
-      services.gnome.gnome-online-accounts.enable = lib.mkForce false;
-      security.pam.services.gdm.enableGnomeKeyring = lib.mkForce false;
-      xdg.portal.extraPortals = lib.mkForce [ pkgs.kdePackages.xdg-desktop-portal-kde ];
-      services.desktopManager.plasma6.enable = true;
-      environment.variables = {
-        TERMINAL = "wezterm";
-      };
-      environment.systemPackages = with pkgs; [
-        kdePackages.kate
-        kdePackages.konsole
-        kdePackages.dolphin
-        kdePackages.ark
-        kdePackages.gwenview
-        kdePackages.okular
-        kdePackages.spectacle
-        kdePackages.kalk
-        kdePackages.kcalc
-        kdePackages.kfind
-        kdePackages.filelight
-        kdePackages.partitionmanager
-        kdePackages.kcolorchooser
-      ];
+    # GNOME fallback. Imports the full GNOME module (extensions, dconf
+    # keybindings, GPaste) and forces off the COSMIC bits the base config sets.
+    gnome.configuration = {
+      imports = [ ../../modules/desktop-gnome.nix ];
+      system.nixos.tags = [ "GNOME" ];
+      services.desktopManager.cosmic.enable = lib.mkForce false;
+      xdg.portal.extraPortals = lib.mkForce [ pkgs.xdg-desktop-portal-gnome ];
     };
 
   };

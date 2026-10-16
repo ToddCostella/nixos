@@ -33,16 +33,18 @@ nixos-config/
 ├── modules/
 │   ├── common.nix                       # Shared base: nix settings, locale, avahi, core CLI
 │   ├── remote-terminal.nix              # Mosh + SSH hardening (imported by common.nix)
-│   ├── desktop-gnome.nix                # GNOME desktop environment (the base DE)
+│   ├── desktop-gnome.nix                # GNOME — the FALLBACK desktop; imported by the
+│   │                                    #   gnome specialisation in desktop-tools.nix
 │   ├── desktop-icons.nix                # Custom desktop application icons
 │   ├── nordvpn.nix                      # NordVPN WireGuard (wgnord)
 │   ├── playwright-dev.nix               # Playwright E2E testing dependencies
 │   ├── esp32-dev.nix                    # ESP32 microcontroller development tools
 │   ├── photo-restoration.nix            # Photo editing and restoration applications
 │   ├── desktop-cosmic.nix               # Standalone COSMIC module — NOT imported; the live
-│   │                                    #   COSMIC setup is the specialisation in desktop-tools.nix
-│   ├── desktop-hyprland.nix             # Hyprland compositor (standalone; see note above)
-│   ├── desktop-kde.nix                  # KDE Plasma desktop (standalone; see note above)
+│   │                                    #   COSMIC setup is inline in desktop-tools.nix
+│   ├── desktop-hyprland.nix             # Hyprland — REMOVED as a specialisation 2026-10-16;
+│   │                                    #   module kept on disk, imported by nothing (PR #6)
+│   ├── desktop-kde.nix                  # KDE Plasma — REMOVED 2026-10-16; imported by nothing
 │   ├── desktop-cinnamon.nix             # Cinnamon desktop (standalone; not wired up)
 │   └── desktop-multi-de-compat.nix      # Multi-DE compatibility layer
 ├── home/
@@ -73,26 +75,32 @@ nixos-config/
 - `hosts/nixos-dev/desktop-tools.nix` — The shared desktop + tools layer, imported by BOTH `nixos-dev` and `vm-guest` so the two never drift. Holds the DE, dev tooling, 1Password, fonts, the full package set, the custom shell scripts, and the alternate-DE specialisations. Most package/tooling changes belong here, not in a host `configuration.nix`
 - `hosts/<name>/configuration.nix` — Host-specific settings only. Sets `system.stateVersion`, `networking.hostName`, hardware/boot specifics
 
-### Desktop environments (specialisations)
-GNOME is the base DE. Hyprland, COSMIC, and KDE Plasma 6 are [NixOS specialisations](https://nixos.wiki/wiki/NixOS_specialisations) defined inline in `hosts/nixos-dev/desktop-tools.nix` (~line 489+) — selectable at boot or switched at runtime without a rebuild. The standalone `modules/desktop-*.nix` files are NOT imported; editing them has no effect on the live system.
+### Desktop environments (COSMIC base + GNOME fallback)
+**COSMIC is the base desktop**, configured inline in
+`hosts/nixos-dev/desktop-tools.nix`. **GNOME is the single fallback**, a
+specialisation in the same file that imports `modules/desktop-gnome.nix` and
+forces COSMIC off. Reorganised 2026-10-16: previously GNOME was the base with
+cosmic/kde/hyprland as specialisations.
+
+KDE and Hyprland were removed. `modules/desktop-{kde,hyprland,cinnamon,multi-de-compat}.nix`
+still exist on disk but are **imported by nothing** — editing them changes
+nothing. (They are kept rather than deleted because PR #6 adds a Hyprland
+session; resolve that before deleting.)
 
 ```bash
-# Switch at runtime (no reboot)
-sudo /run/current-system/specialisation/cosmic/bin/switch-to-configuration switch
-# ...or, when already booted into a specialisation, reach it through the profile:
-sudo /nix/var/nix/profiles/system/specialisation/cosmic/bin/switch-to-configuration switch
+# Boot menu: the default entry is COSMIC; "NixOS - GNOME" boots the fallback.
 
-# Back to base GNOME
+# Runtime switch to the GNOME fallback (no reboot)
+sudo /run/current-system/specialisation/gnome/bin/switch-to-configuration switch
+
+# Back to COSMIC (the base)
 sudo nixos-rebuild switch --flake ~/nixos-config#nixos-dev
 ```
 
-Each specialisation sets `system.nixos.tags`, so the booted one shows up in the
-system name (e.g. `...-nixos-system-nixos-dev-COSMIC-26.11...`).
-
-A `nixos-rebuild switch` builds the base system **and** all its specialisations,
-and the boot menu gains an entry per specialisation for that generation. So the
-normal workflow — rebuild, reboot, pick the COSMIC entry — gets you the new
-config; nothing extra is needed.
+The GNOME specialisation sets `system.nixos.tags = [ "GNOME" ]`, so when it is
+booted the tag shows up in the system name
+(`...-nixos-system-nixos-dev-GNOME-26.11...`). The base COSMIC system carries no
+tag.
 
 **Reading the paths:** when booted into a specialisation, `/run/current-system`
 is the *specialisation's* store path while `/nix/var/nix/profiles/system` is the
@@ -102,7 +110,7 @@ generation — confirm with:
 
 ```bash
 readlink -f /run/current-system
-readlink -f /nix/var/nix/profiles/system/specialisation/cosmic   # should match
+readlink -f /nix/var/nix/profiles/system/specialisation/gnome   # should match
 ```
 
 **Do NOT log out of a graphical session after a `nixos-rebuild switch`.**
@@ -162,7 +170,7 @@ comment at the `cosmic.configuration` block for the full rationale.
 ## Key System Components
 
 - **Hosts**: `nixos-dev` (Dell XPS laptop, `nixos-dev.local`), `vm-guest` (libvirt VM), `home-server` (headless, hardware TBD)
-- **Desktop**: GNOME with GDM display manager (Wayland) is the base; COSMIC / Hyprland / KDE are specialisations (see above). Currently running COSMIC
+- **Desktop**: COSMIC (Wayland) is the base desktop, with GDM as the display manager; GNOME is the one fallback specialisation (see above). KDE and Hyprland were removed 2026-10-16
 - **Terminal**: Ghostty (default, replaced WezTerm 2026-10-08 — terminal-browser needs the full kitty graphics protocol, which WezTerm only partially implements). WezTerm is still installed, and the KDE specialisation still sets `TERMINAL = "wezterm"`. herdr for session/multiplexing (replaced tmux)
 - **Theme**: Catppuccin Mocha across COSMIC and Ghostty (see Theming below)
 - **Shell**: zsh with oh-my-zsh (robbyrussell theme) — configured in `home/todd-base.nix`
@@ -402,7 +410,7 @@ aws sts get-caller-identity --profile toddcostella
 - `~/.secrets.env` is NOT committed — regenerate with `refresh-secrets`
 - `users.users.todd.extraGroups` is NOT merged by NixOS — each host must declare the full list
 - `system.stateVersion` is set per-host, NOT in `modules/common.nix`
-- `modules/desktop-{cosmic,hyprland,kde,cinnamon}.nix` are NOT imported — the live alternate DEs are specialisations in `hosts/nixos-dev/desktop-tools.nix`. Editing those standalone modules changes nothing
+- `modules/desktop-{cosmic,hyprland,kde,cinnamon,multi-de-compat}.nix` are NOT imported — COSMIC is configured inline in `hosts/nixos-dev/desktop-tools.nix` and GNOME comes in via the `gnome` specialisation there. Editing those standalone modules changes nothing
 - home-manager settings must stay inside the single `home-manager` attrset returned by `hmFor` in `flake.nix` — see the note under Flake & Home Manager for why `//` makes dotted keys unsafe
 - `nixos-rebuild switch` builds the specialisations too, and each gets its own boot-menu entry for that generation — rebuild, reboot, pick the COSMIC entry. When booted into a specialisation, `/run/current-system` is the specialisation's path while `/nix/var/nix/profiles/system` is the base; they differ by design and both come from the same generation
 
