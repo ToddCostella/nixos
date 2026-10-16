@@ -212,11 +212,12 @@
     # Screenshot utilities (GNOME-specific)
     gnome-screenshot
 
-    # Office suite
-    libreoffice
-
-    # Backup software
-    pika-backup
+    # NOTE: libreoffice and pika-backup used to live here. Neither is
+    # GNOME-specific, so when this module moved from an unconditional import to
+    # the `gnome` specialisation (2026-10-16) they silently left the base system
+    # — i.e. they vanished under COSMIC. Both now live in the base package set in
+    # hosts/nixos-dev/desktop-tools.nix. Only genuinely GNOME-coupled packages
+    # (shell extensions, gnome-tweaks, gnome-screenshot) belong in this list.
 
     # Desktop entry for wezterm to ensure it appears in GNOME's terminal launcher
     (pkgs.writeTextFile {

@@ -172,6 +172,39 @@ without it 1Password cannot save its 2FA token. See the comment next to
 `services.gnome.gnome-keyring.enable` in `desktop-tools.nix` for the full
 rationale.
 
+## Backups (Pika / borg)
+
+`pika-backup` drives a local borg repo at
+`/mnt/backup-internal/backup-nixos-dev-todd` (~141 GB as of 2026-10-16).
+
+**It is deliberately in the BASE package set** (`hosts/nixos-dev/desktop-tools.nix`),
+not in a DE module. It is a plain GTK4/libadwaita borg frontend with no GNOME
+Shell dependency, so it must not be coupled to a desktop.
+
+**Scheduling runs through a systemd user service**, `pika-backup-monitor`,
+defined in `home/todd-desktop.nix` — NOT through the autostart `.desktop` file
+upstream ships. Check it with:
+
+```bash
+systemctl --user status pika-backup-monitor
+```
+
+Why that matters, and the trap it closes: Pika's scheduler ships only as
+`share/applications/...Monitor.desktop` plus a D-Bus activation file, with no
+unit of its own. On NixOS that `.desktop` reaches `/etc/xdg/autostart` only
+because **the GNOME module puts it there**; COSMIC's module populates no
+autostart directory at all. So when `modules/desktop-gnome.nix` became the
+`gnome` specialisation's on 2026-10-16, `pika-backup` left the base system with
+it and — because the scheduler was an autostart entry rather than a unit —
+**scheduled backups stopped with no error and no failed unit to notice**. Last
+automatic run was 08:18 that morning; found 2026-10-16 only because the app was
+missing from the app grid. `libreoffice` was stranded the same way.
+
+Lesson for future DE changes: when moving anything in or out of a DE module,
+audit its package list for things that are not actually DE-coupled, and prefer a
+systemd user service over an autostart `.desktop` for anything that must keep
+running.
+
 ## Key System Components
 
 - **Hosts**: `nixos-dev` (Dell XPS laptop, `nixos-dev.local`), `vm-guest` (libvirt VM), `home-server` (headless, hardware TBD)

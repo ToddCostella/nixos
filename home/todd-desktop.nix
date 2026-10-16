@@ -135,6 +135,41 @@
     };
   };
 
+  # Pika Backup's scheduler, as a systemd user service rather than an autostart
+  # .desktop file.
+  #
+  # Pika schedules backups from `pika-backup-monitor`, which upstream ships ONLY
+  # as share/applications/...Monitor.desktop (plus a D-Bus activation file). It
+  # has no systemd unit of its own. On NixOS that .desktop reaches
+  # /etc/xdg/autostart only because the GNOME module puts it there — COSMIC's
+  # module populates no autostart directory at all, so under base COSMIC the
+  # directory is empty and the monitor never starts.
+  #
+  # That is how scheduled backups stopped on 2026-10-16 without any error: the
+  # package left the base system with modules/desktop-gnome.nix, and because the
+  # scheduler is an autostart entry rather than a unit, nothing remained to fail
+  # loudly. Last automatic run was 08:18 that morning.
+  #
+  # A user service is DE-independent, so this cannot recur if the desktop
+  # changes again. `pika-backup-monitor` is the headless scheduler, not the GUI;
+  # the Pika window is still launched normally from the app grid.
+  systemd.user.services.pika-backup-monitor = {
+    Unit = {
+      Description = "Pika Backup scheduler (borg repo on /mnt/backup-internal)";
+      # The repo lives on an internal drive mounted by the system, and Pika wants
+      # a session bus for its notifications.
+      After = [ "graphical-session.target" ];
+      PartOf = [ "graphical-session.target" ];
+    };
+    Install.WantedBy = [ "graphical-session.target" ];
+    Service = {
+      Type = "exec";
+      ExecStart = "${pkgs.pika-backup}/bin/pika-backup-monitor";
+      Restart = "on-failure";
+      RestartSec = 30;
+    };
+  };
+
   # --- Catppuccin theme for COSMIC ---
   # COSMIC has no declarative theme option, and its theme config is an exploded
   # tree of ~70 per-key files under ~/.config/cosmic/com.system76.CosmicTheme.*.

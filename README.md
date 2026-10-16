@@ -264,7 +264,12 @@ Under the COSMIC specialisation this does not apply — COSMIC ships
 - **Obsidian**, **LibreOffice**, **Figma**, **Hugo** (static site generator)
   - *Apostrophe (markdown) was removed 2026-10-09 — it pulled in a `python3.12-anyio` build that fails its own test suite and is absent from the binary cache. Looking for a replacement.*
 - **1Password** (GUI + CLI integration enabled)
-- **Maestral** (Dropbox sync — see [DROPBOX-MAESTRAL.md](DROPBOX-MAESTRAL.md)), **Pika Backup**
+- **Maestral** (Dropbox sync — see [DROPBOX-MAESTRAL.md](DROPBOX-MAESTRAL.md))
+- **Pika Backup** — borg repo on `/mnt/backup-internal`. Scheduled by a
+  `pika-backup-monitor` systemd **user service** (`home/todd-desktop.nix`), not
+  by the autostart `.desktop` upstream ships; check with
+  `systemctl --user status pika-backup-monitor`. See CLAUDE.md → Backups for why
+  (it stopped silently for a day when the DE layout changed)
 - **Slack**, **Signal Desktop**, **Zoom**
 
 #### Email (Proton, via `home/mail.nix`)

@@ -353,6 +353,20 @@
     cosmic-store
     cosmic-screenshot
 
+    # Desktop-agnostic apps that must NOT be tied to a DE module. Both of these
+    # previously sat in modules/desktop-gnome.nix and silently disappeared when
+    # that module became the gnome specialisation's (2026-10-16) — pika-backup is
+    # a plain GTK4 borg frontend with no GNOME Shell dependency, and libreoffice
+    # obviously has none either.
+    #
+    # pika-backup drives the local borg repo on /mnt/backup-internal. It
+    # schedules via an autostart .desktop (pika-backup-monitor), NOT a systemd
+    # timer, so if it is not installed there is no unit left behind to fail
+    # loudly — backups just stop. Last run before this was fixed: 2026-10-16
+    # 08:18, i.e. the reboot into base COSMIC silently ended scheduled backups.
+    pika-backup
+    libreoffice
+
     # NOTE: The custom screenshot-area/full/window/quick scripts (and the `satty`
     # annotation tool) were REMOVED. They all wrapped `gnome-screenshot`, which
     # is broken on GNOME Wayland: it can't use GNOME Shell's screenshot interface
