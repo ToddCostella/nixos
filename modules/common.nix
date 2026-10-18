@@ -64,12 +64,30 @@
   # Enable zsh system-wide (oh-my-zsh managed in home manager)
   programs.zsh.enable = true;
 
-  # Enable Avahi for mDNS .local resolution
+  # Avahi for mDNS .local names.
+  #
+  # nssmdns4/6 only make this host RESOLVE other machines' .local names. They do
+  # NOT advertise our own: `services.avahi.publish.enable` defaults to false in
+  # nixpkgs, which generates `disable-publishing=yes` and leaves the daemon
+  # running but silent. So `nixos-dev.local` never resolved — not from the LAN,
+  # and not even locally (`avahi-resolve -n nixos-dev.local` timed out).
+  #
+  # publish.addresses is what answers the A/AAAA query for `nixos-dev.local`,
+  # which is what SSH clients (e.g. Termius on iOS) look up. workstation adds the
+  # _workstation._tcp advert that makes the host visible in network browsers.
+  # Found 2026-10-18 while debugging "host not available" from an iPad; the
+  # config had never set these, so this was long-standing rather than caused by
+  # the COSMIC switch.
   services.avahi = {
     enable = true;
     nssmdns4 = true;
     nssmdns6 = true;
     openFirewall = true;
+    publish = {
+      enable = true;
+      addresses = true;
+      workstation = true;
+    };
   };
 
   # Limit journal size to save disk space.
