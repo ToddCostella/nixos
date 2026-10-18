@@ -44,9 +44,29 @@
     variant = "";
   };
 
-  # Enable PAM integration for keyring
+  # PAM integration that UNLOCKS gnome-keyring at login.
+  #
+  # `gdm` alone is not enough: GDM authenticates password logins through the
+  # separate `gdm-password` PAM service, and that one had zero gnome_keyring
+  # lines. So the keyring daemon ran but stayed LOCKED after every graphical
+  # login, and anything reading a secret at session start failed. Found
+  # 2026-10-18: maestral had been stuck at "Paused" since 2026-10-16 13:08 with
+  # "Could not load auth token. SecretService Keyring is locked" — it reads the
+  # Dropbox token once at startup and never retries, so Dropbox silently stopped
+  # syncing for two days.
+  #
+  # Check which service a session actually used with:
+  #   loginctl show-session "$XDG_SESSION_ID" -p Service
+  # and confirm the unlock is wired with:
+  #   grep -c gnome_keyring /etc/pam.d/<service>
+  #
+  # cosmic-greeter is included because COSMIC ships its own greeter; it is not
+  # currently the display manager (GDM still is) but this costs nothing and
+  # avoids re-breaking the keyring if that changes.
   security.pam.services.login.enableGnomeKeyring = true;
   security.pam.services.gdm.enableGnomeKeyring = true;
+  security.pam.services.gdm-password.enableGnomeKeyring = true;
+  security.pam.services.cosmic-greeter.enableGnomeKeyring = true;
 
   # Enable Polkit for authentication dialogs
   security.polkit.enable = true;

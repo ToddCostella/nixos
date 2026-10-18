@@ -118,13 +118,28 @@
     # ghostty does not bind Alt+number, so the keys already reach the shell.
   '';
 
+  # Maestral reads the Dropbox auth token from the SecretService keyring ONCE at
+  # startup. If the keyring is still locked at that moment it logs "Could not
+  # load auth token", drops to Status=Paused, and never retries — and since it
+  # does not exit non-zero, Restart=on-failure never fires either. The result is
+  # a daemon that looks healthy (`active (running)`) while syncing nothing.
+  #
+  # That happened for two days (2026-10-16 13:08 → 2026-10-18), because
+  # WantedBy=default.target started it before the graphical session had unlocked
+  # the keyring. Ordering it after graphical-session.target makes the token
+  # readable by the time it starts. The real unlock fix is the gdm-password PAM
+  # service in hosts/nixos-dev/desktop-tools.nix; this ordering is the belt to
+  # that braces.
+  #
+  # If it is ever Paused again, `maestral status` shows it and
+  # `systemctl --user restart maestral` recovers once the keyring is unlocked.
   systemd.user.services.maestral = {
     Unit = {
       Description = "Maestral Dropbox sync daemon";
-      After = [ "network-online.target" ];
+      After = [ "network-online.target" "graphical-session.target" ];
       Wants = [ "network-online.target" ];
     };
-    Install.WantedBy = [ "default.target" ];
+    Install.WantedBy = [ "graphical-session.target" ];
     Service = {
       Type = "exec";
       ExecStart = "${pkgs.maestral}/bin/maestral start -f";
