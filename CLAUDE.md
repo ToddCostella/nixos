@@ -232,6 +232,10 @@ All user-level dotfiles are managed declaratively. Changes apply atomically with
 | `~/.secrets.env.tpl` | `home.file` (API key template) |
 | `~/.ssh/allowed_signers` | `home.file` |
 
+**NOT** managed by home-manager: `~/.ssh/authorized_keys`. SSH login keys go in
+`users.users.todd.openssh.authorizedKeys.keys` in `modules/common.nix` — see the
+StrictModes note under Network & Firewall.
+
 ### Shell aliases (defined in home/todd-base.nix)
 - `lg` — lazygit
 - `acv` — activate Python venv
@@ -382,6 +386,28 @@ The first four are `pkgs.writeShellScriptBin` definitions in
 - mDNS enabled via Avahi on all hosts
 - SSH: key-only auth, no root login, allows user `todd`
 - Mosh: enabled (auto-opens UDP 60000-61000)
+
+**Add SSH login keys to `users.users.todd.openssh.authorizedKeys.keys` in
+`modules/common.nix` — NEVER via home-manager's `home.file`.** nixpkgs renders
+that option to a root-owned real file at `/etc/ssh/authorized_keys.d/todd`,
+which is the second entry in sshd's `AuthorizedKeysFile`. `home.file` instead
+makes `~/.ssh/authorized_keys` a **symlink into `/nix/store`**, and sshd runs
+with `StrictModes yes`: it walks the whole *resolved* path and refuses the file
+if any component is group- or world-writable. `/nix/store` is
+`drwxrwxr-t root:nixbld` by design, so every such key is silently ignored:
+
+```
+sshd-session[...]: Authentication refused: bad ownership or modes for directory /nix/store
+```
+
+The key is never compared — the client just sees `Authentication failed
+(publickey)`. Found 2026-10-22 from an iPad (Termius); the key had been
+unusable since home-manager took the file over in **Feb 2026**
+(`~/.ssh/authorized_keys.hm-backup` dates the takeover). It was masked because
+the 1Password key, declared the system way, kept working — so `ssh` from the
+desktop and any test from this machine succeeded while the iPad could not log
+in. When diagnosing SSH auth, check `journalctl -u sshd` for the refusal line
+above rather than trusting a working login from another key.
 
 ## Common Commands
 
