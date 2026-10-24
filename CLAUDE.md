@@ -349,6 +349,49 @@ include `Spawn("cmd")`, `Workspace(n)` (switch to), and `MoveToWorkspace(n)`
 assign-to-workspace rule in 1.9.0. Re-check after a `nix flake update`; upstream
 WindowRules is where such a rule would land.
 
+### Custom shortcut overrides (NOT in the flake)
+
+`~/.config/cosmic/com.system76.CosmicSettings.Shortcuts/v1/custom` holds
+overrides merged on top of the defaults. Added 2026-10-24:
+
+```ron
+{
+    (modifiers: [Super], key: "n"): MoveToNextWorkspace,
+    (modifiers: [Super], key: "p"): MoveToPreviousWorkspace,
+}
+```
+
+Why: carrying a window to the next workspace is the practical "new workspace"
+gesture (workspaces are created by moving into the trailing empty one), but the
+only default binding for it is `Super+Shift+Ctrl+hjkl`. Three modifiers is
+awkward anywhere and worse with the kanata home-row mods on the laptop
+keyboard, where it means holding A+F+D simultaneously. These are **additive** —
+the `Super+Shift+Ctrl` defaults still work.
+
+**The file must start with `{` on line 1 — no leading comments.** COSMIC's RON
+parser rejects the whole file otherwise, so the override is silently ignored and
+the only sign is a line in the user journal:
+
+```
+cosmic-comp[...]: shortcuts custom config error:
+  RonSpanned(SpannedError { code: ExpectedMap, span: ... line: 1, col: 1 })
+```
+
+Confusingly, COSMIC's own `defaults` file *does* use `//` comments — the
+restriction applies only to `custom`. That is why the rationale above lives here
+rather than in the file itself. Check that journal line after editing it;
+nothing else reports a bad override.
+
+Only seven `Super`+letter combos were unbound before this change
+(`c d e n p v z`); `n` and `p` are now taken, leaving `c d e v z`. Enumerate
+with a grep over the `defaults` file rather than guessing.
+
+This is mutable state **outside** the flake — nothing in `nixos-config` manages
+it, and COSMIC Settings → Keyboard → Shortcuts rewrites the file, so a change
+made there can drop these. Making it declarative would mean a `home.file` entry
+(as with the herdr config), at the cost of the Settings UI no longer being able
+to edit shortcuts at all.
+
 ## Screenshot Tools
 
 Use **GNOME's built-in screenshot UI** (`Print` key → Screen/Window/Selection
