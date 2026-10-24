@@ -358,15 +358,33 @@ overrides merged on top of the defaults. Added 2026-10-24:
 {
     (modifiers: [Super], key: "n"): MoveToNextWorkspace,
     (modifiers: [Super], key: "p"): MoveToPreviousWorkspace,
+    (modifiers: [Super], key: "f"): Spawn("strata"),
+    (modifiers: [Super], key: "t"): Spawn("ghostty"),
 }
 ```
 
-Why: carrying a window to the next workspace is the practical "new workspace"
-gesture (workspaces are created by moving into the trailing empty one), but the
-only default binding for it is `Super+Shift+Ctrl+hjkl`. Three modifiers is
-awkward anywhere and worse with the kanata home-row mods on the laptop
-keyboard, where it means holding A+F+D simultaneously. These are **additive** —
-the `Super+Shift+Ctrl` defaults still work.
+`n` / `p`: carrying a window to the next workspace is the practical "new
+workspace" gesture (workspaces are created by moving into the trailing empty
+one), but the only default binding for it is `Super+Shift+Ctrl+hjkl`. Three
+modifiers is awkward anywhere and worse with the kanata home-row mods on the
+laptop keyboard, where it means holding A+F+D simultaneously. These two are
+**additive** — the `Super+Shift+Ctrl` defaults still work.
+
+`f` / `t` **replace** defaults rather than adding to them: `System(HomeFolder)`
+(not the browser — that is `Super+b`, `System(WebBrowser)`) and
+`System(Terminal)`. Strata is itself a file manager
+(`Categories=Utility;FileTools;FileManager`), so `f` is a like-for-like swap.
+
+Use the **bare command name**, not a store path: `Spawn` resolves against
+`cosmic-comp`'s own PATH, which carries both
+`/etc/profiles/per-user/todd/bin` (ghostty) and `/run/current-system/sw/bin`
+(strata). An absolute `/nix/store/...` path would break on the next rebuild.
+
+Note `Super+t` worked around rather than fixed: `TERMINAL=ghostty` is already
+set by the base config, but `xdg-mime query default x-scheme-handler/terminal`
+returns nothing, so COSMIC's `System(Terminal)` was finding cosmic-term some
+other way. `Spawn("ghostty")` sidesteps the lookup. Setting the XDG default
+would fix it for everything that launches a terminal, not just this keybind.
 
 **The file must start with `{` on line 1 — no leading comments.** COSMIC's RON
 parser rejects the whole file otherwise, so the override is silently ignored and
@@ -381,6 +399,13 @@ Confusingly, COSMIC's own `defaults` file *does* use `//` comments — the
 restriction applies only to `custom`. That is why the rationale above lives here
 rather than in the file itself. Check that journal line after editing it;
 nothing else reports a bad override.
+
+The same `ExpectedMap` error also appears **transiently and harmlessly** when
+COSMIC reads the file mid-write (it watches for changes, so a truncating
+redirect like `cat > custom` is briefly an empty file). So check the
+*timestamp*: re-`touch` the file, wait a couple of seconds, and look only at
+what the journal logged after that. An error that does not reappear on a clean
+reload was the write race, not a bad file.
 
 Only seven `Super`+letter combos were unbound before this change
 (`c d e n p v z`); `n` and `p` are now taken, leaving `c d e v z`. Enumerate
