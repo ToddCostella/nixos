@@ -566,6 +566,21 @@
   # has been the actual default terminal since 2026-10-08.
   environment.variables.TERMINAL = "ghostty";
 
+  # $TERMINAL above only covers programs that read that variable. Anything going
+  # through XDG asks the mime database instead, and
+  # `xdg-mime query default x-scheme-handler/terminal` returned NOTHING on this
+  # machine — so COSMIC's own System(Terminal) shortcut action was finding
+  # cosmic-term by some other route. Registering the handler here fixes every
+  # XDG caller at once; the Super+t shortcut override in
+  # ~/.config/cosmic/.../Shortcuts/v1/custom only fixed that one keybind.
+  #
+  # Deliberately com.mitchellh.ghostty (plain Ghostty), NOT the
+  # ghostty-herdr.desktop defined below: something asking for "a terminal"
+  # should get a shell, not be dropped into a herdr session.
+  xdg.mime.defaultApplications = {
+    "x-scheme-handler/terminal" = "com.mitchellh.ghostty.desktop";
+  };
+
   specialisation = {
 
     # GNOME fallback. Imports the full GNOME module (extensions, dconf
