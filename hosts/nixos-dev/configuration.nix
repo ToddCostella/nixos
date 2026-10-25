@@ -31,9 +31,15 @@
 
   # Networking
   networking.hostName = "nixos-dev";
-  # Cloudflare primary, AdGuard Home (10.0.0.8) fallback. Swap the order to
-  # restore AdGuard ad-blocking as primary once the home-server is back up.
-  networking.nameservers = [ "1.1.1.1" "10.0.0.8" ];
+  # Cloudflare only. The AdGuard Home fallback (10.0.0.8, the home-server) was
+  # REMOVED 2026-10-25: that host is down (no route, not just DNS refused), and
+  # a dead nameserver in resolv.conf makes every lookup that reaches it stall
+  # for the resolver timeout instead of failing fast. Symptom was
+  # protonmail-bridge logging "lookup mail-api.proton.me: no such host" in
+  # bursts while 1.1.1.1 resolved the same name fine.
+  # To restore AdGuard ad-blocking once the home-server is back up, add
+  # "10.0.0.8" back — first for ad-blocking as primary, second as fallback.
+  networking.nameservers = [ "1.1.1.1" ];
   networking.networkmanager = {
     enable = true;
     # Ignore DHCP-provided DNS (ISP resolvers): glibc only consults the first
