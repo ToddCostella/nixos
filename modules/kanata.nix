@@ -55,16 +55,26 @@
         )
 
         ;; ---------------------------------------------------------------
-        ;; Timings — carried over from the Defy's own tuning so the feel
-        ;; matches. From the backup: superkeys.holdstart = 353,
-        ;; qukeys.holdTimeout = 207, overlap/overlapThreshold ~ 85-90.
+        ;; Timings — matched to the Defy so the two keyboards feel the same.
+        ;; From the backup (20261023144832-Defy.json):
+        ;;   superkeys.holdstart    = 353   <- the one that matters here
+        ;;   superkeys.timeout      = 318
+        ;;   qukeys.holdTimeout     = 207
+        ;;   overlap/overlapThreshold ~ 85-90
+        ;;
+        ;; The Defy home row is built from SUPERKEYS (SK1-SK8), not qukeys, so
+        ;; superkeys.holdstart is what governs how long a hold takes to engage
+        ;; there. hold-time was originally set to 210 from qukeys.holdTimeout —
+        ;; the wrong field — which made the laptop fire modifiers ~143ms sooner
+        ;; than the Defy and tripped home-row mods during normal typing.
+        ;; Raised to 353 on 2026-10-25 to match.
         ;;
         ;; tap-time  = how long a press can last and still count as a tap
         ;; hold-time = how long to hold before the modifier engages
         ;; ---------------------------------------------------------------
         (defvar
           tap-time 200
-          hold-time 210
+          hold-time 353
 
           ;; Thumb layer keys engage faster than the home-row mods; a layer
           ;; shift is a deliberate motion, not something you trip over while
