@@ -71,6 +71,10 @@
         ;;
         ;; tap-time  = how long a press can last and still count as a tap
         ;; hold-time = how long to hold before the modifier engages
+        ;;
+        ;; NOTE: tap-time and hold-time are currently UNREFERENCED, because
+        ;; the home-row mods below are disabled. Kept so re-enabling a key is
+        ;; a one-line change. The layer-* vars below ARE still live.
         ;; ---------------------------------------------------------------
         (defvar
           tap-time 200
@@ -84,28 +88,54 @@
         )
 
         ;; ---------------------------------------------------------------
-        ;; Home-row mods, standard GACS order, mirrored across both hands.
+        ;; HOME-ROW MODS ARE DISABLED (2026-10-27).
         ;;
-        ;;   a/;  -> Super        s/l  -> Alt
-        ;;   d/k  -> Ctrl         f/j  -> Shift
+        ;; They misfired during ordinary typing and three attempts failed to
+        ;; fix it, so the home row is plain letters for now. The nav/audio
+        ;; layers and caps-as-esc are unaffected and still work.
         ;;
-        ;; tap-hold-release means: if another key is pressed and released
-        ;; while this one is held, resolve as a HOLD immediately rather than
-        ;; waiting out the timer. That is what makes fast rolls like "as" or
-        ;; "we" come out as letters instead of stray Alt-chords.
+        ;; Use the real modifier keys (lctl/lalt/lmet/lsft) meanwhile. The
+        ;; Defy keeps its own superkey home-row mods; only the laptop is
+        ;; affected by this file.
+        ;;
+        ;; WHAT WAS TRIED, so it is not repeated:
+        ;;
+        ;;  1. tap-hold-release, 200/210 — original. Misfired.
+        ;;  2. tap-hold-release, 200/353 — raised the timeout to match the
+        ;;     Defy's superkeys.holdstart. Still misfired, because
+        ;;     tap-hold-release resolves hold EARLY when another key is
+        ;;     pressed and released (which is what typing a roll does), so
+        ;;     the timeout is never consulted on that path.
+        ;;  3. tap-hold-opposite-hand + defhands + (require-prior-idle 150),
+        ;;     kanata's own recommended HRM setup. Reported as WORSE, with
+        ;;     modifiers still misfiring while typing.
+        ;;
+        ;; (3) failing the same way as (1) and (2) is the useful clue: all
+        ;; three resolve differently, so the problem may not be the hold
+        ;; mechanism at all. Things not yet ruled out:
+        ;;   - COSMIC/libinput seeing both the real and the kanata virtual
+        ;;     device, so the OS applies its own repeat/modifier handling on
+        ;;     top (check: `kanata --debug` against what the compositor gets)
+        ;;   - the Linux antecedent-key-repeat issue the kanata docs warn
+        ;;     about for ALL tap-hold variants, whose workaround is wrapping
+        ;;     the action in (multi f24 (tap-hold ...)) — see kanata
+        ;;     discussion #422. This was never tried.
+        ;;
+        ;; To re-enable a single key for testing, give it back a tap-hold
+        ;; form; the deflayer already points at these aliases.
         ;; ---------------------------------------------------------------
         (defalias
-          ;; left hand
-          hm-a (tap-hold-release $tap-time $hold-time a lmet)
-          hm-s (tap-hold-release $tap-time $hold-time s lalt)
-          hm-d (tap-hold-release $tap-time $hold-time d lctl)
-          hm-f (tap-hold-release $tap-time $hold-time f lsft)
+          ;; left hand — plain letters while HRM is disabled
+          hm-a a
+          hm-s s
+          hm-d d
+          hm-f f
 
-          ;; right hand
-          hm-j (tap-hold-release $tap-time $hold-time j rsft)
-          hm-k (tap-hold-release $tap-time $hold-time k rctl)
-          hm-l (tap-hold-release $tap-time $hold-time l lalt)
-          hm-; (tap-hold-release $tap-time $hold-time ; rmet)
+          ;; right hand — plain letters while HRM is disabled
+          hm-j j
+          hm-k k
+          hm-l l
+          hm-; ;
 
           ;; Thumb/hand layer access. The Defy reaches Navigation and Audio
           ;; from the thumb cluster; the laptop has no thumb keys to spare, so
