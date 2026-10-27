@@ -366,9 +366,8 @@ overrides merged on top of the defaults. Added 2026-10-24:
 `n` / `p`: carrying a window to the next workspace is the practical "new
 workspace" gesture (workspaces are created by moving into the trailing empty
 one), but the only default binding for it is `Super+Shift+Ctrl+hjkl`. Three
-modifiers is awkward anywhere and worse with the kanata home-row mods on the
-laptop keyboard, where it means holding A+F+D simultaneously. These two are
-**additive** — the `Super+Shift+Ctrl` defaults still work.
+modifiers is awkward on a laptop keyboard. These two are **additive** — the
+`Super+Shift+Ctrl` defaults still work.
 
 `f` / `t` **replace** defaults rather than adding to them: `System(HomeFolder)`
 (not the browser — that is `Super+b`, `System(WebBrowser)`) and
@@ -416,6 +415,55 @@ it, and COSMIC Settings → Keyboard → Shortcuts rewrites the file, so a chang
 made there can drop these. Making it declarative would mean a `home.file` entry
 (as with the herdr config), at the cost of the Settings UI no longer being able
 to edit shortcuts at all.
+
+## Keyboard remapping (kanata — REMOVED, do not re-add)
+
+`modules/kanata.nix` was removed on **2026-10-27**. Home-row mods on the
+built-in keyboard were tried for four days and abandoned — **not** because
+of a bad config, but because they are not achievable for this typist. The
+Dygma Defy keeps its own superkey home-row mods in hardware; the laptop
+simply does without.
+
+This was settled by measurement, not opinion, so don't re-litigate it with
+another timeout or `tap-hold` variant. 939 real key events captured via
+`kanata --debug`:
+
+| intent | n | p5 | p50 | p95 | max |
+|---|---|---|---|---|---|
+| letter (no other key during the hold) | 54 | — | 111ms | 135ms | 141ms |
+| chord (another key pressed during it) | 22 | 94ms | 122ms | 153ms | 154ms |
+
+The two distributions overlap almost entirely — medians 11ms apart. Key
+holds while typing average 111ms, where typical touch-typists run 50–80ms,
+so an ordinary keypress is indistinguishable from a deliberate hold. No
+`hold-time` can separate them: ~120ms loses half the real chords, ~150ms
+turns ordinary letters into modifiers.
+
+Three mechanisms were tried and all misfired: `tap-hold-release` at 200/210
+and 200/353, then `tap-hold-opposite-hand` + `defhands` +
+`require-prior-idle 150` (kanata's own recommended HRM setup). The last was
+*worse*, for two measured reasons: `require-prior-idle 150` sat below the
+182ms median inter-key gap, so it suppressed real chords mid-typing; and
+same-hand home-row chords are genuinely used (`Alt+a` is the herdr prefix,
+and under GACS that is `s`-hold + `a`, both left hand), which
+`same-hand -> tap` breaks outright.
+
+Two hardware facts found along the way, worth keeping:
+
+- **This keyboard has no right Ctrl.** `KEY_RIGHTCTRL` never appears in the
+  input stream, while `KEY_RIGHTALT` and `KEY_RIGHTSHIFT` do. Bottom-right
+  is Alt, then arrows.
+- **kanata holds an exclusive `EVIOCGRAB`** on the physical device, so an
+  external evdev reader on `/dev/input/event0` opens successfully but
+  receives nothing and blocks forever. To measure keyboard timing, use
+  `kanata --debug` and parse the journal (`process recv ev` lines are the
+  physical input, `send to uinput:` is kanata's output); note
+  `journalctl -o cat` preserves kanata's ANSI escapes, so strip them first.
+
+QMK is not an option on this machine: the keyboard is driven by Dell's
+non-reflashable embedded controller. If keyboard remapping is ever wanted
+again, put modifiers somewhere never typed — a `caps`-style hold or thumb
+keys — not on the home row.
 
 ## Screenshot Tools
 

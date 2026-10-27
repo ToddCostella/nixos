@@ -8,9 +8,6 @@
   imports = [
     ./hardware-configuration.nix
     ./desktop-tools.nix
-    # Built-in keyboard remapping (home-row mods + nav/audio layers). Physical
-    # i8042 keyboard only, so it stays out of the shared desktop layer.
-    ../../modules/kanata.nix
   ];
 
   # Boot loader configuration
